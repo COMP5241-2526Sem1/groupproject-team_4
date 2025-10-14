@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* 强制覆盖外部 .container 样式，保证主内容区填满 */
+        .container {
+            max-width: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            display: flex !important;
+            height: 100vh;
+        }
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            width: auto;
+            height: 100vh;
+            background: #fff;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 48px 40px;
+            overflow-y: auto;
+            display: block;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: url('/static/background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .sidebar {
+            width: 240px;
+            min-width: 240px;
+            height: 100vh;
+            background: #8a1c32;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding-top: 32px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 10;
+        }
+        .section {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        #courses-section h1 {
+            color: #8a1c32;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+        #courses-list {
+            font-size: 1.2rem;
+            color: #222;
+        }
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .sidebar .logo img {
+            width: 80px;
+        }
+        .sidebar nav {
+            flex: 1;
+        }
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .sidebar nav a.active {
+            background: #a62c43;
+        }
+        .sidebar nav a:hover {
+            background: #a62c43;
+        }
+        .sidebar .bottom {
+            padding: 16px 24px;
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+        .course-tab-btn {
+            font-size:1.1rem;
+            padding:8px 24px;
+            border-radius:12px;
+            border:2px solid #a62c43;
+            margin-right:32px;
+            background:#f7eaea;
+            color:#a62c43;
+            font-weight:bold;
+            cursor:pointer;
+            transition:background 0.2s, color 0.2s;
+        }
+        .course-tab-btn.active {
+            background:#b40101;
+            color:#fff;
+            border-color:#b40101;
+        }
+        .course-item {
+            border-bottom:1px solid #eee;
+            padding:16px 0;
+            display:flex;
+            flex-direction:row;
+            align-items:center;
+            gap:32px;
+        }
+        .course-info {
+            font-size:1.15rem;
+            color:#222;
+            display:flex;
+            flex-direction:row;
+            align-items:center;
+            gap:24px;
+        }
+        .course-info b {
+            font-size:1.35rem;
+            color:#8a1c32;
+            margin-right:18px;
+        }
+        .course-info .course-desc {
+            color:#888;
+            font-size:1rem;
+            margin-right:18px;
+        }
+        .course-info .course-meta {
+            color:#555;
+            font-size:1rem;
+        }
+        .course-add-btn {
+            padding:4px 32px 4px 32px;
+            font-size:1rem;
+            border-radius:8px;
+            background:#b40101;
+            color:#fff;
+            border:none;
+            cursor:pointer;
+            min-width:80px;
+            max-width:100px;
+            transition:background 0.2s;
+        }
+        .course-add-btn:hover {
+            background:#a62c43;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+        </div>
+        <nav>
+            <a href="#" class="active" onclick="showSection('institution')">Institution Page</a>
+            <a href="#" onclick="showSection('profile')">Profile</a>
+            <a href="#" onclick="showSection('activity')">Activity</a>
+            <a href="#" onclick="showSection('courses')">Courses</a>
+            <a href="#" onclick="showSection('calendar')">Calendar</a>
+            <a href="#" onclick="showSection('messages')">Messages</a>
+            <a href="#" onclick="showSection('grades')">Grades</a>
+            <a href="#" onclick="showSection('assist')">Assist</a>
+            <a href="#" onclick="showSection('tools')">Tools</a>
+            <a href="/logout">Sign Out</a>
+        </nav>
+        <div class="bottom">
+            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
+        </div>
+    </aside>
+    <main class="main-content">
+        <div id="institution-section" class="section"> </div>
+        <div id="profile-section" class="section" style="display:none;"> </div>
+        <div id="activity-section" class="section" style="display:none;"> </div>
+        <div id="courses-section" class="section" style="display:none;">
+            <div style="display:flex;gap:32px;margin-bottom:32px;">
+                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">选课</button>
+                <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">查看课程表</button>
+            </div>
+            <div id="add-course-area">
+                <h2 style="color:#8a1c32;">可选课程</h2>
+                <div id="available-courses">Loading...</div>
+            </div>
+            <div id="table-course-area" style="display:none;">
+                <h2 style="color:#8a1c32;">已选课程表</h2>
+                <div id="my-courses">Loading...</div>
+            </div>
+            <div id="course-msg" style="margin-top:24px;color:#d81e06;font-size:1.1rem;"></div>
+        </div>
+        <div id="calendar-section" class="section" style="display:none;"> </div>
+        <div id="messages-section" class="section" style="display:none;"> </div>
+        <div id="grades-section" class="section" style="display:none;"> </div>
+        <div id="assist-section" class="section" style="display:none;"> </div>
+        <div id="tools-section" class="section" style="display:none;"> </div>
+    </main>
+</div>
+<script>
+    function showSection(section) {
+        // 移除所有active
+        document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+        // 给当前加active
+        const navs = document.querySelectorAll('.sidebar nav a');
+        switch(section) {
+            case 'institution': navs[0].classList.add('active'); break;
+            case 'profile': navs[1].classList.add('active'); break;
+            case 'activity': navs[2].classList.add('active'); break;
+            case 'courses': navs[3].classList.add('active'); break;
+            case 'calendar': navs[4].classList.add('active'); break;
+            case 'messages': navs[5].classList.add('active'); break;
+            case 'grades': navs[6].classList.add('active'); break;
+            case 'assist': navs[7].classList.add('active'); break;
+            case 'tools': navs[8].classList.add('active'); break;
+        }
+        // 隐藏所有section
+        document.querySelectorAll('.main-content .section').forEach(div => div.style.display = 'none');
+        // 显示当前section
+        document.getElementById(section+'-section').style.display = 'block';
+    }
+    // 默认显示 institution-section
+    showSection('institution');
+
+    async function loadCourses() {
+        const res = await fetch('/my_courses');
+        const data = await res.json();
+        const list = document.getElementById('courses-list');
+        if (!data.courses || data.courses.length === 0) {
+            list.innerHTML = '<p style="color:#888;">No courses found.</p>';
+            return;
+        }
+        list.innerHTML = '';
+        data.courses.forEach(course => {
+            list.innerHTML += `<div class="course-card">
+                <div class="course-title">${course.name}</div>
+                <div class="course-desc">${course.description || 'No description.'}</div>
+                <div class="course-meta">Teacher: ${course.teacher} | Created: ${course.created_at}</div>
+            </div>`;
+        });
+    }
+    loadCourses();
+
+    function showCourseTab(tab) {
+        document.getElementById('add-course-area').style.display = tab === 'add' ? 'block' : 'none';
+        document.getElementById('table-course-area').style.display = tab === 'table' ? 'block' : 'none';
+        document.getElementById('tab-add').classList.toggle('active', tab === 'add');
+        document.getElementById('tab-table').classList.toggle('active', tab === 'table');
+        document.getElementById('course-msg').innerText = '';
+        if(tab === 'add') loadAvailableCourses();
+        if(tab === 'table') loadMyCourses();
+    }
+    // 默认显示选课tab并加载数据
+    showCourseTab('add');
+
+    // 加载可选课程
+    function loadAvailableCourses() {
+        fetch('/courses/available').then(r=>r.json()).then(data=>{
+            let html = '';
+            if(data.length===0) html = '<p>暂无可选课程</p>';
+            else data.forEach(c=>{
+                html += `<div class='course-item' style='display:flex;align-items:center;'>
+                    <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
+                    <div style='flex:3;color:#888;'>${c.description||''}</div>
+                    <div style='flex:1;'>${c.credit}学分</div>
+                    <div style='flex:2;'>${c.enrolled}/${c.capacity}</div>
+                    <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
+                    <div style='flex:1;text-align:right;'><button onclick='addCourse(${c.id})' class='course-add-btn'>Add</button></div>
+                </div>`;
+            });
+            document.getElementById('available-courses').innerHTML = html;
+        });
+    }
+    // 加载已选课程
+    function loadMyCourses() {
+        fetch('/courses/my').then(r=>r.json()).then(data=>{
+            let html = '';
+            if(data.length===0) html = '<p>暂无已选课程</p>';
+            else data.forEach(c=>{
+                html += `<div class='course-item' style='display:flex;align-items:center;'>
+                    <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
+                    <div style='flex:3;color:#888;'>${c.description||''}</div>
+                    <div style='flex:1;'>${c.credit}学分</div>
+                    <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
+                    <div style='flex:1;text-align:right;'><button onclick='dropCourse(${c.id})' class='course-add-btn' style='background:#eee;color:#a62c43;'>Drop</button></div>
+                </div>`;
+            });
+            document.getElementById('my-courses').innerHTML = html;
+        });
+    }
+    // 选课
+    function addCourse(cid) {
+        fetch('/courses/add', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({course_id:cid})
+        }).then(r=>r.json()).then(data=>{
+            document.getElementById('course-msg').innerText = data.msg;
+            loadAvailableCourses();
+            loadMyCourses();
+        });
+    }
+    // 退课
+    function dropCourse(cid) {
+        fetch('/courses/drop', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({course_id:cid})
+        }).then(r=>r.json()).then(data=>{
+            document.getElementById('course-msg').innerText = data.msg;
+            loadAvailableCourses();
+            loadMyCourses();
+        });
+    }
+    // 页面切换时自动加载课程
+    document.getElementById('tab-add').onclick = function(){ showCourseTab('add'); loadAvailableCourses(); };
+    document.getElementById('tab-table').onclick = function(){ showCourseTab('table'); loadMyCourses(); };
+    // 初始加载
+    loadAvailableCourses();
+    loadMyCourses();
+</script>
+</body>
+</html>

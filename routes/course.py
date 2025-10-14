@@ -1,0 +1,113 @@
+from flask import Blueprint, request, jsonify, session
+from models.course import Course
+from models.course_enrollment import CourseEnrollment
+from models.user import User, db
+
+course_bp = Blueprint('course', __name__)
+
+# 获取所有可选课程（未选的课程）
+@course_bp.route('/courses/available', methods=['GET'])
+def get_available_courses():
+    student_id = session.get('user_id')
+    if not student_id:
+        return jsonify({'msg': '未登录'}), 401
+    # 已选课程id
+    enrolled_ids = [e.course_id for e in CourseEnrollment.query.filter_by(student_id=student_id).all()]
+    # 可选课程（未选且未满员）
+    # 星期排序辅助字典
+    weekday_order = {'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 7}
+    courses = Course.query.filter(~Course.id.in_(enrolled_ids)).all()
+    courses = sorted(courses, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
+    result = []
+    for c in courses:
+        enrolled_count = CourseEnrollment.query.filter_by(course_id=c.id).count()
+        result.append({
+            'id': c.id,
+            'name': c.name,
+            'description': c.description,
+            'credit': c.credit,
+            'capacity': c.capacity,
+            'enrolled': enrolled_count,
+            'teacher_id': c.teacher_id,
+            'day_of_week': c.day_of_week,
+            'start_time': str(c.start_time) if c.start_time else '',
+            'end_time': str(c.end_time) if c.end_time else ''
+        })
+    return jsonify(result)
+
+# 获取学生已选课程列表
+@course_bp.route('/courses/my', methods=['GET'])
+def get_my_courses():
+    student_id = session.get('user_id')
+    if not student_id:
+        return jsonify({'msg': '未登录'}), 401
+    enrollments = CourseEnrollment.query.filter_by(student_id=student_id).all()
+    # 取出所有已选课程对象
+    courses = [Course.query.get(e.course_id) for e in enrollments]
+    weekday_order = {'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 7}
+    courses_sorted = sorted(courses, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
+    result = []
+    for c in courses_sorted:
+        result.append({
+            'id': c.id,
+            'name': c.name,
+            'description': c.description,
+            'credit': c.credit,
+            'capacity': c.capacity,
+            'teacher_id': c.teacher_id,
+            'day_of_week': c.day_of_week,
+            'start_time': str(c.start_time) if c.start_time else '',
+            'end_time': str(c.end_time) if c.end_time else ''
+        })
+    return jsonify(result)
+
+# 选课接口
+@course_bp.route('/courses/add', methods=['POST'])
+def add_course():
+    student_id = session.get('user_id')
+    if not student_id:
+        return jsonify({'msg': '未登录'}), 401
+    course_id = request.json.get('course_id')
+    course = Course.query.get(course_id)
+    if not course:
+        return jsonify({'msg': '课程不存在'}), 404
+    # 校验是否已选
+    if CourseEnrollment.query.filter_by(student_id=student_id, course_id=course_id).first():
+        return jsonify({'msg': '已选该课程'}), 400
+    # 校验人数
+    enrolled_count = CourseEnrollment.query.filter_by(course_id=course_id).count()
+    if enrolled_count >= course.capacity:
+        return jsonify({'msg': '课程人数已满'}), 400
+    # 校验学分和课程数
+    enrollments = CourseEnrollment.query.filter_by(student_id=student_id).all()
+    total_credits = sum(Course.query.get(e.course_id).credit for e in enrollments)
+    if total_credits + course.credit > 18:
+        return jsonify({'msg': '学分超限，最多18学分'}), 400
+    if len(enrollments) >= 6:
+        return jsonify({'msg': '最多只能选6门课程'}), 400
+    # 校验时间冲突
+    for e in enrollments:
+        c2 = Course.query.get(e.course_id)
+        if c2.day_of_week == course.day_of_week:
+            # 时间有重叠则冲突
+            if not (course.end_time <= c2.start_time or course.start_time >= c2.end_time):
+                return jsonify({'msg': '课程时间冲突，请选择其他课程'}), 400
+    # 添加选课
+    new_enroll = CourseEnrollment(course_id=course_id, student_id=student_id)
+    db.session.add(new_enroll)
+    db.session.commit()
+    return jsonify({'msg': '选课成功'})
+
+# 退课接口
+@course_bp.route('/courses/drop', methods=['POST'])
+def drop_course():
+    student_id = session.get('user_id')
+    if not student_id:
+        return jsonify({'msg': '未登录'}), 401
+    course_id = request.json.get('course_id')
+    enroll = CourseEnrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
+    if not enroll:
+        return jsonify({'msg': '未选该课程'}), 400
+    db.session.delete(enroll)
+    db.session.commit()
+    return jsonify({'msg': '退课成功'})
