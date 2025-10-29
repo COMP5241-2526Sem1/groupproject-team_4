@@ -52,9 +52,11 @@
             // 登录成功后跳转到不同角色首页
             if (result.role === 'student') {
                 window.location.href = '/student_home';
-            } else if (result.role === 'teacher') {
+            } 
+            else if (result.role === 'teacher') {
                 window.location.href = '/teacher_home';
-            } else if (result.role === 'admin') {
+            } 
+            else if (result.role === 'admin') {
                 window.location.href = '/admin_home';
             }
         }

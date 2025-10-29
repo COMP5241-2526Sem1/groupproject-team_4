@@ -10,7 +10,7 @@ app.secret_key = 'your_secret_key_123456789'
 
 # 初始化数据库对象
 from models import User, Course, CourseEnrollment, Activity, Submission, Grade, Notification, SystemLog
-from models.user import db
+from models import db
 db.init_app(app)
 
 # 注册auth蓝图
