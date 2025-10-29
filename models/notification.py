@@ -1,8 +1,8 @@
-from models import db
+from database import db
 from datetime import datetime
 
 class Notification(db.Model):
-    __tablename__ = 'notifications'
+    __tablename__ = 'notification'
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

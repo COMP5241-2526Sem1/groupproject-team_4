@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, session
 from models.course import Course
 from models.course_enrollment import CourseEnrollment
-from models.user import User, db
+from models.user import User
+from database import db
 
 course_bp = Blueprint('course', __name__)
 

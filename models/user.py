@@ -1,13 +1,13 @@
-from models import db
+from sqlalchemy import Enum, Column, Integer, String
 from datetime import datetime
-from sqlalchemy import Enum
+from database import db
 
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(Enum('student', 'teacher', 'admin'), nullable=False)
+    role = db.Column(Enum('student', 'teacher', 'admin', name='user_role_enum'), nullable=False)
     email = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

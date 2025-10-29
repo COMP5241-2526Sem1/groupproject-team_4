@@ -1,12 +1,16 @@
-from models import db
 from datetime import datetime
-from sqlalchemy import JSON
+from sqlalchemy import Column, Integer, Float, ForeignKey
+from sqlalchemy.sql import func
+from database import db
+
 
 class Submission(db.Model):
-    __tablename__ = 'submissions'
-    id = db.Column(db.Integer, primary_key=True)
-    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    answer = db.Column(JSON)
-    score = db.Column(db.Float)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __tablename__ = 'submission'
+
+    id = Column(Integer, primary_key=True)
+    quiz_id = Column(Integer, ForeignKey('quiz.id'), nullable=False)
+    student_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    submitted_at = Column(db.DateTime, default=func.now())
+    grade = Column(Float)
+
+    answers = db.relationship('Answer', backref='submission', cascade='all, delete-orphan')

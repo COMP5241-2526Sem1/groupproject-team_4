@@ -1,6 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+from database import db
 
 from .user import User
 from .course import Course
@@ -10,3 +8,7 @@ from .submission import Submission
 from .grade import Grade
 from .notification import Notification
 from .system_log import SystemLog
+from .quiz import Quiz
+from .answer import Answer
+from .choice import Choice
+from .question import Question

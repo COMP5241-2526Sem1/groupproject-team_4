@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from models.user import User, db
+from models.user import User
+from database import db
 import re
 
 # Create blueprint
@@ -40,7 +41,7 @@ def register():
         return jsonify({'msg': 'Username already exists'}), 400
 
     password_hash = generate_password_hash(password)
-    user = User(username=username, password_hash=password_hash, role=role, email=email)
+    user = Users(username=username, password_hash=password_hash, role=role, email=email)
     db.session.add(user)
     db.session.commit()
     return jsonify({'msg': 'Registration successful'}), 201
@@ -53,7 +54,7 @@ def login():
     password = data.get('password')
     role = data.get('role')
 
-    user = User.query.filter_by(username=username, role=role).first()
+    user = Users.query.filter_by(username=username, role=role).first()
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({'msg': '用户名、密码或角色错误'}), 401
     session['user_id'] = user.id
