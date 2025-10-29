@@ -3,7 +3,9 @@
 
 # Ignore Python cache and virtual environment
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+*.pyd
 venv/
 
 # Ignore IDE specific files
