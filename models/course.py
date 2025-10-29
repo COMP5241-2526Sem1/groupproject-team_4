@@ -8,11 +8,11 @@ class Course(db.Model):
     description = db.Column(db.Text)
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    credit = db.Column(db.Integer, default=3, nullable=False)      # 学分
-    capacity = db.Column(db.Integer, nullable=False)               # 最大人数
-    day_of_week = db.Column(db.String(10), nullable=False)         # 星期几，如 'Mon', 'Tue', 'Wed' ...
-    start_time = db.Column(db.Time, nullable=False)                # 开始时间，如 09:00:00
-    end_time = db.Column(db.Time, nullable=False)                  # 结束时间，如 11:00:00
+    credit = db.Column(db.Integer, default=3, nullable=False)      # Credit
+    capacity = db.Column(db.Integer, nullable=False)               # Maximum capacity
+    day_of_week = db.Column(db.String(10), nullable=False)         # Day of the week, e.g., 'Mon', 'Tue', 'Wed' ...
+    start_time = db.Column(db.Time, nullable=False)                # Start time, e.g., 09:00:00
+    end_time = db.Column(db.Time, nullable=False)                  # End time, e.g., 11:00:00
 
     enrollments = db.relationship('CourseEnrollment', backref='course', lazy=True)
     activities = db.relationship('Activity', backref='course', lazy=True)

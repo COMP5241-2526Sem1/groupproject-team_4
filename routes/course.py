@@ -5,16 +5,16 @@ from models.user import User, db
 
 course_bp = Blueprint('course', __name__)
 
-# 获取所有可选课程（未选的课程）
+# Get all available courses (not enrolled)
 @course_bp.route('/courses/available', methods=['GET'])
 def get_available_courses():
     student_id = session.get('user_id')
     if not student_id:
-        return jsonify({'msg': '未登录'}), 401
-    # 已选课程id
+        return jsonify({'msg': 'Not logged in'}), 401
+    # Enrolled course IDs
     enrolled_ids = [e.course_id for e in CourseEnrollment.query.filter_by(student_id=student_id).all()]
-    # 可选课程（未选且未满员）
-    # 星期排序辅助字典
+    # Available courses (not enrolled and not full)
+    # Weekday sorting helper dictionary
     weekday_order = {'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 7}
     courses = Course.query.filter(~Course.id.in_(enrolled_ids)).all()
     courses = sorted(courses, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
@@ -35,14 +35,14 @@ def get_available_courses():
         })
     return jsonify(result)
 
-# 获取学生已选课程列表
+# Get student's enrolled courses
 @course_bp.route('/courses/my', methods=['GET'])
 def get_my_courses():
     student_id = session.get('user_id')
     if not student_id:
-        return jsonify({'msg': '未登录'}), 401
+        return jsonify({'msg': 'Not logged in'}), 401
     enrollments = CourseEnrollment.query.filter_by(student_id=student_id).all()
-    # 取出所有已选课程对象
+    # Retrieve all enrolled course objects
     courses = [Course.query.get(e.course_id) for e in enrollments]
     weekday_order = {'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 7}
     courses_sorted = sorted(courses, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
@@ -66,7 +66,7 @@ def get_my_courses():
 def add_course():
     student_id = session.get('user_id')
     if not student_id:
-        return jsonify({'msg': '未登录'}), 401
+        return jsonify({'msg': 'Not logged in'}), 401
     course_id = request.json.get('course_id')
     course = Course.query.get(course_id)
     if not course:
@@ -103,7 +103,7 @@ def add_course():
 def drop_course():
     student_id = session.get('user_id')
     if not student_id:
-        return jsonify({'msg': '未登录'}), 401
+        return jsonify({'msg': 'Not logged in'}), 401
     course_id = request.json.get('course_id')
     enroll = CourseEnrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
     if not enroll:

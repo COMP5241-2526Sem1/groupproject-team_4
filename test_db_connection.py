@@ -62,5 +62,5 @@ def test_mysql_connection():
         print(f"MySQL connection test failed: {e}")
 
 if __name__ == "__main__":
-    #test_postgresql_connection()
-    test_mysql_connection()
+    test_postgresql_connection()
+    #test_mysql_connection()
