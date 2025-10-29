@@ -41,12 +41,12 @@ def register():
         return jsonify({'msg': 'Username already exists'}), 400
 
     password_hash = generate_password_hash(password)
-    user = Users(username=username, password_hash=password_hash, role=role, email=email)
+    user = User(username=username, password_hash=password_hash, role=role, email=email)
     db.session.add(user)
     db.session.commit()
     return jsonify({'msg': 'Registration successful'}), 201
 
-# Login endpoint
+# Login
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -54,11 +54,11 @@ def login():
     password = data.get('password')
     role = data.get('role')
 
-    user = Users.query.filter_by(username=username, role=role).first()
+    user = User.query.filter_by(username=username, role=role).first()
     if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({'msg': '用户名、密码或角色错误'}), 401
+        return jsonify({'msg': 'Incorrect username, password or role'}), 401
     session['user_id'] = user.id
-    return jsonify({'msg': '登录成功', 'role': user.role}), 200
+    return jsonify({'msg': 'login success!', 'role': user.role}), 200
 
 # logout
 @auth_bp.route('/logout')

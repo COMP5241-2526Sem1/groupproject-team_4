@@ -11,4 +11,4 @@ class Activity(db.Model):
     content = db.Column(JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    submissions = db.relationship('Submission', backref='activity', lazy=True)
+    submission = db.relationship('Submission', backref='activity', lazy=True)
