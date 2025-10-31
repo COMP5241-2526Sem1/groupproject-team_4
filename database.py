@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 from flask_sqlalchemy import SQLAlchemy
 
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -12,6 +13,9 @@ app = Flask(__name__)
 
 # Initialize SQLAlchemy
 db = SQLAlchemy()
+
+
+
 
 # Test database connection
 def test_db_connection():

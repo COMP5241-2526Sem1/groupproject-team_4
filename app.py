@@ -4,6 +4,7 @@ from config import Config
 from sqlalchemy import text
 from database import db
 
+
 app = Flask(__name__)
 
 # Set secret_key for Flask app to avoid session errors
@@ -30,11 +31,51 @@ try:
         tables = db.session.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")).fetchall()
         for table in tables:
             db.session.execute(text(f'ALTER TABLE {table[0]} ENABLE ROW LEVEL SECURITY;'))
-
+        from database import create_sample
+        create_sample()
 except Exception as e:
     print(f"not create!: {e}")
 
+def create_sample():
+    # Insert sample users
+    sample_users = [
+        {'username': 'student1', 'password_hash': 'hashed_password_1', 'role': 'student', 'email': 'student1@example.com'},
+        {'username': 'teacher1', 'password_hash': 'hashed_password_2', 'role': 'teacher', 'email': 'teacher1@example.com'},
+        {'username': 'admin1', 'password_hash': 'hashed_password_3', 'role': 'admin', 'email': 'admin1@example.com'}
+    ]
+    for user_data in sample_users:
+        user = User(
+            username=user_data['username'],
+            password_hash=user_data['password_hash'],
+            role=user_data['role'],
+            email=user_data['email']
+        )
+        with app.app_context():
+            db.session.add(user)
+            db.session.commit()
 
+    # Insert sample courses
+    sample_courses = [
+        {'name': 'Introduction to Programming', 'description': 'Basic programming concepts', 'teacher_id': 1, 'credit': 3, 'capacity': 30, 'day_of_week': 'Mon', 'start_time': '09:00:00', 'end_time': '11:00:00'},
+        {'name': 'Data Structures', 'description': 'Fundamental data structures', 'teacher_id': 1, 'credit': 4, 'capacity': 25, 'day_of_week': 'Tue', 'start_time': '13:00:00', 'end_time': '15:00:00'},
+        {'name': 'Algorithms', 'description': 'Algorithm design and analysis', 'teacher_id': 2, 'credit': 4, 'capacity': 20, 'day_of_week': 'Wed', 'start_time': '10:00:00', 'end_time': '12:00:00'}
+    ]
+    for course_data in sample_courses:
+        course = Course(
+            name=course_data['name'],
+            description=course_data['description'],
+            teacher_id=course_data['teacher_id'],
+            credit=course_data['credit'],
+            capacity=course_data['capacity'],
+            day_of_week=course_data['day_of_week'],
+            start_time=course_data['start_time'],
+            end_time=course_data['end_time']
+        )
+        with app.app_context():
+            db.session.add(course)
+            db.session.commit()
+
+create_sample()
 
 # Register auth blueprint
 from routes.auth import auth_bp
