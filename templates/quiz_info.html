@@ -188,30 +188,27 @@
         }
     </style>
     <script>
-        function loadAnnouncement() {
-            document.querySelector('.main-content').innerHTML = '<h1>Announcement</h1><p>This is the announcement section.</p>';
-        }
-        function loadCalendar() {
-            document.querySelector('.main-content').innerHTML = '<h1>Calendar</h1><p>This is the calendar section.</p>';
-        }
-        function loadContent() {
-            document.querySelector('.main-content').innerHTML = '<h1>Content</h1><p>This is the content section.</p>';
-        }
+
         function loadQuiz() {
+
+            document.querySelector('.main-content').innerHTML = `
+
+                <div class="quiz-container">
+
+                    <h1>{{ quiz.name }}</h1>
+
+                    <p>Used Attempts: {{ quiz.used_attempts }}</p>
+
+                    <p>Max Attempts: {{ quiz.max_attempts }}</p>
+
+                    <button onclick="window.location.href='course/3/quiz/5/start'">Start Quiz</button>
+
+                </div>
+
+            `;
             document.querySelector('.main-content').innerHTML = '<h1>Quiz</h1><p>This is the quiz section.</p>';
         }
-        function loadPoll() {
-            document.querySelector('.main-content').innerHTML = '<h1>Poll</h1><p>This is the poll section.</p>';
-        }
-        function loadWordCloud() {
-            document.querySelector('.main-content').innerHTML = '<h1>Word Cloud</h1><p>This is the word cloud section.</p>';
-        }
-        function loadMiniGames() {
-            document.querySelector('.main-content').innerHTML = '<h1>Mini Games</h1><p>This is the mini games section.</p>';
-        }
-        function loadGrade() {
-            document.querySelector('.main-content').innerHTML = '<h1>Grade</h1><p>This is the grade section.</p>';
-        }
+
     </script>
 </head>
 <body>
@@ -223,8 +220,8 @@
         </div>
 
         <nav>
-            <a href="#" onclick="loadAnnouncement()">Announcement</a>
-            <a href="#" onclick="loadCalendar()">Calendar</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/announcement';">Announcement</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/calendar';">Calendar</a>
             <a href="#" onclick="">Content</a>
             <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/quiz';">Quiz</a>
             <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/poll';">Poll</a>
@@ -241,12 +238,12 @@
     </aside>
 
     <main class="main-content">
-        <h1>{{ course.name }}</h1>
-        <p>Description: {{ course.description }}</p>
-        <p>Code: {{ course.code }}</p>
-        <p>Teacher: {{ course.teacher.username }}</p>
-        <p>Department: {{ course.department.name if course.department else 'N/A' }}</p>
-
+        <div class="quiz-container">
+            <h1>{{ quiz.name }}</h1>
+            <p>Used Attempts: {{ quiz.used_attempts }}</p>
+            <p>Max Attempts: {{ quiz.max_attempts }}</p>
+            <button href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/start';">Start Quiz</button>
+        </div>
     </main>
 
 </div>

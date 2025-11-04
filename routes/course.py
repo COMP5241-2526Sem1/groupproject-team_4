@@ -113,3 +113,17 @@ def drop_course():
     db.session.delete(enroll)
     db.session.commit()
     return jsonify({'msg': 'course dropped successfully!'})
+
+@course_bp.route('/course/<int:course_id>/quiz', methods=['POST'])
+def get_quiz_list():
+    return 0
+
+# show quiz info(name user attempt, max attempt) user can choose to start
+@course_bp.route('/course/<int:course_id>/quiz/<int:quiz_id>', methods=['POST'])
+def get_quiz_info():
+    return 0
+
+
+@course_bp.route('/course/<int:course_id>/quiz/<int:quiz_id>/start', methods=['POST'])
+def start_quiz_():
+    return 0
