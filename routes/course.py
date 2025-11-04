@@ -4,6 +4,9 @@ from models.course_enrollment import CourseEnrollment
 from models.user import User
 from models.submission import Submission
 from models.quiz import Quiz
+from models.question import Question
+from models.choice import Choice
+from models.question_response import QuestionResponse
 from database import db
 
 course_bp = Blueprint('course', __name__)
@@ -116,8 +119,24 @@ def drop_course():
     db.session.commit()
     return jsonify({'msg': 'course dropped successfully!'})
 
-@course_bp.route('/course/<int:course_id>/quiz', methods=['GET', 'POST'])
+@course_bp.route('/course/<course_id>/quiz', methods=['GET'])
 def get_quiz_list(course_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('quiz_list.html', message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
     # Check if user is logged in
     user_id = session.get('user_id')
     if not user_id:
@@ -156,15 +175,253 @@ def get_quiz_list(course_id):
     if not quiz_data:
         return render_template('quiz_list.html', message="No quizzes available for this course.")
     
-    # Return all quizzes and the course_id for the template to use
-    return render_template('quiz_list.html', quizzes=quiz_data, course_id=course_id)
+    # Return all quizzes, course object and course_id for the template to use
+    return render_template('quiz_list.html', quizzes=quiz_data, course=course, course_id=course_id)
 
 # show quiz info(name user attempt, max attempt) user can choose to start
-@course_bp.route('/course/<int:course_id>/quiz/<int:quiz_id>', methods=['POST'])
-def get_quiz_info():
-    return 0
+@course_bp.route('/course/<course_id>/quiz/<int:quiz_id>', methods=['GET'])
+def get_quiz_info(course_id, quiz_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('quiz_info.html', message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('quiz_info.html', message="You are not enrolled in this course.")
+    
+    # Get the specific quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_id=course_id).first()
+    
+    if not quiz:
+        return render_template('quiz_info.html', message="Quiz not found.")
+    
+    # Calculate used_attempts by querying the Submission table
+    used_attempts = Submission.query.filter_by(
+        student_id=user_id,
+        quiz_id=quiz.id
+    ).count()
+    
+    # Format quiz data for template
+    quiz_data = {
+        'id': quiz.id,
+        'name': quiz.title,
+        'description': quiz.description,
+        'used_attempts': used_attempts,
+        'max_attempts': quiz.attempt_limit
+    }
+    
+    # Return quiz data, course object and course_id for the template to use
+    return render_template('quiz_info.html', quiz=quiz_data, course=course, course_id=course_id)
 
 
-@course_bp.route('/course/<int:course_id>/quiz/<int:quiz_id>/start', methods=['POST'])
-def start_quiz_():
-    return 0
+@course_bp.route('/course/<course_id>/quiz/<int:quiz_id>/start', methods=['GET'])  
+def start_quiz(course_id, quiz_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('quiz_start.html', error_message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
+    
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('quiz_start.html', error_message="You are not enrolled in this course.")
+    
+    # Get the specific quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_id=course_id).first()
+    
+    if not quiz:
+        return render_template('quiz_start.html', error_message="Quiz not found.")
+    
+    # Check attempt limit
+    used_attempts = Submission.query.filter_by(
+        student_id=user_id,
+        quiz_id=quiz.id
+    ).count()
+    
+    if used_attempts >= quiz.attempt_limit:
+        return render_template('quiz_start.html', error_message="You have reached the maximum number of attempts for this quiz.")
+    
+    # Get all questions with their choices for the quiz
+    questions = []
+    for question in quiz.questions:
+        question_data = {
+            'id': question.id,
+            'type': question.type,
+            'content': question.content,
+            'points': question.points
+        }
+        
+        # If it's an MCQ, include the choices
+        if question.type == 'mcq':
+            question_data['choices'] = [
+                {'id': choice.id, 'content': choice.content}
+                for choice in question.choices
+            ]
+        
+        questions.append(question_data)
+    
+    # Format quiz data for template
+    quiz_data = {
+        'id': quiz.id,
+        'name': quiz.title,
+        'description': quiz.description,
+        'used_attempts': used_attempts,
+        'max_attempts': quiz.attempt_limit
+    }
+    
+    # Render the quiz_start template with questions
+    return render_template(
+        'quiz_start.html', 
+        quiz=quiz_data, 
+        course=course, 
+        course_id=course_id,
+        questions=questions
+    )
+
+@course_bp.route('/course/<course_id>/quiz/<int:quiz_id>/submit', methods=['POST'])
+def submit_quiz(course_id, quiz_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('quiz_start.html', error_message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
+    
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('quiz_start.html', error_message="You are not enrolled in this course.")
+    
+    # Get the specific quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_id=course_id).first()
+    
+    if not quiz:
+        return render_template('quiz_start.html', error_message="Quiz not found.")
+    
+    # Check attempt limit before creating submission
+    used_attempts = Submission.query.filter_by(
+        student_id=user_id,
+        quiz_id=quiz.id
+    ).count()
+    
+    if used_attempts >= quiz.attempt_limit:
+        return render_template('quiz_start.html', error_message="You have reached the maximum number of attempts for this quiz.")
+    
+    # Create a new submission record
+    submission = Submission(
+        student_id=user_id,
+        quiz_id=quiz.id
+    )
+    
+    db.session.add(submission)
+    db.session.flush()  # Get the submission ID before committing
+    
+    # Process each question response
+    total_score = 0
+    for question in quiz.questions:
+        # Get the user's answer from the form
+        answer_key = f'question-{question.id}'
+        user_answer = request.form.get(answer_key)
+        
+        if not user_answer:
+            # Skip if no answer provided (should be caught by frontend validation)
+            continue
+        
+        # Create question response
+        is_correct = False
+        response_content = user_answer
+        
+        if question.type == 'mcq':
+            # For MCQ, check if the selected choice is correct
+            selected_choice = Choice.query.get(int(user_answer))
+            if selected_choice and selected_choice.is_correct:
+                is_correct = True
+                total_score += question.points
+            # Store the selected choice content
+            response_content = selected_choice.content if selected_choice else user_answer
+        elif question.type == 'saq':
+            # For short answer, store the text (grading would typically be manual)
+            # For now, we'll mark as not correct since we can't auto-grade
+            is_correct = None  # None indicates needs manual grading
+        
+        # Create the question response record
+        question_response = QuestionResponse(
+            submission_id=submission.id,
+            question_id=question.id,
+            content=response_content,
+            is_correct=is_correct
+        )
+        
+        db.session.add(question_response)
+    
+    # Update submission grade if it's auto-gradable (all questions are MCQ)
+    if quiz.is_graded and all(q.type == 'mcq' for q in quiz.questions):
+        submission.grade = total_score
+    
+    # Commit all changes to the database
+    db.session.commit()
+    
+    # Redirect to quiz list with success message
+    return redirect(f'/course/{course_id}/quiz?submitted=1')

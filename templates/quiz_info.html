@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Home</title>
+    <title>Quiz Info - {{ quiz.name if quiz else 'Student Home' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         /* 强制覆盖外部 .container 样式，保证主内容区填满 */
@@ -186,28 +186,42 @@
             display: block;
             color: rgb(255, 255, 255);
         }
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .quiz-container h1 {
+            color: #8a1c32;
+            margin-bottom: 20px;
+        }
+        .quiz-container p {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .quiz-container button {
+            padding: 10px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            background: #b40101;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+        .quiz-container button:hover {
+            background: #a62c43;
+        }
     </style>
     <script>
-
-        function loadQuiz() {
-
-            document.querySelector('.main-content').innerHTML = `
-
-                <div class="quiz-container">
-
-                    <h1>{{ quiz.name }}</h1>
-
-                    <p>Used Attempts: {{ quiz.used_attempts }}</p>
-
-                    <p>Max Attempts: {{ quiz.max_attempts }}</p>
-
-                    <button onclick="window.location.href='course/3/quiz/5/start'">Start Quiz</button>
-
-                </div>
-
-            `;
-            document.querySelector('.main-content').innerHTML = '<h1>Quiz</h1><p>This is the quiz section.</p>';
-        }
+        // Quiz loading functionality is handled by server-side rendering
+        // rather than JavaScript to ensure proper data binding
 
     </script>
 </head>
@@ -220,15 +234,8 @@
         </div>
 
         <nav>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/announcement';">Announcement</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/calendar';">Calendar</a>
-            <a href="#" onclick="">Content</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/quiz';">Quiz</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/poll';">Poll</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/word_cloud';">Word Cloud</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/mini_games';">Mini Games</a>
-            <a href="#" onclick="">Grades</a>
-
+            <a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}'">Course Home</a>
+            <a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz'">Quiz List</a>
             <a href="/logout">Sign Out</a>
         </nav>
 
@@ -238,12 +245,26 @@
     </aside>
 
     <main class="main-content">
-        <div class="quiz-container">
-            <h1>{{ quiz.name }}</h1>
-            <p>Used Attempts: {{ quiz.used_attempts }}</p>
-            <p>Max Attempts: {{ quiz.max_attempts }}</p>
-            <button href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/start';">Start Quiz</button>
-        </div>
+        {% if message %}
+            <div class="quiz-container">
+                <h1>Error</h1>
+                <p>{{ message }}</p>
+                <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz'">Back to Quiz List</button>
+            </div>
+        {% else %}
+            <div class="quiz-container">
+                <h1>{{ quiz.name }}</h1>
+                {% if quiz.description %}
+                    <p><strong>Description:</strong> {{ quiz.description }}</p>
+                {% endif %}
+                <p><strong>Used Attempts:</strong> {{ quiz.used_attempts }}</p>
+                <p><strong>Max Attempts:</strong> {{ quiz.max_attempts }}</p>
+                <div style="margin-top: 20px;">
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz/{{ quiz.id }}/start'">Start Quiz</button>
+                    <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz'">Back to List</button>
+                </div>
+            </div>
+        {% endif %}
     </main>
 
 </div>

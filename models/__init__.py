@@ -4,7 +4,6 @@ from .user import User
 from .course import Course
 from .department import Department
 from .course_enrollment import CourseEnrollment
-from .activity import Activity
 from .submission import Submission
 from .grade import Grade
 from .notification import Notification
