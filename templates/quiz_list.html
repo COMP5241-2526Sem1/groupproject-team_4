@@ -131,14 +131,14 @@
         </div>
 
         <nav>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/announcement';">Announcement</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/calendar';">Calendar</a>
-            <a href="#" onclick="">Content</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/quiz';">Quiz</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/poll';">Poll</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/word_cloud';">Word Cloud</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/mini_games';">Mini Games</a>
-            <a href="#" onclick="">Grades</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/announcement';">Announcement</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/calendar';">Calendar</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/content';">Content</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/quiz';">Quiz</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/mini_games';">Mini Games</a>
+            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/grades';">Grades</a>
 
             <a href="/logout">Sign Out</a>
         </nav>

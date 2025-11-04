@@ -12,3 +12,4 @@ from .quiz import Quiz
 from .question_response import QuestionResponse
 from .choice import Choice
 from .question import Question
+from .poll import Poll

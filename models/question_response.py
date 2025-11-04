@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Text, Float
 from database import db
 
 # user response to ONE question
@@ -12,3 +12,4 @@ class QuestionResponse(db.Model):
     # if saq, content is some text
     content = Column(Text)
     is_correct = Column(Boolean)
+    points = Column(Float, default=0.0)

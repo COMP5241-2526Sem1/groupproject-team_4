@@ -9,7 +9,8 @@ class Submission(db.Model):
 
     id = Column(Integer, primary_key=True)
     student_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    quiz_id = Column(Integer, ForeignKey('quiz.id'), nullable=False)
+    quiz_id = Column(Integer, ForeignKey('quiz.id'), nullable=True)
+    poll_id = Column(Integer, ForeignKey('poll.id'), nullable=True)
     submitted_at = Column(db.DateTime, default=func.now())
     grade = Column(Float)
 

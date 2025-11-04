@@ -21,18 +21,17 @@ try:
 except Exception as e:
     print(f"PostgreSQL Database Connection Failed!: {e}")
 
-from models import User, Course, CourseEnrollment, Submission, Grade, Notification, SystemLog
+from models import User, Course, CourseEnrollment, Submission, Grade, Notification, SystemLog, Quiz, Question, Choice, QuestionResponse, Poll
 try:
     with app.app_context():
         print(app.app_context)
         res = db.create_all()
+        print("create_all tables---")
         print(res)
+        print("create_all tables---")
         # Enable Row Level Security for all tables
-        tables = db.session.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")).fetchall()
-        for table in tables:
-            db.session.execute(text(f'ALTER TABLE {table[0]} ENABLE ROW LEVEL SECURITY;'))
-        from database import create_sample
-        create_sample()
+
+        #create_sample()
 except Exception as e:
     print(f"not create!: {e}")
 

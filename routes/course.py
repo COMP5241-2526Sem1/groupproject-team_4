@@ -7,6 +7,7 @@ from models.quiz import Quiz
 from models.question import Question
 from models.choice import Choice
 from models.question_response import QuestionResponse
+from models.poll import Poll
 from database import db
 
 course_bp = Blueprint('course', __name__)
@@ -175,8 +176,70 @@ def get_quiz_list(course_id):
     if not quiz_data:
         return render_template('quiz_list.html', message="No quizzes available for this course.")
     
+    # 获取URL参数中的submitted标志
+    submitted = request.args.get('submitted')
     # Return all quizzes, course object and course_id for the template to use
-    return render_template('quiz_list.html', quizzes=quiz_data, course=course, course_id=course_id)
+    return render_template('quiz_list.html', quizzes=quiz_data, course=course, course_id=course_id, submitted=submitted)
+
+@course_bp.route('/course/<course_id>/poll', methods=['GET'])
+def get_poll_list(course_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('poll_list.html', message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('poll_list.html', message="You are not enrolled in this course.")
+    
+    # Get polls for the specified course
+    polls = Poll.query.filter_by(course_id=course_id).all()
+    
+    # Format poll data for template
+    poll_data = []
+    for poll in polls:
+        # 检查用户是否已参与该poll（通过检查是否有相关的submission）
+        has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
+            Submission.student_id == user_id,
+            Question.poll_id == poll.id
+        ).first() is not None
+        
+        poll_info = {
+            'id': poll.id,
+            'title': poll.title,
+            'has_responded': has_responded
+        }
+        poll_data.append(poll_info)
+    
+    # If there are no polls, return a message
+    if not poll_data:
+        return render_template('poll_list.html', message="No polls available.", course=course, course_id=course_id)
+    
+    # 获取URL参数中的submitted标志
+    submitted = request.args.get('submitted')
+    # Return all polls, course object and course_id for the template to use
+    return render_template('poll_list.html', polls=poll_data, course=course, course_id=course_id, submitted=submitted)
 
 # show quiz info(name user attempt, max attempt) user can choose to start
 @course_bp.route('/course/<course_id>/quiz/<int:quiz_id>', methods=['GET'])
@@ -282,7 +345,15 @@ def start_quiz(course_id, quiz_id):
     ).count()
     
     if used_attempts >= quiz.attempt_limit:
-        return render_template('quiz_start.html', error_message="You have reached the maximum number of attempts for this quiz.")
+        # Format quiz data for template even when attempt limit is reached
+        quiz_data = {
+            'id': quiz.id,
+            'name': quiz.title,
+            'description': quiz.description,
+            'used_attempts': used_attempts,
+            'max_attempts': quiz.attempt_limit
+        }
+        return render_template('quiz_start.html', error_message="You have reached the maximum number of attempts for this quiz.", quiz=quiz_data, course=course, course_id=course_id)
     
     # Get all questions with their choices for the quiz
     questions = []
@@ -379,39 +450,57 @@ def submit_quiz(course_id, quiz_id):
     db.session.flush()  # Get the submission ID before committing
     
     # Process each question response
-    total_score = 0
+    total_score = 0.0
     for question in quiz.questions:
         # Get the user's answer from the form
         answer_key = f'question-{question.id}'
         user_answer = request.form.get(answer_key)
         
-        if not user_answer:
-            # Skip if no answer provided (should be caught by frontend validation)
-            continue
-        
-        # Create question response
+        # Create question response with default values
         is_correct = False
-        response_content = user_answer
+        response_content = ''
+        user_points = 0.0
         
-        if question.type == 'mcq':
-            # For MCQ, check if the selected choice is correct
-            selected_choice = Choice.query.get(int(user_answer))
-            if selected_choice and selected_choice.is_correct:
-                is_correct = True
-                total_score += question.points
-            # Store the selected choice content
-            response_content = selected_choice.content if selected_choice else user_answer
-        elif question.type == 'saq':
-            # For short answer, store the text (grading would typically be manual)
-            # For now, we'll mark as not correct since we can't auto-grade
-            is_correct = None  # None indicates needs manual grading
+        if user_answer:
+            # Process answered question
+            response_content = user_answer
+            
+            if question.type == 'mcq':
+                # For MCQ, check if the selected choice is correct
+                try:
+                    selected_choice = Choice.query.get(int(user_answer))
+                    if selected_choice and selected_choice.is_correct:
+                        is_correct = True
+                        total_score += question.points
+                        user_points = float(question.points)
+                    # Store the selected choice content
+                    response_content = selected_choice.content if selected_choice else user_answer
+                except (ValueError, TypeError):
+                    # Invalid choice ID, treat as incorrect
+                    pass
+            elif question.type == 'saq':
+                # For short answer, store the text (grading would typically be manual)
+                # For now, we'll mark as not correct since we can't auto-grade
+                is_correct = None  # None indicates needs manual grading
+                response_content = user_answer.strip()
+        else:
+            # Process unanswered question
+            if question.type == 'mcq':
+                is_correct = False  # Explicitly set to False for unanswered MCQ
+                response_content = 'Unanswered'
+                user_points = 0.0
+            elif question.type == 'saq':
+                is_correct = None  # Still None for unanswered SAQ (needs manual grading)
+                response_content = ''
+                user_points = 0.0
         
-        # Create the question response record
+        # Create the question response record for every question
         question_response = QuestionResponse(
             submission_id=submission.id,
             question_id=question.id,
             content=response_content,
-            is_correct=is_correct
+            is_correct=is_correct,
+            points=user_points
         )
         
         db.session.add(question_response)
@@ -425,3 +514,251 @@ def submit_quiz(course_id, quiz_id):
     
     # Redirect to quiz list with success message
     return redirect(f'/course/{course_id}/quiz?submitted=1')
+
+# Poll related routes
+@course_bp.route('/course/<course_id>/poll/<int:poll_id>', methods=['GET'])
+def get_poll_info(course_id, poll_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('poll_info.html', message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('poll_info.html', message="You are not enrolled in this course.")
+    
+    # Get the specific poll
+    poll = Poll.query.get(poll_id)
+    
+    if not poll:
+        return render_template('poll_info.html', message="Poll not found.")
+    
+    # Check if user has already responded
+    has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
+        Submission.student_id == user_id,
+        Question.poll_id == poll.id
+    ).first() is not None
+    
+    # Format poll data for template
+    poll_data = {
+        'id': poll.id,
+        'title': poll.title,
+        'description': poll.description,
+        'has_responded': has_responded
+    }
+    
+    # Return poll data, course object and course_id for the template to use
+    return render_template('poll_info.html', poll=poll_data, course=course, course_id=course_id)
+
+@course_bp.route('/course/<course_id>/poll/<int:poll_id>/start', methods=['GET'])
+def start_poll(course_id, poll_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('poll_start.html', error_message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
+    
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('poll_start.html', error_message="You are not enrolled in this course.")
+    
+    # Get the specific poll
+    poll = Poll.query.get(poll_id)
+    
+    if not poll:
+        return render_template('poll_start.html', error_message="Poll not found.")
+    
+    # Check if user has already responded
+    has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
+        Submission.student_id == user_id,
+        Question.poll_id == poll.id
+    ).first() is not None
+    
+    if has_responded:
+        # Format poll data for template even when user has already responded
+        poll_data = {
+            'id': poll.id,
+            'title': poll.title,
+            'description': poll.description,
+            'has_responded': has_responded
+        }
+        return render_template('poll_start.html', error_message="You have already responded to this poll.", poll=poll_data, course=course, course_id=course_id)
+    
+    # Get all questions with their choices for the poll
+    questions = []
+    for question in poll.questions:
+        question_data = {
+            'id': question.id,
+            'type': question.type,
+            'content': question.content
+        }
+        
+        # If it's an MCQ, include the choices
+        if question.type == 'mcq':
+            question_data['choices'] = [
+                {'id': choice.id, 'content': choice.content}
+                for choice in question.choices
+            ]
+        
+        questions.append(question_data)
+    
+    # Format poll data for template
+    poll_data = {
+        'id': poll.id,
+        'title': poll.title,
+        'description': poll.description
+    }
+    
+    # Render the poll_start template with questions
+    return render_template(
+        'poll_start.html', 
+        poll=poll_data, 
+        course=course, 
+        course_id=course_id,
+        questions=questions
+    )
+
+@course_bp.route('/course/<course_id>/poll/<int:poll_id>/submit', methods=['POST'])
+def submit_poll(course_id, poll_id):
+    # Check if course_id is an integer or a code
+    course = None
+    try:
+        # Try to parse as integer ID first
+        course_id_int = int(course_id)
+        course = Course.query.get(course_id_int)
+    except ValueError:
+        # If not an integer, try to find by course code
+        course = Course.query.filter_by(code=course_id).first()
+    
+    # If course not found, return error
+    if not course:
+        return render_template('poll_start.html', error_message="Course not found.")
+    
+    # Use the actual course ID for further processing
+    course_id = course.id
+    
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('poll_start.html', error_message="You are not enrolled in this course.")
+    
+    # Get the specific poll
+    poll = Poll.query.get(poll_id)
+    
+    if not poll:
+        return render_template('poll_start.html', error_message="Poll not found.")
+    
+    # Check if user has already responded
+    has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
+        Submission.student_id == user_id,
+        Question.poll_id == poll.id
+    ).first() is not None
+    
+    if has_responded:
+        return render_template('poll_start.html', error_message="You have already responded to this poll.")
+    
+    # Create a new submission record for the poll
+    submission = Submission(
+        student_id=user_id,
+        poll_id=poll_id  # Using poll_id instead of quiz_id
+    )
+    
+    db.session.add(submission)
+    db.session.flush()  # Get the submission ID before committing
+    
+    # Process each question response
+    for question in poll.questions:
+        # Get the user's answer from the form
+        answer_key = f'question-{question.id}'
+        user_answer = request.form.get(answer_key)
+        
+        # For polls, we just store the response without grading
+        response_content = ''
+        is_correct = None
+        user_points = 0.0
+        
+        if user_answer:
+            # Process answered question
+            if question.type == 'mcq':
+                # For MCQ, get the selected choice content
+                try:
+                    selected_choice = Choice.query.get(int(user_answer))
+                    if selected_choice and selected_choice.question_id == question.id:
+                        response_content = selected_choice.content
+                except (ValueError, TypeError):
+                    # Invalid choice ID
+                    response_content = user_answer
+            elif question.type == 'saq':
+                # For short answer, store the text
+                response_content = user_answer.strip()
+        else:
+            # Process unanswered question
+            response_content = 'Unanswered'
+        
+        # Create the question response record for every question
+        question_response = QuestionResponse(
+            submission_id=submission.id,
+            question_id=question.id,
+            content=response_content,
+            is_correct=is_correct,
+            points=user_points
+        )
+        
+        db.session.add(question_response)
+    
+    # Commit all changes to the database
+    db.session.commit()
+    
+    # Redirect to poll list with success message
+    return redirect(f'/course/{course_id}/poll?submitted=1')
