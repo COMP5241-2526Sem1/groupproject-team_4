@@ -8,6 +8,7 @@ from models.question import Question
 from models.choice import Choice
 from models.question_response import QuestionResponse
 from models.poll import Poll
+from models.attempt import Attempt
 from database import db
 
 course_bp = Blueprint('course', __name__)
@@ -158,9 +159,9 @@ def get_quiz_list(course_id):
     # Format quiz data for template
     quiz_data = []
     for quiz in quizzes:
-        # Calculate used_attempts by querying the Submission table
-        used_attempts = Submission.query.filter_by(
-            student_id=user_id,
+        # Calculate used_attempts by querying the Attempt table
+        used_attempts = Attempt.query.filter_by(
+            user_id=user_id,
             quiz_id=quiz.id
         ).count()
         
@@ -280,9 +281,9 @@ def get_quiz_info(course_id, quiz_id):
     if not quiz:
         return render_template('quiz_info.html', message="Quiz not found.")
     
-    # Calculate used_attempts by querying the Submission table
-    used_attempts = Submission.query.filter_by(
-        student_id=user_id,
+    # Calculate used_attempts by querying the Attempt table
+    used_attempts = Attempt.query.filter_by(
+        user_id=user_id,
         quiz_id=quiz.id
     ).count()
     
@@ -338,9 +339,9 @@ def start_quiz(course_id, quiz_id):
     if not quiz:
         return render_template('quiz_start.html', error_message="Quiz not found.")
     
-    # Check attempt limit
-    used_attempts = Submission.query.filter_by(
-        student_id=user_id,
+    # Check attempt limit using Attempt table
+    used_attempts = Attempt.query.filter_by(
+        user_id=user_id,
         quiz_id=quiz.id
     ).count()
     
@@ -354,6 +355,21 @@ def start_quiz(course_id, quiz_id):
             'max_attempts': quiz.attempt_limit
         }
         return render_template('quiz_start.html', error_message="You have reached the maximum number of attempts for this quiz.", quiz=quiz_data, course=course, course_id=course_id)
+    
+    # 计算当前用户的尝试次数
+    current_attempt_count = Attempt.query.filter_by(
+        user_id=user_id,
+        quiz_id=quiz.id
+    ).count()
+    
+    # 创建新的尝试记录
+    new_attempt = Attempt(
+        quiz_id=quiz.id,
+        user_id=user_id,
+        attempt_count=current_attempt_count + 1
+    )
+    db.session.add(new_attempt)
+    db.session.commit()
     
     # Get all questions with their choices for the quiz
     questions = []
@@ -379,7 +395,7 @@ def start_quiz(course_id, quiz_id):
         'id': quiz.id,
         'name': quiz.title,
         'description': quiz.description,
-        'used_attempts': used_attempts,
+        'used_attempts': current_attempt_count + 1,  # 更新为新的尝试次数
         'max_attempts': quiz.attempt_limit
     }
     

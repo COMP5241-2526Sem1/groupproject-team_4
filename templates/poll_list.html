@@ -116,29 +116,6 @@
             color: #8a1c32;
             margin-bottom: 20px;
         }
-        
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            font-weight: bold;
-            text-align: center;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
     </style>
     <script>
         // Quiz loading functionality is handled by server-side rendering
@@ -173,11 +150,6 @@
 
     <main class="main-content">
         <h1>Available Quizzes</h1>
-        {% if submitted %}
-        <div class="success-message">
-            <p>Quiz submitted successfully!</p>
-        </div>
-        {% endif %}
         {% if quizzes %}
             {% for quiz in quizzes %}
                 <div class="quiz-container">
