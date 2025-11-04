@@ -81,6 +81,11 @@ from routes.auth import auth_bp
 app.register_blueprint(auth_bp)
 from routes.course import course_bp
 app.register_blueprint(course_bp)
+# Register quiz and poll blueprints
+from routes.quiz_routes import quiz_bp
+app.register_blueprint(quiz_bp)
+from routes.poll_routes import poll_bp
+app.register_blueprint(poll_bp)
 
 # Routes: Login and registration pages
 @app.route('/login')
