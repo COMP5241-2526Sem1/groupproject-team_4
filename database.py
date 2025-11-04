@@ -15,8 +15,6 @@ app = Flask(__name__)
 db = SQLAlchemy()
 
 
-
-
 # Test database connection
 def test_db_connection():
     print("Database connection successful!")

@@ -1,7 +1,6 @@
 # TO-DO LIST
 ## authentication system
-use cookie
-used at every action
+flask built-in
 
 ## activity
 ### mcq and saq
@@ -22,7 +21,9 @@ teacher create, edit, delete activity, POST, PUT, DELETE
 student get and answer poll and quiz, GET, POST
 teacher get response, GET
 
-### submission 
-both poll and quiz go into submission
-poll.id, quiz.id, student.id, update_time, mcq_answer(one or multiple), saq_answer, grade(if applicable)
+### submission
+student respond to a task(eg. poll, quiz, word cloud or mini-game) by a submission
+if the teacher want to grade a submission
+the system will look up the quiz id(or other id of the task) in that submission
+and then look up the answers to the quiz
 word cloud: generate from saq, external package

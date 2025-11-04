@@ -62,7 +62,7 @@ def get_my_courses():
         })
     return jsonify(result)
 
-# 选课接口
+# add
 @course_bp.route('/courses/add', methods=['POST'])
 def add_course():
     student_id = session.get('user_id')
@@ -99,7 +99,7 @@ def add_course():
     db.session.commit()
     return jsonify({'msg': '选课成功'})
 
-# 退课接口
+# drop
 @course_bp.route('/courses/drop', methods=['POST'])
 def drop_course():
     student_id = session.get('user_id')
@@ -108,7 +108,7 @@ def drop_course():
     course_id = request.json.get('course_id')
     enroll = CourseEnrollment.query.filter_by(student_id=student_id, course_id=course_id).first()
     if not enroll:
-        return jsonify({'msg': '未选该课程'}), 400
+        return jsonify({'msg': 'not enrolled in this course'}), 400
     db.session.delete(enroll)
     db.session.commit()
-    return jsonify({'msg': '退课成功'})
+    return jsonify({'msg': 'course dropped successfully!'})
