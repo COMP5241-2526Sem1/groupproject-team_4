@@ -2,14 +2,243 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Home</title>
+    <title>Student Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* 强制覆盖外部 .container 样式，保证主内容区填满 */
+        .container {
+            max-width: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            display: flex !important;
+            height: 100vh;
+        }
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            width: auto;
+            height: 100vh;
+            background: #fff;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 48px 40px;
+            overflow-y: auto;
+            display: block;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: url('/static/background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .sidebar {
+            width: 240px;
+            min-width: 240px;
+            height: 100vh;
+            background: #8a1c32;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding-top: 32px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 10;
+        }
+        .section {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        #courses-section h1 {
+            color: #8a1c32;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+        #courses-list {
+            font-size: 1.2rem;
+            color: #222;
+        }
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .sidebar .logo img {
+            width: 80px;
+        }
+        .sidebar nav {
+            flex: 1;
+        }
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .sidebar nav a.active {
+            background: #a62c43;
+        }
+        .sidebar nav a:hover {
+            background: #a62c43;
+        }
+        .sidebar .bottom {
+            padding: 16px 24px;
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+        .course-tab-btn {
+            font-size:1.1rem;
+            padding:8px 24px;
+            border-radius:12px;
+            border:2px solid #a62c43;
+            margin-right:32px;
+            background:#f7eaea;
+            color:#a62c43;
+            font-weight:bold;
+            cursor:pointer;
+            transition:background 0.2s, color 0.2s;
+        }
+        .course-tab-btn.active {
+            background:#b40101;
+            color:#fff;
+            border-color:#b40101;
+        }
+        .course-item {
+            border-bottom:1px solid #eee;
+            padding:16px 0;
+            display:flex;
+            flex-direction:row;
+            align-items:center;
+            gap:32px;
+        }
+        .course-info {
+            font-size:1.15rem;
+            color:#222;
+            display:flex;
+            flex-direction:row;
+            align-items:center;
+            gap:24px;
+        }
+        .course-info b {
+            font-size:1.35rem;
+            color:#8a1c32;
+            margin-right:18px;
+        }
+        .course-info .course-desc {
+            color:#888;
+            font-size:1rem;
+            margin-right:18px;
+        }
+        .course-info .course-meta {
+            color:#555;
+            font-size:1rem;
+        }
+        .course-add-btn {
+            padding:4px 32px 4px 32px;
+            font-size:1rem;
+            border-radius:8px;
+            background:#b40101;
+            color:#fff;
+            border:none;
+            cursor:pointer;
+            min-width:80px;
+            max-width:100px;
+            transition:background 0.2s;
+        }
+        .course-add-btn:hover {
+            background:#a62c43;
+        }
+            .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: rgb(255, 142, 142);
+            color: #222;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .dropdown-content a {
+            color: rgb(31, 252, 64);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+        .dropdown-content a:hover {
+            background-color: #ffbcbc;
+            color: rgb(22, 185, 214);
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+            color: rgb(255, 255, 255);
+        }
+    </style>
 </head>
 <body>
-    <h1>{{ course.name }}</h1>
-    <p>Description: {{ course.description }}</p>
-    <p>Code: {{ course.code }}</p>
-    <p>Teacher: {{ course.teacher.username }}</p>
-    <p>Department: {{ course.department.name if course.department else 'N/A' }}</p>
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo" onclick="window.location.href='/student_home'">
+            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+        </div>
+
+        <nav>
+            <a href="#" onclick="showSection('announcement')">Announcement</a>
+            <a href="#" onclick="showSection('calendar')">Calendar</a>
+            <a href="#" onclick="showSection('content')">Content</a>
+            <a href="#" onclick="showSection('quiz')">Quiz</a>
+            <a href="#" onclick="showSection('poll')">Poll</a>
+            <a href="#" onclick="showSection('word_cloud')">Word Cloud</a>
+            <a href="#" onclick="showSection('mini_games')">Mini Games</a>
+            <a href="#" onclick="showSection('grades')">Grades</a>
+
+            <a href="/logout">Sign Out</a>
+        </nav>
+
+        <div class="bottom">
+            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
+        </div>
+
+    </aside>
+    <main class="main-content">
+        <h1>{{ course.name }}</h1>
+        <p>Description: {{ course.description }}</p>
+        <p>Code: {{ course.code }}</p>
+        <p>Teacher: {{ course.teacher.username }}</p>
+        <p>Department: {{ course.department.name if course.department else 'N/A' }}</p>
+
+
+    </main>
+</div>
+<script>
+    function showSection(section) {
+        // 移除所有active
+        document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
+        // 给当前加active
+        const navs = document.querySelectorAll('.sidebar nav a');
+        switch(section) {
+
+        }
+        // 隐藏所有section
+        document.querySelectorAll('.main-content .section').forEach(div => div.style.display = 'none');
+        // 显示当前section
+        document.getElementById(section+'-section').style.display = 'block';
+    }
+</script>
+
 </body>
 </html>

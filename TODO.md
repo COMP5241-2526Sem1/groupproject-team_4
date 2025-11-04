@@ -6,6 +6,23 @@ feat, fix, docs, style, refactor, test, chore
 ## authentication system
 flask built-in
 
+## course home
+announcement
+calendar
+quiz: click, show all possible quiz (newest first)
+click one quiz, show quiz info, attempt number, max attempt allowed, start button
+start the quiz, show all questions(mcq or saq)
+mcq have choices
+saq have input box
+click submit, arrange the answers in json, send to server
+show submit success page, stop quiz, go back to quiz list
+
+poll: click, show all possible poll (newest first)
+similar to quiz
+
+word cloud: click, show all possible word cloud (newest first)
+mini games: click, show all possible minigames (newest first)
+grads
 ## activity
 ### mcq and saq
 #### multiple-choice-questions(mcq)
