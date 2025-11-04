@@ -149,20 +149,25 @@
     </aside>
 
     <main class="main-content">
-        <h1>Available Quizzes</h1>
-        {% if quizzes %}
-            {% for quiz in quizzes %}
+        <h1>Available Polls</h1>
+        {% if message %}
+        <div style="color: #2e7d32; margin: 20px 0; padding: 15px; background-color: #e8f5e9; border-radius: 5px; border-left: 4px solid #2e7d32;">
+            {{ message }}
+        </div>
+        {% endif %}
+        {% if polls %}
+            {% for poll in polls %}
                 <div class="quiz-container">
-                    <a href="{{ url_for('course.get_quiz_info', course_id=course.code if course and course.code else course_id, quiz_id=quiz.id) }}" class="quiz-link">
-                        <h2>{{ quiz.name }}</h2>
-                        <p>Used Attempts: {{ quiz.used_attempts }}</p>
-                        <p>Max Attempts: {{ quiz.max_attempts }}</p>
+                    <a href="{{ url_for('course.get_poll_info', course_id=course.code if course and course.code else course_id, poll_id=poll.id) }}" class="quiz-link">
+                        <h2>{{ poll.title }}</h2>
+                        <p>Created: {{ poll.created_at.strftime('%Y-%m-%d') }}</p>
+                        <p>Status: Active</p>
                     </a>
                 </div>
             {% endfor %}
         {% else %}
             <div class="quiz-container">
-                <p>No quizzes available for this course yet.</p>
+                <p>{{ message or 'No polls available for this course yet.' }}</p>
             </div>
         {% endif %}
     </main>

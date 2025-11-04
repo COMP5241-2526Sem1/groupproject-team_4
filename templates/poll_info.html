@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Quiz Info - {{ quiz.name if quiz else 'Student Home' }}</title>
+    <title>Poll Info - {{ poll.title if poll else 'Student Home' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         /* 强制覆盖外部 .container 样式，保证主内容区填满 */
@@ -235,7 +235,7 @@
 
         <nav>
             <a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}'">Course Home</a>
-            <a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz'">Quiz List</a>
+            <a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Poll List</a>
             <a href="/logout">Sign Out</a>
         </nav>
 
@@ -247,24 +247,24 @@
     <main class="main-content">
         {% if message %}
             <div class="quiz-container">
-                <h1>Error</h1>
+                <h1>Message</h1>
                 <p>{{ message }}</p>
-                <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz'">Back to Quiz List</button>
+                <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to Poll List</button>
             </div>
         {% else %}
             <div class="quiz-container">
-                <h1>{{ quiz.name }}</h1>
-                {% if quiz.description %}
-                    <p><strong>Description:</strong> {{ quiz.description }}</p>
+                <h1>{{ poll.title }}</h1>
+                {% if poll.description %}
+                    <p><strong>Description:</strong> {{ poll.description }}</p>
                 {% endif %}
-                <p><strong>Used Attempts:</strong> {{ quiz.used_attempts }}</p>
-                <p><strong>Max Attempts:</strong> {{ quiz.max_attempts }}</p>
+                <p><strong>Poll Status:</strong> Active</p>
+                <p><strong>Created At:</strong> {{ poll.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                 <div style="margin-top: 20px;">
-                    {% if quiz.used_attempts < quiz.max_attempts %}
-                        <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz/{{ quiz.id }}/start'">Start Quiz</button>
-                        <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz'">Back to List</button>
+                    {% if not has_submitted %}
+                        <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}/start'">Start Poll</button>
+                        <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to List</button>
                     {% else %}
-                        <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/quiz'">Return to Quiz List</button>
+                        <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Return to Poll List</button>
                     {% endif %}
                 </div>
             </div>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Start Quiz - {{ quiz.name }}</title>
+    <title>Start Poll - {{ poll.title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         /* 强制覆盖外部 .container 样式，保证主内容区填满 */
@@ -82,23 +82,23 @@
             color: #e0e0e0;
         }
         
-        /* Quiz specific styles */
-        .quiz-header {
+        /* Poll specific styles */
+        .poll-header {
             margin-bottom: 30px;
             padding-bottom: 20px;
             border-bottom: 2px solid #e0e0e0;
         }
-        .quiz-header h1 {
+        .poll-header h1 {
             color: #8a1c32;
             font-size: 2.2rem;
             margin-bottom: 10px;
         }
-        .quiz-description {
+        .poll-description {
             color: #555;
             font-size: 1.1rem;
             margin-bottom: 15px;
         }
-        .quiz-info {
+        .poll-info {
             color: #777;
             font-size: 1rem;
         }
@@ -166,7 +166,7 @@
         }
         
         /* Submit button */
-        .quiz-submit {
+        .poll-submit {
             text-align: center;
             margin-top: 40px;
             margin-bottom: 30px;
@@ -197,41 +197,10 @@
         }
     </style>
     <script>
-        // Simple validation before submitting
-        function validateQuizForm() {
-            const form = document.getElementById('quiz-form');
-            const questions = form.querySelectorAll('.question');
-            let isValid = true;
-            
-            questions.forEach(question => {
-                const questionType = question.dataset.type;
-                
-                if (questionType === 'mcq') {
-                    const selectedOption = question.querySelector('input[name^="question-"]:checked');
-                    if (!selectedOption) {
-                        isValid = false;
-                        // Highlight the question if not answered
-                        question.style.border = '2px solid #d32f2f';
-                    } else {
-                        question.style.border = 'none';
-                    }
-                } else if (questionType === 'saq') {
-                    const answerText = question.querySelector('textarea[name^="question-"]').value.trim();
-                    if (answerText === '') {
-                        isValid = false;
-                        // Highlight the question if not answered
-                        question.style.border = '2px solid #d32f2f';
-                    } else {
-                        question.style.border = 'none';
-                    }
-                }
-            });
-            
-            if (!isValid) {
-                alert('Please answer all questions before submitting.');
-            }
-            
-            return isValid;
+        // Enhanced experience for poll submission
+         function enhancePollForm() {
+             // Allow empty answers for poll submission
+             return true;
         }
     </script>
 </head>
@@ -261,20 +230,20 @@
         </div>
         {% endif %}
         
-        <div class="quiz-header">
-            <h1>{{ quiz.name }}</h1>
-            {% if quiz.description %}
-            <div class="quiz-description">{{ quiz.description }}</div>
+        <div class="poll-header">
+              <h1>{{ poll.title }}</h1>
+            {% if poll.description %}
+            <div class="poll-description">{{ poll.description }}</div>
             {% endif %}
-            <div class="quiz-info">
+            <div class="poll-info">
                 <p>Question Count: {{ questions|length }}</p>
-                {% if quiz.used_attempts is defined %}
-                <p>Attempts Used: {{ quiz.used_attempts }} / {{ quiz.max_attempts }}</p>
+                {% if has_submitted is defined %}
+                <p>Poll Status: You have already submitted this poll</p>
                 {% endif %}
             </div>
         </div>
         
-        <form id="quiz-form" action="/course/{{ course_id }}/quiz/{{ quiz.id }}/submit" method="POST" onsubmit="return validateQuizForm();">
+        <form id="poll-form" action="/course/{{ course_id }}/poll/{{ poll.id }}/submit" method="POST" onsubmit="return enhancePollForm();">
             {% for question in questions %}
             <div class="question" data-type="{{ question.type }}">
                 <div class="question-number">Question {{ loop.index }} ({{ question.points }} point{% if question.points > 1 %}s{% endif %})</div>
@@ -284,21 +253,21 @@
                 {% for choice in question.choices %}
                 <div class="choice">
                     <label>
-                        <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}" required>
+                        <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}">
                         {{ choice.content }}
                     </label>
                 </div>
                 {% endfor %}
                 {% elif question.type == 'saq' %}
                 <div class="short-answer">
-                    <textarea name="question-{{ question.id }}" placeholder="Type your answer here..." required></textarea>
+                    <textarea name="question-{{ question.id }}" placeholder="Type your answer here..."></textarea>
                 </div>
                 {% endif %}
             </div>
             {% endfor %}
             
-            <div class="quiz-submit">
-                <button type="submit" class="submit-btn">Submit Quiz</button>
+            <div class="poll-submit">
+                 <button type="submit" class="submit-btn">Submit Poll</button>
             </div>
         </form>
     </main>

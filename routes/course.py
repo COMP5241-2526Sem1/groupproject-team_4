@@ -218,6 +218,9 @@ def get_poll_list(course_id):
     polls = Poll.query.filter_by(course_id=course_id).all()
     
     # Format poll data for template
+    print(f"DEBUG: Found {len(polls)} polls for course_id {course_id}")
+    for p in polls:
+        print(f"DEBUG: Poll ID: {p.id}, Title: {p.title}, Created at: {p.created_at}")
     poll_data = []
     for poll in polls:
         # 检查用户是否已参与该poll（通过检查是否有相关的submission）
@@ -229,18 +232,26 @@ def get_poll_list(course_id):
         poll_info = {
             'id': poll.id,
             'title': poll.title,
-            'has_responded': has_responded
+            'has_responded': has_responded,
+            'created_at': poll.created_at
         }
         poll_data.append(poll_info)
     
-    # If there are no polls, return a message
-    if not poll_data:
-        return render_template('poll_list.html', message="No polls available.", course=course, course_id=course_id)
+    # Check for query parameters to show appropriate messages
+    already_submitted = request.args.get('already_submitted') == '1'
+    submitted = request.args.get('submitted') == '1'
     
-    # 获取URL参数中的submitted标志
-    submitted = request.args.get('submitted')
-    # Return all polls, course object and course_id for the template to use
-    return render_template('poll_list.html', polls=poll_data, course=course, course_id=course_id, submitted=submitted)
+    # Determine message to display
+    message = None
+    if already_submitted:
+        message = "You have already responded to this poll."
+    elif submitted:
+        message = "Poll submitted successfully!"
+    elif not poll_data:
+        message = "No polls available."
+    
+    # Render the poll list template with the poll data and any messages
+    return render_template('poll_list.html', course_id=course_id, polls=poll_data, course=course, message=message)
 
 # show quiz info(name user attempt, max attempt) user can choose to start
 @course_bp.route('/course/<course_id>/quiz/<int:quiz_id>', methods=['GET'])
@@ -564,11 +575,11 @@ def get_poll_info(course_id, poll_id):
     if not enrollment:
         return render_template('poll_info.html', message="You are not enrolled in this course.")
     
-    # Get the specific poll
-    poll = Poll.query.get(poll_id)
+    # Get the specific poll for this course
+    poll = Poll.query.filter_by(id=poll_id, course_id=course_id).first()
     
     if not poll:
-        return render_template('poll_info.html', message="Poll not found.")
+        return render_template('poll_info.html', message="Poll not found for this course.")
     
     # Check if user has already responded
     has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
@@ -581,7 +592,8 @@ def get_poll_info(course_id, poll_id):
         'id': poll.id,
         'title': poll.title,
         'description': poll.description,
-        'has_responded': has_responded
+        'has_submitted': has_responded,
+        'created_at': poll.created_at
     }
     
     # Return poll data, course object and course_id for the template to use
@@ -601,7 +613,7 @@ def start_poll(course_id, poll_id):
     
     # If course not found, return error
     if not course:
-        return render_template('poll_start.html', error_message="Course not found.")
+        return redirect(url_for('course.get_poll_list', course_id=course_id))
     
     # Use the actual course ID for further processing
     course_id = course.id
@@ -618,19 +630,16 @@ def start_poll(course_id, poll_id):
     ).first()
     
     if not enrollment:
-        return render_template('poll_start.html', error_message="You are not enrolled in this course.")
+        return redirect(url_for('course.get_poll_list', course_id=course_id))
     
-    # Get the specific poll
-    poll = Poll.query.get(poll_id)
+    # Get the specific poll for this course
+    poll = Poll.query.filter_by(id=poll_id, course_id=course_id).first()
     
     if not poll:
-        return render_template('poll_start.html', error_message="Poll not found.")
+        return redirect(url_for('course.get_poll_list', course_id=course_id))
     
     # Check if user has already responded
-    has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
-        Submission.student_id == user_id,
-        Question.poll_id == poll.id
-    ).first() is not None
+    has_responded = False
     
     if has_responded:
         # Format poll data for template even when user has already responded
@@ -640,7 +649,7 @@ def start_poll(course_id, poll_id):
             'description': poll.description,
             'has_responded': has_responded
         }
-        return render_template('poll_start.html', error_message="You have already responded to this poll.", poll=poll_data, course=course, course_id=course_id)
+        return render_template('poll_start.html', error_message="xxYou have already responded to this poll.", poll=poll_data, course=course, course_id=course_id)
     
     # Get all questions with their choices for the poll
     questions = []
@@ -648,7 +657,8 @@ def start_poll(course_id, poll_id):
         question_data = {
             'id': question.id,
             'type': question.type,
-            'content': question.content
+            'content': question.content,
+            'points': 1  # 默认每个问题1分
         }
         
         # If it's an MCQ, include the choices
@@ -709,20 +719,18 @@ def submit_poll(course_id, poll_id):
     if not enrollment:
         return render_template('poll_start.html', error_message="You are not enrolled in this course.")
     
-    # Get the specific poll
-    poll = Poll.query.get(poll_id)
+    # Get the specific poll for this course
+    poll = Poll.query.filter_by(id=poll_id, course_id=course_id).first()
     
     if not poll:
-        return render_template('poll_start.html', error_message="Poll not found.")
+        return render_template('poll_start.html', error_message="Poll not found for this course.")
     
     # Check if user has already responded
-    has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
-        Submission.student_id == user_id,
-        Question.poll_id == poll.id
-    ).first() is not None
+    has_responded = False
     
     if has_responded:
-        return render_template('poll_start.html', error_message="You have already responded to this poll.")
+        # Redirect to poll list with a parameter indicating already submitted
+        return redirect(f'/course/{course_id}/poll?already_submitted=1')
     
     # Create a new submission record for the poll
     submission = Submission(
@@ -744,10 +752,10 @@ def submit_poll(course_id, poll_id):
         is_correct = None
         user_points = 0.0
         
-        if user_answer:
-            # Process answered question
-            if question.type == 'mcq':
-                # For MCQ, get the selected choice content
+        # Process question regardless of whether user_answer is empty or not
+        if question.type == 'mcq':
+            # For MCQ, get the selected choice content if available
+            if user_answer:
                 try:
                     selected_choice = Choice.query.get(int(user_answer))
                     if selected_choice and selected_choice.question_id == question.id:
@@ -755,12 +763,10 @@ def submit_poll(course_id, poll_id):
                 except (ValueError, TypeError):
                     # Invalid choice ID
                     response_content = user_answer
-            elif question.type == 'saq':
-                # For short answer, store the text
-                response_content = user_answer.strip()
-        else:
-            # Process unanswered question
-            response_content = 'Unanswered'
+            # No 'else' clause - empty answers are allowed and will remain as empty string
+        elif question.type == 'saq':
+            # For short answer, store the text (including empty text)
+            response_content = user_answer.strip() if user_answer else ''
         
         # Create the question response record for every question
         question_response = QuestionResponse(
