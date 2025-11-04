@@ -1,7 +1,9 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
 from models.course import Course
 from models.course_enrollment import CourseEnrollment
 from models.user import User
+from models.submission import Submission
+from models.quiz import Quiz
 from database import db
 
 course_bp = Blueprint('course', __name__)
@@ -114,9 +116,48 @@ def drop_course():
     db.session.commit()
     return jsonify({'msg': 'course dropped successfully!'})
 
-@course_bp.route('/course/<int:course_id>/quiz', methods=['POST'])
-def get_quiz_list():
-    return 0
+@course_bp.route('/course/<int:course_id>/quiz', methods=['GET', 'POST'])
+def get_quiz_list(course_id):
+    # Check if user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check if user is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(
+        student_id=user_id, 
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        return render_template('quiz_list.html', message="You are not enrolled in this course.")
+    
+    # Get quizzes for the specified course
+    quizzes = Quiz.query.filter_by(course_id=course_id).all()
+    
+    # Format quiz data for template
+    quiz_data = []
+    for quiz in quizzes:
+        # Calculate used_attempts by querying the Submission table
+        used_attempts = Submission.query.filter_by(
+            student_id=user_id,
+            quiz_id=quiz.id
+        ).count()
+        
+        quiz_info = {
+            'id': quiz.id,
+            'name': quiz.title,
+            'used_attempts': used_attempts,
+            'max_attempts': quiz.attempt_limit
+        }
+        quiz_data.append(quiz_info)
+    
+    # If there are no quizzes, return a message
+    if not quiz_data:
+        return render_template('quiz_list.html', message="No quizzes available for this course.")
+    
+    # Return all quizzes and the course_id for the template to use
+    return render_template('quiz_list.html', quizzes=quiz_data, course_id=course_id)
 
 # show quiz info(name user attempt, max attempt) user can choose to start
 @course_bp.route('/course/<int:course_id>/quiz/<int:quiz_id>', methods=['POST'])
