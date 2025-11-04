@@ -1,4 +1,8 @@
 # TO-DO LIST
+## general
+git commit
+feat, fix, docs, style, refactor, test, chore
+
 ## authentication system
 flask built-in
 
