@@ -6,6 +6,7 @@ import re
 
 # Create blueprint
 auth_bp = Blueprint('auth', __name__)
+# THIS IS RESTFUL API, NOT A VISABLE WEB PAGE!!!
 
 # Email format validation (supports all standard email formats)
 def is_valid_email(email):

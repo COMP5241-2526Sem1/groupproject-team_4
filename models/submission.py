@@ -14,4 +14,4 @@ class Submission(db.Model):
     submitted_at = Column(db.DateTime, default=func.now())
     grade = Column(Float)
 
-    answers = db.relationship('Answer', backref='submission', cascade='all, delete-orphan')
+    QuestionResponse = db.relationship('QuestionResponse', backref='submission', cascade='all, delete-orphan')

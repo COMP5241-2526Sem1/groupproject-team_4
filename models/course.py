@@ -4,8 +4,11 @@ from datetime import datetime
 class Course(db.Model):
     __tablename__ = 'course'
     id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.Text, nullable=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)  # Course's department
+    department = db.relationship('Department', backref='courses')
     teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     credit = db.Column(db.Integer, default=3, nullable=False)      # Credit

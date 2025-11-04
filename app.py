@@ -75,7 +75,7 @@ def create_sample():
             db.session.add(course)
             db.session.commit()
 
-create_sample()
+#create_sample()
 
 # Register auth blueprint
 from routes.auth import auth_bp
@@ -104,6 +104,17 @@ def teacher_home():
 @app.route('/admin_home')
 def admin_home():
     return render_template('role_home.html', role='Admin')
+
+@app.route('/course/<int:course_id>')
+def course_by_id(course_id):
+    course = Course.query.get_or_404(course_id)
+    return render_template('course_home.html', course=course)
+
+
+@app.route('/course/<string:course_code>')
+def course_by_code(course_code):
+    course = Course.query.filter_by(code=course_code).first_or_404()
+    return render_template('course_home.html', course=course)
 
 @app.route('/')
 def index():

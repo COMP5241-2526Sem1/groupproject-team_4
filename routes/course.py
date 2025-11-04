@@ -5,22 +5,23 @@ from models.user import User
 from database import db
 
 course_bp = Blueprint('course', __name__)
+# THIS IS RESTFUL API, NOT A VISABLE WEB PAGE!!!
 
-# Get all available courses (not enrolled)
-@course_bp.route('/courses/available', methods=['GET'])
-def get_available_courses():
+# Get all available course (not enrolled)
+@course_bp.route('/course/available', methods=['GET'])
+def get_available_course():
     student_id = session.get('user_id')
     if not student_id:
         return jsonify({'msg': 'Not logged in'}), 401
     # Enrolled course IDs
     enrolled_ids = [e.course_id for e in CourseEnrollment.query.filter_by(student_id=student_id).all()]
-    # Available courses (not enrolled and not full)
+    # Available course (not enrolled and not full)
     # Weekday sorting helper dictionary
     weekday_order = {'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 7}
-    courses = Course.query.filter(~Course.id.in_(enrolled_ids)).all()
-    courses = sorted(courses, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
+    course = Course.query.filter(~Course.id.in_(enrolled_ids)).all()
+    course = sorted(course, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
     result = []
-    for c in courses:
+    for c in course:
         enrolled_count = CourseEnrollment.query.filter_by(course_id=c.id).count()
         result.append({
             'id': c.id,
@@ -36,19 +37,19 @@ def get_available_courses():
         })
     return jsonify(result)
 
-# Get student's enrolled courses
-@course_bp.route('/courses/my', methods=['GET'])
-def get_my_courses():
+# Get student's enrolled course
+@course_bp.route('/course/my', methods=['GET'])
+def get_my_course():
     student_id = session.get('user_id')
     if not student_id:
         return jsonify({'msg': 'Not logged in'}), 401
     enrollments = CourseEnrollment.query.filter_by(student_id=student_id).all()
     # Retrieve all enrolled course objects
-    courses = [Course.query.get(e.course_id) for e in enrollments]
+    course = [Course.query.get(e.course_id) for e in enrollments]
     weekday_order = {'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 7}
-    courses_sorted = sorted(courses, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
+    course_sorted = sorted(course, key=lambda c: (weekday_order.get(c.day_of_week, 99), c.start_time))
     result = []
-    for c in courses_sorted:
+    for c in course_sorted:
         result.append({
             'id': c.id,
             'name': c.name,
@@ -63,7 +64,7 @@ def get_my_courses():
     return jsonify(result)
 
 # add
-@course_bp.route('/courses/add', methods=['POST'])
+@course_bp.route('/course/add', methods=['POST'])
 def add_course():
     student_id = session.get('user_id')
     if not student_id:
@@ -100,7 +101,7 @@ def add_course():
     return jsonify({'msg': '选课成功'})
 
 # drop
-@course_bp.route('/courses/drop', methods=['POST'])
+@course_bp.route('/course/drop', methods=['POST'])
 def drop_course():
     student_id = session.get('user_id')
     if not student_id:

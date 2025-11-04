@@ -10,6 +10,8 @@ class User(db.Model):
     role = db.Column(Enum('student', 'teacher', 'admin', name='user_role_enum'), nullable=False)
     email = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)  # User's department (nullable)
+    department = db.relationship('Department', backref='users')
 
     courses = db.relationship('Course', backref='teacher', lazy=True)
     enrollments = db.relationship('CourseEnrollment', backref='student', lazy=True)
