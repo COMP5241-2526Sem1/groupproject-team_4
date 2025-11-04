@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from sqlalchemy import text
@@ -86,6 +86,9 @@ from routes.quiz_routes import quiz_bp
 app.register_blueprint(quiz_bp)
 from routes.poll_routes import poll_bp
 app.register_blueprint(poll_bp)
+# Register course registration blueprint
+from routes.course_registration import course_registration_bp
+app.register_blueprint(course_registration_bp)
 
 # Routes: Login and registration pages
 @app.route('/login')
@@ -123,6 +126,11 @@ def course_by_code(course_code):
 @app.route('/')
 def index():
     return redirect('/login')
+
+# Route for serving favicon.ico
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 if __name__ == '__main__':
     app.run(debug=True)

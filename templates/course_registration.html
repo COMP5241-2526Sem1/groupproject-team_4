@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Home</title>
+    <title>Course Registration</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         /* 强制覆盖外部 .container 样式，保证主内容区填满 */
@@ -196,7 +196,7 @@
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
-            <a href="/institution" class="active">Institution Page</a>
+            <a href="/institution">Institution Page</a>
             <div class="dropdown">
                 <a href="/course/my">My Course</a>
                 <div class="dropdown-content" id="course-dropdown">
@@ -205,7 +205,7 @@
             </div>
             <a href="/profile">Profile</a>
             <a href="/activity">Activity</a>
-            <a href="/course_registration">Courses</a>
+            <a href="/course_registration" class="active">Courses</a>
             <a href="/calendar">Calendar</a>
             <a href="/messages">Messages</a>
             <a href="/grades">Grades</a>
@@ -217,10 +217,8 @@
         </div>
     </aside>
     <main class="main-content">
-        <div id="institution-section" class="section"> </div>
-        <div id="profile-section" class="section" style="display:none;"> </div>
-        <div id="activity-section" class="section" style="display:none;"> </div>
-        <div id="courses-section" class="section" style="display:none;">
+        <div id="courses-section" class="section">
+            <h1>Course Registration</h1>
             <div style="display:flex;gap:32px;margin-bottom:32px;">
                 <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">选课</button>
                 <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">查看课程表</button>
@@ -235,15 +233,90 @@
             </div>
             <div id="course-msg" style="margin-top:24px;color:#d81e06;font-size:1.1rem;"></div>
         </div>
-        <div id="calendar-section" class="section" style="display:none;"> </div>
-        <div id="messages-section" class="section" style="display:none;"> </div>
-        <div id="grades-section" class="section" style="display:none;"> </div>
-        <div id="assist-section" class="section" style="display:none;"> </div>
-        <div id="tools-section" class="section" style="display:none;"> </div>
     </main>
 </div>
 <script>
     // Navigation is now handled through URL-based routing instead of JavaScript
+
+    function showCourseTab(tab) {
+        document.getElementById('add-course-area').style.display = tab === 'add' ? 'block' : 'none';
+        document.getElementById('table-course-area').style.display = tab === 'table' ? 'block' : 'none';
+        document.getElementById('tab-add').classList.toggle('active', tab === 'add');
+        document.getElementById('tab-table').classList.toggle('active', tab === 'table');
+        document.getElementById('course-msg').innerText = '';
+        if(tab === 'add') loadAvailableCourses();
+        if(tab === 'table') loadMyCourses();
+    }
+    // 默认显示选课tab并加载数据
+    showCourseTab('add');
+
+    // 加载可选课程
+    function loadAvailableCourses() {
+        fetch('/course/available').then(r=>r.json()).then(data=>{
+            let html = '';
+            if(data.length===0) html = '<p>暂无可选课程</p>';
+            else data.forEach(c=>{
+                html += `<div class='course-item' style='display:flex;align-items:center;'>
+                    <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
+                    <div style='flex:3;color:#888;'>${c.description||''}</div>
+                    <div style='flex:1;'>${c.credit}学分</div>
+                    <div style='flex:2;'>${c.enrolled}/${c.capacity}</div>
+                    <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
+                    <div style='flex:1;text-align:right;'><button onclick='addCourse(${c.id})' class='course-add-btn'>Add</button></div>
+                </div>`;
+            });
+            document.getElementById('available-courses').innerHTML = html;
+        });
+    }
+    // 加载已选课程
+    function loadMyCourses() {
+        fetch('/course/my').then(r=>r.json()).then(data=>{
+            let html = '';
+            if(data.length===0) html = '<p>暂无已选课程</p>';
+            else data.forEach(c=>{
+                html += `<div class='course-item' style='display:flex;align-items:center;'>
+                    <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
+                    <div style='flex:3;color:#888;'>${c.description||''}</div>
+                    <div style='flex:1;'>${c.credit}学分</div>
+                    <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
+                    <div style='flex:1;text-align:right;'><button onclick='dropCourse(${c.id})' class='course-add-btn' style='background:#eee;color:#a62c43;'>Drop</button></div>
+                </div>`;
+            });
+            document.getElementById('my-courses').innerHTML = html;
+        });
+    }
+    // 选课
+    function addCourse(cid) {
+        fetch('/course/add', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({course_id:cid})
+        }).then(r=>r.json()).then(data=>{
+            document.getElementById('course-msg').innerText = data.msg;
+            loadAvailableCourses();
+            loadMyCourses();
+            populateCourseDropdown();
+        });
+    }
+    // 退课
+    function dropCourse(cid) {
+        fetch('/course/drop', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({course_id:cid})
+        }).then(r=>r.json()).then(data=>{
+            document.getElementById('course-msg').innerText = data.msg;
+            loadAvailableCourses();
+            loadMyCourses();
+            populateCourseDropdown();
+        });
+    }
+    // 页面切换时自动加载课程
+    document.getElementById('tab-add').onclick = function(){ showCourseTab('add'); loadAvailableCourses(); };
+    document.getElementById('tab-table').onclick = function(){ showCourseTab('table'); loadMyCourses(); };
+    // 初始加载
+    loadAvailableCourses();
+    loadMyCourses();
 </script>
 <script>
         // 动态生成课程下拉菜单
