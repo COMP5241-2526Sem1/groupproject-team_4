@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>未注册学生列表 - {{ course.name }}</title>
+    <title>Not Enrolled Students - {{ course.name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .student-container {
@@ -142,7 +142,7 @@
         }
     </style>
     <script>
-        // 全选/取消全选功能
+        // Select/Deselect all functionality
         function toggleSelectAll() {
             var selectAll = document.getElementById('selectAll');
             var checkboxes = document.querySelectorAll('input[name="students[]"]');
@@ -152,7 +152,7 @@
             });
         }
         
-        // 取消全选功能
+        // Deselect all functionality
         function unselectAll() {
             document.getElementById('selectAll').checked = false;
             var checkboxes = document.querySelectorAll('input[name="students[]"]');
@@ -162,16 +162,16 @@
             });
         }
         
-        // 确认添加功能
+        // Confirm addition functionality
         function confirmAdd() {
             var selectedCount = document.querySelectorAll('input[name="students[]"]:checked').length;
             
             if (selectedCount === 0) {
-                alert('请至少选择一名学生进行添加。');
+                alert('Please select at least one student to add.');
                 return false;
             }
             
-            return confirm('确定要添加选中的 ' + selectedCount + ' 名学生到课程中吗？');
+            return confirm('Are you sure you want to add the selected ' + selectedCount + ' students to the course?');
         }
     </script>
 </head>
@@ -184,9 +184,9 @@
         </div>
 
         <nav>
-            <a href="/teacher_home">教师主页</a>
-            <a href="/teacher_course" style="background-color: #3498db; color: white;">课程管理</a>
-            <a href="/logout">退出登录</a>
+            <a href="/teacher_home">Teacher Home</a>
+            <a href="/teacher_course" style="background-color: #3498db; color: white;">Course Management</a>
+            <a href="/logout">Logout</a>
         </nav>
 
         <div class="bottom">
@@ -195,30 +195,30 @@
     </aside>
 
     <main class="main-content">
-        <h1>{{ course.name }} - 未注册学生列表</h1>
+        <h1>{{ course.name }} - Not Enrolled Students</h1>
         
         <div class="action-buttons">
             <div class="nav-buttons">
-                <a href="/teacher_course/{{ course.id }}" class="nav-btn">返回课程详情</a>
-                <a href="/teacher_course/{{ course.id }}/enrolled_list" class="nav-btn">已注册学生</a>
-                <a href="/teacher_course/{{ course.id }}/import_students" class="nav-btn">导入学生</a>
+                <a href="/teacher_course/{{ course.id }}" class="nav-btn">Back to Course Details</a>
+                <a href="/teacher_course/{{ course.id }}/enrolled_list" class="nav-btn">Enrolled Students</a>
+                <a href="/teacher_course/{{ course.id }}/import_students" class="nav-btn">Import Students</a>
             </div>
         </div>
         
-        <!-- 课程容量信息 -->
+        <!-- Course Capacity Information -->
         {% set enrolled_count = course.enrollments|length %}
         {% set available_slots = course.capacity - enrolled_count %}
         <div class="capacity-info">
-            当前已注册: {{ enrolled_count }} / {{ course.capacity }} 人
+            Currently enrolled: {{ enrolled_count }} / {{ course.capacity }} students
             <span {% if available_slots < 5 %}class="capacity-warning"{% endif %}>
-                (剩余: {{ available_slots }} 个名额)
+                (Remaining: {{ available_slots }} slots)
             </span>
         </div>
         
         <div class="search-bar">
             <form method="GET" action="">
-                <input type="text" name="department" placeholder="按院系搜索" value="{{ request.args.get('department', '') }}">
-                <button type="submit">搜索</button>
+                <input type="text" name="department" placeholder="Search by department" value="{{ request.args.get('department', '') }}">
+                <button type="submit">Search</button>
             </form>
         </div>
         
@@ -227,8 +227,8 @@
                 <div class="student-list">
                     {% if students %}
                         <div class="student-header">
-                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> 全选
-                            <div style="margin-left: 30px; font-weight: normal;">共 {{ students|length }} 名学生</div>
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> Select All
+                            <div style="margin-left: 30px; font-weight: normal;">Total: {{ students|length }} students</div>
                         </div>
                         
                         {% for student in students %}
@@ -236,13 +236,13 @@
                             <input type="checkbox" name="students[]" value="{{ student.id }}">
                             <div class="student-info">
                                 <div class="student-name">{{ student.username }}</div>
-                                <div class="student-detail">ID: {{ student.id }} | 邮箱: {{ student.email }} | 院系: {{ student.department or '未设置' }}</div>
+                                <div class="student-detail">ID: {{ student.id }} | Email: {{ student.email }} | Department: {{ student.department or 'Not set' }}</div>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
                         <div class="no-students">
-                            <p>没有未注册的学生。</p>
+                            <p>No students available for enrollment.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -250,20 +250,20 @@
                 {% if students %}
                 <div class="action-buttons">
                     <div class="control-buttons">
-                        <button type="button" class="select-btn" onclick="toggleSelectAll()">全选</button>
-                        <button type="button" class="select-btn" onclick="unselectAll()">取消全选</button>
+                        <button type="button" class="select-btn" onclick="toggleSelectAll()">Select All</button>
+                        <button type="button" class="select-btn" onclick="unselectAll()">Deselect All</button>
                     </div>
                     {% if available_slots > 0 %}
-                        <button type="submit" class="add-btn">添加选中的学生</button>
+                        <button type="submit" class="add-btn">Add Selected Students</button>
                     {% else %}
-                        <button type="button" class="add-btn" disabled>课程已满</button>
+                        <button type="button" class="add-btn" disabled>Course Full</button>
                     {% endif %}
                 </div>
                 {% endif %}
             </form>
         </div>
         
-        <!-- 显示消息 -->
+        <!-- Display messages -->
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="messages">

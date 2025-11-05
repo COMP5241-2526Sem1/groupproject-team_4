@@ -9,70 +9,70 @@ import io
 import random
 import string
 
-# 创建教师课程管理蓝图
+# Create teacher course management blueprint
 teacher_course_bp = Blueprint('teacher_course', __name__)
 
-# 认证装饰器：检查用户是否已登录
+# Authentication decorator: Check if user is logged in
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            flash('您需要先登录才能访问此页面。')
+            flash('You need to log in to access this page.')
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
-# 认证装饰器：检查用户是否是教师
+# Authentication decorator: Check if user is a teacher
 def teacher_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # 首先检查是否已登录
+        # First check if logged in
         if 'user_id' not in session:
-            flash('您需要先登录才能访问此页面。')
+            flash('You need to log in to access this page.')
             return redirect(url_for('auth.login'))
         
-        # 获取用户角色
+        # Get user role
         user = User.query.get(session['user_id'])
         if not user or user.role != 'teacher':
-            flash('您需要是教师才能访问此页面。')
+            flash('You need to be a teacher to access this page.')
             return redirect(url_for('auth.login'))
         
         return f(*args, **kwargs)
     return decorated_function
 
-# 生成随机课程代码
+# Generate random course code
 def generate_course_code():
     characters = string.ascii_uppercase + string.digits
     return ''.join(random.choice(characters) for _ in range(6))
 
-# 教师课程主页 - 显示所有课程
+# Teacher course homepage - Display all courses
 @teacher_course_bp.route('/teacher_course')
 @login_required
 @teacher_required
 def teacher_course_home():
-    # 获取当前教师ID
+    # Get current teacher ID
     teacher_id = session['user_id']
     
-    # 获取教师自己创建的课程
+    # Get courses created by the teacher
     my_courses = Course.query.filter_by(teacher_id=teacher_id).all()
     
-    # 获取其他教师创建的课程
+    # Get courses created by other teachers
     other_courses = Course.query.filter(Course.teacher_id != teacher_id).all()
     
     return render_template('teacher_course_home.html', my_courses=my_courses, other_courses=other_courses)
 
-# 获取教师课程列表的API端点（用于下拉菜单）
+# API endpoint for teacher course list (for dropdown menu)
 @teacher_course_bp.route('/teacher_course/list')
 @login_required
 @teacher_required
 def get_teacher_courses():
-    # 获取当前教师ID
+    # Get current teacher ID
     teacher_id = session['user_id']
     
-    # 获取教师自己创建的课程
+    # Get courses created by the teacher
     courses = Course.query.filter_by(teacher_id=teacher_id).all()
     
-    # 返回JSON格式的课程列表
+    # Return course list in JSON format
     course_list = [{
         'id': course.id,
         'name': course.name,
@@ -81,31 +81,31 @@ def get_teacher_courses():
     
     return jsonify(course_list)
 
-# 教师课程详细页面
+# Teacher course detail page
 @teacher_course_bp.route('/teacher_course/<int:course_id>')
 @login_required
 @teacher_required
 def teacher_course_detail(course_id):
-    # 获取课程信息
+    # Get course information
     course = Course.query.get_or_404(course_id)
     
-    # 检查是否是该课程的教师
+    # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
-        flash('您不是此课程的教师，无法访问此页面。')
+        flash('You are not the teacher of this course, cannot access this page.')
         return redirect(url_for('teacher_course.teacher_course_home'))
     
-    # 获取课程的学生数量
+    # Get the number of students enrolled in the course
     enrolled_count = CourseEnrollment.query.filter_by(course_id=course_id).count()
     
     return render_template('teacher_course_detail.html', course=course, enrolled_count=enrolled_count)
 
-# 创建新课程页面
+# Create new course page
 @teacher_course_bp.route('/teacher_course/create', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def create_course():
     if request.method == 'POST':
-        # 获取表单数据
+        # Get form data
         name = request.form['name']
         description = request.form['description']
         credit = int(request.form['credit'])
@@ -113,14 +113,14 @@ def create_course():
         day_of_week = request.form['day_of_week']
         start_time = request.form['start_time']
         end_time = request.form['end_time']
-        department_id = request.form.get('department_id')  # 可选字段
+        department_id = request.form.get('department_id')  # Optional field
         
-        # 生成唯一的课程代码
+        # Generate unique course code
         code = generate_course_code()
         while Course.query.filter_by(code=code).first():
             code = generate_course_code()
         
-        # 创建新课程
+        # Create new course
         new_course = Course(
             code=code,
             name=name,
@@ -134,76 +134,76 @@ def create_course():
             department_id=department_id if department_id else None
         )
         
-        # 保存到数据库
+        # Save to database
         db.session.add(new_course)
         db.session.commit()
         
-        flash('课程创建成功！')
+        flash('Course created successfully!')
         return redirect(url_for('teacher_course.teacher_course_detail', course_id=new_course.id))
     
     return render_template('create_course.html')
 
-# 已注册学生列表页面
+# Enrolled students list page
 @teacher_course_bp.route('/teacher_course/<int:course_id>/enrolled_list', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def enrolled_list(course_id):
-    # 获取课程信息
+    # Get course information
     course = Course.query.get_or_404(course_id)
     
-    # 检查是否是该课程的教师
+    # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
-        flash('您不是此课程的教师，无法访问此页面。')
+        flash('You are not the teacher of this course, cannot access this page.')
         return redirect(url_for('teacher_course.teacher_course_home'))
     
-    # 获取搜索条件
+    # Get search criteria
     department_filter = request.args.get('department')
     
-    # 获取已注册的学生
+    # Get enrolled students
     enrolled_students = db.session.query(User).join(
         CourseEnrollment, User.id == CourseEnrollment.student_id
     ).filter(
         CourseEnrollment.course_id == course_id
     )
     
-    # 应用部门过滤
+    # Apply department filter
     if department_filter:
         enrolled_students = enrolled_students.filter(User.department == department_filter)
     
     enrolled_students = enrolled_students.all()
     
-    # 处理删除学生操作
+    # Handle removing students
     if request.method == 'POST':
         student_ids = request.form.getlist('students[]')
         if student_ids:
-            # 删除选中的学生注册记录
+            # Delete selected student enrollment records
             CourseEnrollment.query.filter(
                 CourseEnrollment.course_id == course_id,
                 CourseEnrollment.student_id.in_(student_ids)
             ).delete(synchronize_session=False)
             db.session.commit()
-            flash(f'已从课程中移除 {len(student_ids)} 名学生。')
+            flash(f'Successfully removed {len(student_ids)} students from the course.')
         return redirect(url_for('teacher_course.enrolled_list', course_id=course_id))
     
     return render_template('enrolled_list.html', course=course, students=enrolled_students)
 
-# 未注册学生列表页面
+# Not enrolled students list page
 @teacher_course_bp.route('/teacher_course/<int:course_id>/not_enrolled_list', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def not_enrolled_list(course_id):
-    # 获取课程信息
+    # Get course information
     course = Course.query.get_or_404(course_id)
     
-    # 检查是否是该课程的教师
+    # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
-        flash('您不是此课程的教师，无法访问此页面。')
+        flash('You are not the teacher of this course, cannot access this page.')
         return redirect(url_for('teacher_course.teacher_course_home'))
     
-    # 获取搜索条件
+    # Get search criteria
     department_filter = request.args.get('department')
     
-    # 获取未注册的学生
+    # Get not enrolled students
     not_enrolled_students = User.query.filter(
         User.role == 'student',
         User.id.notin_(
@@ -212,23 +212,23 @@ def not_enrolled_list(course_id):
         )
     )
     
-    # 应用部门过滤
+    # Apply department filter
     if department_filter:
         not_enrolled_students = not_enrolled_students.filter(User.department == department_filter)
     
     not_enrolled_students = not_enrolled_students.all()
     
-    # 处理添加学生操作
+    # Handle adding students
     if request.method == 'POST':
         student_ids = request.form.getlist('students[]')
         if student_ids:
-            # 检查课程容量
+            # Check course capacity
             current_enrolled = CourseEnrollment.query.filter_by(course_id=course_id).count()
             if current_enrolled + len(student_ids) > course.capacity:
-                flash('添加的学生数量超过了课程容量限制。')
+                flash('The number of students to add exceeds the course capacity limit.')
                 return redirect(url_for('teacher_course.not_enrolled_list', course_id=course_id))
             
-            # 添加选中的学生
+            # Add selected students
             for student_id in student_ids:
                 enrollment = CourseEnrollment(
                     course_id=course_id,
@@ -236,57 +236,57 @@ def not_enrolled_list(course_id):
                 )
                 db.session.add(enrollment)
             db.session.commit()
-            flash(f'已成功添加 {len(student_ids)} 名学生到课程中。')
+            flash(f'Successfully added {len(student_ids)} students to the course.')
         return redirect(url_for('teacher_course.not_enrolled_list', course_id=course_id))
     
     return render_template('not_enrolled_list.html', course=course, students=not_enrolled_students)
 
-# CSV导入学生页面
+# CSV import students page
 @teacher_course_bp.route('/teacher_course/<int:course_id>/import_students', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def import_students(course_id):
-    # 获取课程信息
+    # Get course information
     course = Course.query.get_or_404(course_id)
     
-    # 检查是否是该课程的教师
+    # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
-        flash('您不是此课程的教师，无法访问此页面。')
+        flash('You are not the teacher of this course, cannot access this page.')
         return redirect(url_for('teacher_course.teacher_course_home'))
     
-    # 处理CSV文件上传
+    # Handle CSV file upload
     if request.method == 'POST':
-        # 检查是否有文件上传
+        # Check if a file is uploaded
         if 'csv_file' not in request.files or request.files['csv_file'].filename == '':
-            flash('请选择一个CSV文件上传。')
+            flash('Please select a CSV file to upload.')
             return redirect(request.url)
         
         csv_file = request.files['csv_file']
         
-        # 检查文件类型
+        # Check file type
         if not csv_file.filename.endswith('.csv'):
-            flash('请上传CSV格式的文件。')
+            flash('Please upload a CSV format file.')
             return redirect(request.url)
         
-        # 解析CSV文件
+        # Parse CSV file
         csv_data = []
         try:
-            # 读取CSV文件内容
+            # Read CSV file content
             stream = io.StringIO(csv_file.stream.read().decode('utf-8'))
             reader = csv.DictReader(stream)
             
-            # 检查CSV格式是否正确
-            required_columns = ['student_id', 'email']  # 至少需要学生ID或邮箱
+            # Check if CSV format is correct
+            required_columns = ['student_id', 'email']  # At least student_id or email is required
             if not any(col in reader.fieldnames for col in required_columns):
-                flash('CSV文件格式不正确，至少需要包含student_id或email列。')
+                flash('CSV file format is incorrect, must contain at least student_id or email column.')
                 return redirect(request.url)
             
             csv_data = list(reader)
         except Exception as e:
-            flash(f'解析CSV文件时出错: {str(e)}')
+            flash(f'Error parsing CSV file: {str(e)}')
             return redirect(request.url)
         
-        # 处理学生数据
+        # Process student data
         enrolled_students = []
         not_enrolled_students = []
         errors = []
@@ -294,25 +294,25 @@ def import_students(course_id):
         for row in csv_data:
             student = None
             
-            # 尝试通过学生ID查找
+            # Try to find by student ID
             if 'student_id' in row and row['student_id']:
-                # 将student_id转换为整数类型
+                # Convert student_id to integer type
                 try:
                     student_id = int(row['student_id'])
                     student = User.query.filter_by(id=student_id, role='student').first()
                 except ValueError:
-                    # 如果转换失败，继续尝试通过邮箱查找
+                    # If conversion fails, continue trying to find by email
                     student = None
             
-            # 如果没有找到，尝试通过邮箱查找
+            # If not found, try to find by email
             if not student and 'email' in row and row['email']:
                 student = User.query.filter_by(email=row['email'], role='student').first()
             
             if not student:
-                errors.append(f"找不到学生: {row}")
+                errors.append(f"Student not found: {row}")
                 continue
             
-            # 检查学生是否已注册该课程
+            # Check if student is already enrolled in the course
             enrollment = CourseEnrollment.query.filter_by(
                 course_id=course_id,
                 student_id=student.id
@@ -323,14 +323,14 @@ def import_students(course_id):
             else:
                 not_enrolled_students.append(student)
         
-        # 如果有未注册的学生且选择了自动添加
+        # If there are unenrolled students and auto-add is selected
         if request.form.get('auto_enroll') == '1' and not_enrolled_students:
-            # 检查课程容量
+            # Check course capacity
             current_enrolled = CourseEnrollment.query.filter_by(course_id=course_id).count()
             if current_enrolled + len(not_enrolled_students) > course.capacity:
-                flash('添加的学生数量超过了课程容量限制，未自动添加。')
+                flash('The number of students to add exceeds the course capacity limit, not automatically added.')
             else:
-                # 自动添加学生
+                # Auto add students
                 for student in not_enrolled_students:
                     enrollment = CourseEnrollment(
                         course_id=course_id,
@@ -338,11 +338,11 @@ def import_students(course_id):
                     )
                     db.session.add(enrollment)
                 db.session.commit()
-                flash(f'已自动添加 {len(not_enrolled_students)} 名学生到课程中。')
+                flash(f'Successfully added {len(not_enrolled_students)} students to the course automatically.')
                 enrolled_students.extend(not_enrolled_students)
                 not_enrolled_students = []
         
-        # 准备导入结果数据结构
+        # Prepare import result data structure
         imported_result = {
             'total_students': len(csv_data),
             'existing_students': len(enrolled_students) + len(not_enrolled_students),
@@ -354,28 +354,28 @@ def import_students(course_id):
             'missing_students_list': []
         }
         
-        # 转换错误信息为学生列表格式
+        # Convert error messages to student list format
         if errors:
             for error in errors:
-                # 尝试解析出学生信息
+                # Try to parse student information
                 try:
-                    # 简单解析错误信息中的学生数据
-                    # 格式: "找不到学生: {'student_id': '123', 'username': '张三', 'email': 'xxx@polyu.edu.hk}"
-                    student_data = eval(error[5:])  # 去掉"找不到学生: "前缀
+                    # Simple parsing of student data from error messages
+                    # Format: "Student not found: {'student_id': '123', 'username': 'John Doe', 'email': 'xxx@polyu.edu.hk}"
+                    student_data = eval(error[15:])  # Remove "Student not found: " prefix
                     imported_result['missing_students_list'].append({
                         'id': student_data.get('student_id', ''),
                         'username': student_data.get('username', ''),
                         'email': student_data.get('email', '')
                     })
                 except:
-                    # 如果解析失败，添加一个基本条目
+                    # If parsing fails, add a basic entry
                     imported_result['missing_students_list'].append({
                         'id': '',
                         'username': '',
                         'email': error
                     })
         
-        # 显示导入结果
+        # Display import results
         return render_template('import_students.html', 
                               course=course, 
                               imported_result=imported_result)

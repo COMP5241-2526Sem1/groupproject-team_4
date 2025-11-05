@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>已注册学生列表 - {{ course.name }}</title>
+    <title>Enrolled Students - {{ course.name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .student-container {
@@ -132,7 +132,7 @@
         }
     </style>
     <script>
-        // 全选/取消全选功能
+        // Select/Deselect all functionality
         function toggleSelectAll() {
             var selectAll = document.getElementById('selectAll');
             var checkboxes = document.querySelectorAll('input[name="students[]"]');
@@ -142,7 +142,7 @@
             });
         }
         
-        // 取消全选功能
+        // Deselect all functionality
         function unselectAll() {
             document.getElementById('selectAll').checked = false;
             var checkboxes = document.querySelectorAll('input[name="students[]"]');
@@ -152,16 +152,16 @@
             });
         }
         
-        // 确认删除功能
+        // Confirm deletion functionality
         function confirmDelete() {
             var selectedCount = document.querySelectorAll('input[name="students[]"]:checked').length;
             
             if (selectedCount === 0) {
-                alert('请至少选择一名学生进行删除。');
+                alert('Please select at least one student to remove.');
                 return false;
             }
             
-            return confirm('确定要删除选中的 ' + selectedCount + ' 名学生吗？');
+            return confirm('Are you sure you want to remove the selected ' + selectedCount + ' students?');
         }
     </script>
 </head>
@@ -174,9 +174,9 @@
         </div>
 
         <nav>
-            <a href="/teacher_home">教师主页</a>
-            <a href="/teacher_course" style="background-color: #3498db; color: white;">课程管理</a>
-            <a href="/logout">退出登录</a>
+            <a href="/teacher_home">Teacher Home</a>
+            <a href="/teacher_course" style="background-color: #3498db; color: white;">Course Management</a>
+            <a href="/logout">Logout</a>
         </nav>
 
         <div class="bottom">
@@ -185,20 +185,20 @@
     </aside>
 
     <main class="main-content">
-        <h1>{{ course.name }} - 已注册学生列表</h1>
+        <h1>{{ course.name }} - Enrolled Students</h1>
         
         <div class="action-buttons">
             <div class="nav-buttons">
-                <a href="/teacher_course/{{ course.id }}" class="nav-btn">返回课程详情</a>
-                <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">未注册学生</a>
-                <a href="/teacher_course/{{ course.id }}/import_students" class="nav-btn">导入学生</a>
+                <a href="/teacher_course/{{ course.id }}" class="nav-btn">Back to Course Details</a>
+                <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
+                <a href="/teacher_course/{{ course.id }}/import_students" class="nav-btn">Import Students</a>
             </div>
         </div>
         
         <div class="search-bar">
             <form method="GET" action="">
-                <input type="text" name="department" placeholder="按院系搜索" value="{{ request.args.get('department', '') }}">
-                <button type="submit">搜索</button>
+                <input type="text" name="department" placeholder="Search by department" value="{{ request.args.get('department', '') }}">
+                <button type="submit">Search</button>
             </form>
         </div>
         
@@ -207,8 +207,8 @@
                 <div class="student-list">
                     {% if students %}
                         <div class="student-header">
-                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> 全选
-                            <div style="margin-left: 30px; font-weight: normal;">共 {{ students|length }} 名学生</div>
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> Select All
+                            <div style="margin-left: 30px; font-weight: normal;">Total: {{ students|length }} students</div>
                         </div>
                         
                         {% for student in students %}
@@ -216,13 +216,13 @@
                             <input type="checkbox" name="students[]" value="{{ student.id }}">
                             <div class="student-info">
                                 <div class="student-name">{{ student.username }}</div>
-                                <div class="student-detail">ID: {{ student.id }} | 邮箱: {{ student.email }} | 院系: {{ student.department or '未设置' }}</div>
+                                <div class="student-detail">ID: {{ student.id }} | Email: {{ student.email }} | Department: {{ student.department or 'Not set' }}</div>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
                         <div class="no-students">
-                            <p>暂无学生注册此课程。</p>
+                            <p>No students enrolled in this course.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -230,16 +230,16 @@
                 {% if students %}
                 <div class="action-buttons">
                     <div class="control-buttons">
-                        <button type="button" class="select-btn" onclick="toggleSelectAll()">全选</button>
-                        <button type="button" class="select-btn" onclick="unselectAll()">取消全选</button>
+                        <button type="button" class="select-btn" onclick="toggleSelectAll()">Select All</button>
+                        <button type="button" class="select-btn" onclick="unselectAll()">Deselect All</button>
                     </div>
-                    <button type="submit" class="delete-btn">删除选中的学生</button>
+                    <button type="submit" class="delete-btn">Remove Selected Students</button>
                 </div>
                 {% endif %}
             </form>
         </div>
         
-        <!-- 显示消息 -->
+        <!-- Display messages -->
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="messages">

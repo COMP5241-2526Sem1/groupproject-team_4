@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Teacher Home</title>
+    <title>Teacher Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -10,20 +10,20 @@
     <aside class="sidebar">
         <div class="logo">
             <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">Teacher Dashboard</div>
         </div>
         <nav>
-            <a href="/teacher_course" class="active">My Courses</a>
+            <a href="/teacher_home" class="active">Teacher Dashboard</a>
             <div class="dropdown">
-                <a href="/teacher_course">Manage Courses</a>
+                <a href="/teacher_course">My Courses</a>
                 <div class="dropdown-content" id="course-dropdown">
-                    <!-- 动态生成课程选项 -->
+                    <!-- Dynamically generate course options -->
                 </div>
             </div>
             <a href="/profile">Profile</a>
             <a href="/activity">Activity</a>
             <a href="/messages">Messages</a>
-            <a href="/logout">Sign Out</a>
+            <a href="/logout">Logout</a>
         </nav>
         <div class="bottom">
             Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
@@ -87,14 +87,14 @@
     </main>
 </div>
 <script>
-    // 导航通过URL路由处理
+    // Navigation handled by URL routing
     document.getElementById('create-course-btn').addEventListener('click', function() {
         window.location.href = '/teacher_course/create';
     });
     
-    // 动态生成课程下拉菜单
+    // Dynamically generate course dropdown menu
     document.addEventListener('DOMContentLoaded', function() {
-        // 如果有课程数据，直接在模板中渲染，这里保持下拉菜单功能
+        // If course data exists, render directly in template, maintaining dropdown functionality
         fetch('/teacher_course/list')
             .then(response => response.json())
             .then(courses => {

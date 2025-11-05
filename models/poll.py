@@ -12,5 +12,5 @@ class Poll(db.Model):
     created_by = Column(Integer, ForeignKey('users.id'), nullable=False)
     course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
 
-    # 关联到Question模型，与Quiz类似的关系
+    # Relationship to Question model, similar to Quiz relationship
     questions = relationship("Question", backref="poll", cascade="all, delete-orphan")

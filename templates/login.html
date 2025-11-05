@@ -6,7 +6,7 @@
     <title>Sign In</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        /* 响应式登录页面样式 */
+        /* Responsive login page styles */
         @media (max-width: 480px) {
             .auth-container {
                 margin: 40px 16px;
@@ -37,12 +37,12 @@
             }
         }
         
-        /* 表单元素居中 */
+        /* Center form elements */
         form label {
             text-align: left;
         }
         
-        /* 登录消息样式 */
+        /* Login message styles */
         #loginMsg {
             min-height: 24px;
         }
@@ -69,7 +69,7 @@
         <a href="/register">No account? Register</a>
     </div>
     <script>
-    // 角色菜单交互
+    // Role menu interaction
     document.querySelectorAll('.role-item').forEach(item => {
         item.onclick = function() {
             document.querySelectorAll('.role-item').forEach(i => i.classList.remove('selected'));
@@ -92,7 +92,7 @@
         const result = await res.json();
         document.getElementById('loginMsg').textContent = result.msg;
         if (res.ok) {
-            // 登录成功后跳转到不同角色首页
+            // Redirect to different role homepages after successful login
             if (result.role === 'student') {
                 window.location.href = '/student_home';
             } 

@@ -18,7 +18,7 @@
             <div class="dropdown">
                 <a href="/course/my">My Course</a>
                 <div class="dropdown-content" id="course-dropdown">
-                    <!-- 动态生成课程选项 -->
+                    <!-- Dynamically generate course options -->
                 </div>
             </div>
             <a href="/profile">Profile</a>
@@ -38,15 +38,15 @@
         <div id="courses-section" class="section">
             <h1>Course Registration</h1>
             <div style="display:flex;gap:32px;margin-bottom:32px;">
-                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">选课</button>
-                <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">查看课程表</button>
+                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">Add Courses</button>
+        <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">View Schedule</button>
             </div>
             <div id="add-course-area">
-                <h2 style="color:#8a1c32;">可选课程</h2>
+                <h2 style="color:#8a1c32;">Available Courses</h2>
                 <div id="available-courses">Loading...</div>
             </div>
             <div id="table-course-area" style="display:none;">
-                <h2 style="color:#8a1c32;">已选课程表</h2>
+                <h2 style="color:#8a1c32;">My Courses</h2>
                 <div id="my-courses">Loading...</div>
             </div>
             <div id="course-msg" style="margin-top:24px;color:#d81e06;font-size:1.1rem;"></div>
@@ -65,19 +65,19 @@
         if(tab === 'add') loadAvailableCourses();
         if(tab === 'table') loadMyCourses();
     }
-    // 默认显示选课tab并加载数据
+    // Default to show add courses tab and load data
     showCourseTab('add');
 
-    // 加载可选课程
+    // Load available courses
     function loadAvailableCourses() {
         fetch('/course/available').then(r=>r.json()).then(data=>{
             let html = '';
-            if(data.length===0) html = '<p>暂无可选课程</p>';
+            if(data.length===0) html = '<p>No available courses</p>';
             else data.forEach(c=>{
                 html += `<div class='course-item' style='display:flex;align-items:center;'>
                     <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
                     <div style='flex:3;color:#888;'>${c.description||''}</div>
-                    <div style='flex:1;'>${c.credit}学分</div>
+                    <div style='flex:1;'>${c.credit} credits</div>
                     <div style='flex:2;'>${c.enrolled}/${c.capacity}</div>
                     <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
                     <div style='flex:1;text-align:right;'><button onclick='addCourse(${c.id})' class='course-add-btn'>Add</button></div>
@@ -86,16 +86,16 @@
             document.getElementById('available-courses').innerHTML = html;
         });
     }
-    // 加载已选课程
+    // Load selected courses
     function loadMyCourses() {
         fetch('/course/my').then(r=>r.json()).then(data=>{
             let html = '';
-            if(data.length===0) html = '<p>暂无已选课程</p>';
+            if(data.length===0) html = '<p>No courses selected</p>';
             else data.forEach(c=>{
                 html += `<div class='course-item' style='display:flex;align-items:center;'>
                     <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
                     <div style='flex:3;color:#888;'>${c.description||''}</div>
-                    <div style='flex:1;'>${c.credit}学分</div>
+                    <div style='flex:1;'>${c.credit} credits</div>
                     <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
                     <div style='flex:1;text-align:right;'><button onclick='dropCourse(${c.id})' class='course-add-btn' style='background:#eee;color:#a62c43;'>Drop</button></div>
                 </div>`;
@@ -103,7 +103,7 @@
             document.getElementById('my-courses').innerHTML = html;
         });
     }
-    // 选课
+    // Add course
     function addCourse(cid) {
         fetch('/course/add', {
             method:'POST',
@@ -116,7 +116,7 @@
             populateCourseDropdown();
         });
     }
-    // 退课
+    // Drop course
     function dropCourse(cid) {
         fetch('/course/drop', {
             method:'POST',
@@ -129,15 +129,15 @@
             populateCourseDropdown();
         });
     }
-    // 页面切换时自动加载课程
+    // Auto load courses when switching tabs
     document.getElementById('tab-add').onclick = function(){ showCourseTab('add'); loadAvailableCourses(); };
     document.getElementById('tab-table').onclick = function(){ showCourseTab('table'); loadMyCourses(); };
-    // 初始加载
+    // Initial load
     loadAvailableCourses();
     loadMyCourses();
 </script>
 <script>
-        // 动态生成课程下拉菜单
+        // Dynamically generate course dropdown menu
         function populateCourseDropdown() {
             fetch('/course/my')
                 .then(response => response.json())
@@ -146,7 +146,7 @@
                     dropdown.innerHTML = '';
                     courses.forEach(course => {
                         const link = document.createElement('a');
-                        link.href = `/course/${course.id}`; // 或 `/course/${course.code}`
+                        link.href = `/course/${course.id}`; // or `/course/${course.code}`
                         link.textContent = course.name;
                         dropdown.appendChild(link);
                     });
@@ -154,7 +154,7 @@
                 .catch(error => console.error('Error loading courses:', error));
         }
 
-        // 页面加载完成后调用
+        // Call after page loads
         document.addEventListener('DOMContentLoaded', populateCourseDropdown);
     </script>
 </body>

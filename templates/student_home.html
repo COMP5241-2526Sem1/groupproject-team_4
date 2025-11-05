@@ -18,7 +18,7 @@
             <div class="dropdown">
                 <a href="/course/my">My Course</a>
                 <div class="dropdown-content" id="course-dropdown">
-                    <!-- 动态生成课程选项 -->
+                    <!-- Dynamically generate course options -->
                 </div>
             </div>
             <a href="/profile">Profile</a>
@@ -40,15 +40,15 @@
         <div id="activity-section" class="section" style="display:none;"> </div>
         <div id="courses-section" class="section" style="display:none;">
             <div style="display:flex;gap:32px;margin-bottom:32px;">
-                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">选课</button>
-                <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">查看课程表</button>
+                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">Add Courses</button>
+        <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">View Schedule</button>
             </div>
             <div id="add-course-area">
-                <h2 style="color:#8a1c32;">可选课程</h2>
+                <h2 style="color:#8a1c32;">Available Courses</h2>
                 <div id="available-courses">Loading...</div>
             </div>
             <div id="table-course-area" style="display:none;">
-                <h2 style="color:#8a1c32;">已选课程表</h2>
+                <h2 style="color:#8a1c32;">My Courses</h2>
                 <div id="my-courses">Loading...</div>
             </div>
             <div id="course-msg" style="margin-top:24px;color:#d81e06;font-size:1.1rem;"></div>
@@ -64,7 +64,7 @@
     // Navigation is now handled through URL-based routing instead of JavaScript
 </script>
 <script>
-        // 动态生成课程下拉菜单
+        // Dynamically generate course dropdown menu
         function populateCourseDropdown() {
             fetch('/course/my')
                 .then(response => response.json())
@@ -73,7 +73,7 @@
                     dropdown.innerHTML = '';
                     courses.forEach(course => {
                         const link = document.createElement('a');
-                        link.href = `/course/${course.id}`; // 或 `/course/${course.code}`
+                        link.href = `/course/${course.id}`; // or `/course/${course.code}`
                         link.textContent = course.name;
                         dropdown.appendChild(link);
                     });
@@ -81,7 +81,7 @@
                 .catch(error => console.error('Error loading courses:', error));
         }
 
-        // 页面加载完成后调用
+        // Call after page loads
         document.addEventListener('DOMContentLoaded', populateCourseDropdown);
     </script>
 </body>

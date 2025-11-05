@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>创建新课程</title>
+    <title>Create New Course</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .form-container {
@@ -96,9 +96,9 @@
         </div>
 
         <nav>
-            <a href="/teacher_home">教师主页</a>
-            <a href="/teacher_course" style="background-color: #3498db; color: white;">课程管理</a>
-            <a href="/logout">退出登录</a>
+            <a href="/teacher_home">Teacher Home</a>
+            <a href="/teacher_course" style="background-color: #3498db; color: white;">Course Management</a>
+            <a href="/logout">Logout</a>
         </nav>
 
         <div class="bottom">
@@ -107,68 +107,68 @@
     </aside>
 
     <main class="main-content">
-        <h1>创建新课程</h1>
+        <h1>Create New Course</h1>
         
         <div class="form-container">
             <form method="POST">
                 <div class="form-group">
-                    <label for="name">课程名称 <span class="required">*</span></label>
-                    <input type="text" id="name" name="name" required placeholder="请输入课程名称">
+                    <label for="name">Course Name <span class="required">*</span></label>
+                    <input type="text" id="name" name="name" required placeholder="Enter course name">
                 </div>
                 
                 <div class="form-group">
-                    <label for="description">课程描述 <span class="required">*</span></label>
-                    <textarea id="description" name="description" required placeholder="请输入课程描述"></textarea>
+                    <label for="description">Course Description <span class="required">*</span></label>
+                    <textarea id="description" name="description" required placeholder="Enter course description"></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="credit">学分 <span class="required">*</span></label>
-                    <input type="number" id="credit" name="credit" required min="1" max="10" placeholder="请输入学分">
+                    <label for="credit">Credits <span class="required">*</span></label>
+                    <input type="number" id="credit" name="credit" required min="1" max="10" placeholder="Enter credits">
                 </div>
                 
                 <div class="form-group">
-                    <label for="capacity">容量 <span class="required">*</span></label>
-                    <input type="number" id="capacity" name="capacity" required min="1" max="200" placeholder="请输入课程容量">
+                    <label for="capacity">Capacity <span class="required">*</span></label>
+                    <input type="number" id="capacity" name="capacity" required min="1" max="200" placeholder="Enter course capacity">
                 </div>
                 
                 <div class="form-group">
-                    <label for="day_of_week">上课日 <span class="required">*</span></label>
+                    <label for="day_of_week">Day of Week <span class="required">*</span></label>
                     <select id="day_of_week" name="day_of_week" required>
-                        <option value="">请选择上课日</option>
-                        <option value="Mon">周一</option>
-                        <option value="Tue">周二</option>
-                        <option value="Wed">周三</option>
-                        <option value="Thu">周四</option>
-                        <option value="Fri">周五</option>
-                        <option value="Sat">周六</option>
+                        <option value="">Select day of week</option>
+                        <option value="Mon">Monday</option>
+                        <option value="Tue">Tuesday</option>
+                        <option value="Wed">Wednesday</option>
+                        <option value="Thu">Thursday</option>
+                        <option value="Fri">Friday</option>
+                        <option value="Sat">Saturday</option>
                     </select>
                 </div>
                 
                 <div class="time-fields">
                     <div class="form-group">
-                        <label for="start_time">开始时间 <span class="required">*</span></label>
+                        <label for="start_time">Start Time <span class="required">*</span></label>
                         <input type="time" id="start_time" name="start_time" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="end_time">结束时间 <span class="required">*</span></label>
+                        <label for="end_time">End Time <span class="required">*</span></label>
                         <input type="time" id="end_time" name="end_time" required>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="department_id">所属院系（可选）</label>
-                    <input type="text" id="department_id" name="department_id" placeholder="请输入院系ID">
+                    <label for="department_id">Department ID (Optional)</label>
+                    <input type="text" id="department_id" name="department_id" placeholder="Enter department ID">
                 </div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="submit-btn">创建课程</button>
-                    <a href="/teacher_course" class="cancel-btn">取消</a>
+                    <button type="submit" class="submit-btn">Create Course</button>
+                    <a href="/teacher_course" class="cancel-btn">Cancel</a>
                 </div>
             </form>
         </div>
         
-        <!-- 显示消息 -->
+        <!-- Display messages -->
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="messages">

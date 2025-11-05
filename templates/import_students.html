@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>导入学生 - {{ course.name }}</title>
+    <title>Import Students - {{ course.name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .import-container {
@@ -185,7 +185,7 @@
         }
     </style>
     <script>
-        // 文件选择功能
+        // File selection functionality
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -194,17 +194,17 @@
             }
         }
         
-        // 显示CSV格式说明弹窗
+        // Show CSV format instructions modal
         function showFormatInfo() {
             document.getElementById('format-modal').style.display = 'flex';
         }
         
-        // 关闭弹窗
+        // Close modal
         function closeModal() {
             document.getElementById('format-modal').style.display = 'none';
         }
         
-        // 点击弹窗外部关闭
+        // Close when clicking outside the modal
         window.onclick = function(event) {
             if (event.target === document.getElementById('format-modal')) {
                 closeModal();
@@ -221,9 +221,9 @@
         </div>
 
         <nav>
-            <a href="/teacher_home">教师主页</a>
-            <a href="/teacher_course" style="background-color: #3498db; color: white;">课程管理</a>
-            <a href="/logout">退出登录</a>
+            <a href="/teacher_home">Teacher Dashboard</a>
+            <a href="/teacher_course" style="background-color: #3498db; color: white;">Course Management</a>
+            <a href="/logout">Logout</a>
         </nav>
 
         <div class="bottom">
@@ -232,63 +232,63 @@
     </aside>
 
     <main class="main-content">
-        <h1>{{ course.name }} - 导入学生</h1>
+        <h1>{{ course.name }} - Import Students</h1>
         
         <div class="nav-buttons">
-            <a href="/teacher_course/{{ course.id }}" class="nav-btn">返回课程详情</a>
-            <a href="/teacher_course/{{ course.id }}/enrolled_list" class="nav-btn">已注册学生</a>
-            <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">未注册学生</a>
+            <a href="/teacher_course/{{ course.id }}" class="nav-btn">Back to Course Details</a>
+            <a href="/teacher_course/{{ course.id }}/enrolled_list" class="nav-btn">Enrolled Students</a>
+            <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
         </div>
         
         <div class="import-container">
             <form method="POST" enctype="multipart/form-data">
                 <div class="file-upload">
-                    <label for="csv-file" class="file-label">选择CSV文件</label>
+                    <label for="csv-file" class="file-label">Select CSV File</label>
                     <input type="file" id="csv-file" name="csv_file" accept=".csv" onchange="handleFileSelect(event)">
-                    <div id="file-name" style="margin-top: 10px; color: #666;">未选择文件</div>
+                    <div id="file-name" style="margin-top: 10px; color: #666;">No file selected</div>
                     <div class="format-info">
-                        CSV格式要求
+                        CSV Format Requirements
                         <span class="info-button" onclick="showFormatInfo()">i</span>
                     </div>
                 </div>
-                <button type="submit" id="upload-btn" class="upload-btn" disabled>上传并导入</button>
+                <button type="submit" id="upload-btn" class="upload-btn" disabled>Upload and Import</button>
             </form>
         </div>
         
-        <!-- 导入结果展示 -->
+        <!-- Import Results Display -->
         {% if imported_result %}
         <div class="results-container">
-            <h3>导入结果</h3>
+            <h3>Import Results</h3>
             
             <div class="result-section">
                 <div class="result-header">
-                    <span class="result-title">总结</span>
+                    <span class="result-title">Summary</span>
                 </div>
-                <p>成功解析: {{ imported_result.total_students }} 名学生</p>
-                <p>已在数据库中存在: {{ imported_result.existing_students }} 名学生</p>
-                <p>不在数据库中: {{ imported_result.missing_students }} 名学生</p>
-                <p>已注册本课程: {{ imported_result.already_enrolled }} 名学生</p>
-                <p>新注册本课程: {{ imported_result.newly_enrolled }} 名学生</p>
+                <p>Successfully parsed: {{ imported_result.total_students }} students</p>
+                <p>Existing in database: {{ imported_result.existing_students }} students</p>
+                <p>Not in database: {{ imported_result.missing_students }} students</p>
+                <p>Already enrolled in this course: {{ imported_result.already_enrolled }} students</p>
+                <p>Newly enrolled in this course: {{ imported_result.newly_enrolled }} students</p>
             </div>
             
             {% if imported_result.enrolled_students %}
             <div class="result-section">
                 <div class="result-header">
-                    <span class="result-title">已注册学生</span>
+                    <span class="result-title">Already Enrolled Students</span>
                 </div>
                 <div class="student-list">
                     <div class="student-header">
-                        <div class="id-col">学生ID</div>
-                        <div class="name-col">学生姓名</div>
-                        <div class="email-col">邮箱</div>
-                        <div class="status-col">状态</div>
+                        <div class="id-col">Student ID</div>
+                        <div class="name-col">Student Name</div>
+                        <div class="email-col">Email</div>
+                        <div class="status-col">Status</div>
                     </div>
                     {% for student in imported_result.enrolled_students %}
                     <div class="student-row">
                         <div class="id-col">{{ student.id }}</div>
                         <div class="name-col">{{ student.username }}</div>
                         <div class="email-col">{{ student.email }}</div>
-                        <div class="status-col"><span class="warning">已注册</span></div>
+                        <div class="status-col"><span class="warning">Already Enrolled</span></div>
                     </div>
                     {% endfor %}
                 </div>
@@ -298,21 +298,21 @@
             {% if imported_result.not_enrolled_students %}
             <div class="result-section">
                 <div class="result-header">
-                    <span class="result-title">新注册学生</span>
+                    <span class="result-title">Newly Enrolled Students</span>
                 </div>
                 <div class="student-list">
                     <div class="student-header">
-                        <div class="id-col">学生ID</div>
-                        <div class="name-col">学生姓名</div>
-                        <div class="email-col">邮箱</div>
-                        <div class="status-col">状态</div>
+                        <div class="id-col">Student ID</div>
+                        <div class="name-col">Student Name</div>
+                        <div class="email-col">Email</div>
+                        <div class="status-col">Status</div>
                     </div>
                     {% for student in imported_result.not_enrolled_students %}
                     <div class="student-row">
                         <div class="id-col">{{ student.id }}</div>
                         <div class="name-col">{{ student.username }}</div>
                         <div class="email-col">{{ student.email }}</div>
-                        <div class="status-col"><span class="success">已添加</span></div>
+                        <div class="status-col"><span class="success">Added</span></div>
                     </div>
                     {% endfor %}
                 </div>
@@ -322,21 +322,21 @@
             {% if imported_result.missing_students_list %}
             <div class="result-section">
                 <div class="result-header">
-                    <span class="result-title">未在数据库中找到的学生</span>
+                    <span class="result-title">Students Not Found in Database</span>
                 </div>
                 <div class="student-list">
                     <div class="student-header">
-                        <div class="id-col">学生ID</div>
-                        <div class="name-col">学生姓名</div>
-                        <div class="email-col">邮箱</div>
-                        <div class="status-col">状态</div>
+                        <div class="id-col">Student ID</div>
+                        <div class="name-col">Student Name</div>
+                        <div class="email-col">Email</div>
+                        <div class="status-col">Status</div>
                     </div>
                     {% for student in imported_result.missing_students_list %}
                     <div class="student-row">
                         <div class="id-col">{{ student.id }}</div>
                         <div class="name-col">{{ student.username }}</div>
                         <div class="email-col">{{ student.email }}</div>
-                        <div class="status-col"><span class="error">未找到</span></div>
+                        <div class="status-col"><span class="error">Not Found</span></div>
                     </div>
                     {% endfor %}
                 </div>
@@ -345,7 +345,7 @@
         </div>
         {% endif %}
         
-        <!-- 显示消息 -->
+        <!-- Display messages -->
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="messages">
@@ -358,28 +358,28 @@
     </main>
 </div>
 
-<!-- CSV格式说明弹窗 -->
+<!-- CSV Format Instructions Modal -->
 <div id="format-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>CSV文件格式说明</h3>
+            <h3>CSV File Format Instructions</h3>
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
-        <p>请确保您的CSV文件符合以下格式要求：</p>
+        <p>Please ensure your CSV file follows these format requirements:</p>
         <ol>
-            <li>文件必须是CSV（逗号分隔值）格式</li>
-            <li>文件必须包含以下列（第一行作为标题）：</li>
+            <li>File must be in CSV (Comma Separated Values) format</li>
+            <li>File must contain the following columns (first row as headers):</li>
         </ol>
         <div class="code-block">student_id,username,email
-s00123456,张三,zhangsan@polyu.edu.hk
-s00123457,李四,lisi@polyu.edu.hk</div>
-        <p>注意事项：</p>
+123456,John Doe,johndoe@polyu.edu.hk
+123457,Mary Smith,marysmith@polyu.edu.hk</div>
+        <p>Notes:</p>
         <ul>
-            <li>student_id：学生ID，用于匹配数据库中的学生</li>
-            <li>username：学生姓名</li>
-            <li>email：学生邮箱，必须使用polyu.edu.hk域名</li>
-            <li>系统将根据student_id检查学生是否存在于数据库中</li>
-            <li>如果学生存在但未注册该课程，将自动添加</li>
+            <li>student_id: Student ID (must be an integer) used to match students in the database</li>
+            <li>username: Student name</li>
+            <li>email: Student email (must use polyu.edu.hk domain)</li>
+            <li>The system will check if the student exists in the database using student_id</li>
+            <li>If the student exists but is not registered for this course, they will be automatically added</li>
         </ul>
     </div>
 </div>

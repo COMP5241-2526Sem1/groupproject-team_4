@@ -89,17 +89,17 @@
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
-            <a href="/teacher_home">教师主页</a>
+            <a href="/teacher_home">Teacher Dashboard</a>
             <div class="dropdown">
-                <a href="/teacher_course" class="active">我的课程</a>
+                <a href="/teacher_course" class="active">My Courses</a>
                 <div class="dropdown-content" id="course-dropdown">
-                    <!-- 动态生成课程选项 -->
+                    <!-- Dynamically generate course options -->
                 </div>
             </div>
-            <a href="/profile">个人资料</a>
-            <a href="/activity">活动记录</a>
-            <a href="/messages">消息</a>
-            <a href="/logout">退出登录</a>
+            <a href="/profile">Profile</a>
+            <a href="/activity">Activity</a>
+            <a href="/messages">Messages</a>
+            <a href="/logout">Logout</a>
         </nav>
         <div class="bottom">
             Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
@@ -110,52 +110,52 @@
         <div class="course-details-container">
             <div class="course-header">
                 <h1>{{ course.name }}</h1>
-                <div class="course-code">课程代码: {{ course.code }}</div>
+                <div class="course-code">Course Code: {{ course.code }}</div>
             </div>
             
             <div class="course-info-grid">
                 <div>
                     <div class="info-item">
-                        <div class="info-label">学分:</div>
+                        <div class="info-label">Credits:</div>
                         <div class="info-value">{{ course.credit }}</div>
                     </div>
                     <div class="info-item">
-                        <div class="info-label">容量:</div>
+                        <div class="info-label">Capacity:</div>
                         <div class="info-value">{{ enrolled_count }}/{{ course.capacity }}</div>
                     </div>
                     <div class="info-item">
-                        <div class="info-label">上课时间:</div>
+                        <div class="info-label">Class Time:</div>
                         <div class="info-value">{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</div>
                     </div>
                 </div>
                 <div>
                     {% if course.department %}
                     <div class="info-item">
-                        <div class="info-label">所属院系:</div>
+                        <div class="info-label">Department:</div>
                         <div class="info-value">{{ course.department.name }}</div>
                     </div>
                     {% endif %}
                     <div class="info-item">
-                        <div class="info-label">创建时间:</div>
+                        <div class="info-label">Created:</div>
                         <div class="info-value">{{ course.created_at.strftime('%Y-%m-%d') }}</div>
                     </div>
                 </div>
             </div>
             
             <div class="course-description">
-                <h3 style="color:#8a1c32;margin-bottom:10px;">课程描述</h3>
+                <h3 style="color:#8a1c32;margin-bottom:10px;">Course Description</h3>
                 <p>{{ course.description }}</p>
             </div>
             
             <div class="action-buttons">
-                <a href="/teacher_course/{{ course.id }}/enrolled_list" class="action-btn">已注册学生</a>
-                <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="action-btn secondary">添加学生</a>
-                <a href="/teacher_course/{{ course.id }}/import_students" class="action-btn success">导入学生(CSV)</a>
-                <a href="/teacher_course" class="action-btn">返回课程列表</a>
+                <a href="/teacher_course/{{ course.id }}/enrolled_list" class="action-btn">Enrolled Students</a>
+                <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="action-btn secondary">Add Students</a>
+                <a href="/teacher_course/{{ course.id }}/import_students" class="action-btn success">Import Students (CSV)</a>
+                <a href="/teacher_course" class="action-btn">Back to Course List</a>
             </div>
         </div>
         
-        <!-- 显示消息 -->
+        <!-- Display messages -->
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <div class="messages">
@@ -168,14 +168,14 @@
     </main>
 </div>
 <script>
-    // 动态生成课程下拉菜单
+    // Dynamically generate course dropdown menu
     function populateCourseDropdown() {
         fetch('/teacher_course')
             .then(response => response.json())
             .then(data => {
                 const dropdown = document.getElementById('course-dropdown');
                 dropdown.innerHTML = '';
-                // 假设data包含my_courses数组
+                // Assuming data contains my_courses array
                 if (data.my_courses) {
                     data.my_courses.forEach(course => {
                         const link = document.createElement('a');
@@ -188,7 +188,7 @@
             .catch(error => console.error('Error loading courses:', error));
     }
 
-    // 页面加载完成后调用
+    // Called after page loads
     document.addEventListener('DOMContentLoaded', populateCourseDropdown);
 </script>
 </body>

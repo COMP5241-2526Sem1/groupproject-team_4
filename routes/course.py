@@ -79,33 +79,33 @@ def add_course():
     course_id = request.json.get('course_id')
     course = Course.query.get(course_id)
     if not course:
-        return jsonify({'msg': '课程不存在'}), 404
-    # 校验是否已选
+        return jsonify({'msg': 'Course does not exist'}), 404
+    # Check if already selected
     if CourseEnrollment.query.filter_by(student_id=student_id, course_id=course_id).first():
-        return jsonify({'msg': '已选该课程'}), 400
-    # 校验人数
+        return jsonify({'msg': 'Already enrolled in this course'}), 400
+    # Check capacity
     enrolled_count = CourseEnrollment.query.filter_by(course_id=course_id).count()
     if enrolled_count >= course.capacity:
-        return jsonify({'msg': '课程人数已满'}), 400
-    # 校验学分和课程数
+        return jsonify({'msg': 'Course is full'}), 400
+    # Check credits and course count
     enrollments = CourseEnrollment.query.filter_by(student_id=student_id).all()
     total_credits = sum(Course.query.get(e.course_id).credit for e in enrollments)
     if total_credits + course.credit > 18:
-        return jsonify({'msg': '学分超限，最多18学分'}), 400
+        return jsonify({'msg': 'Credit limit exceeded, maximum 18 credits'}), 400
     if len(enrollments) >= 6:
-        return jsonify({'msg': '最多只能选6门课程'}), 400
-    # 校验时间冲突
+        return jsonify({'msg': 'Maximum 6 courses allowed'}), 400
+    # Check time conflict
     for e in enrollments:
         c2 = Course.query.get(e.course_id)
         if c2.day_of_week == course.day_of_week:
-            # 时间有重叠则冲突
+            # Conflict if time overlaps
             if not (course.end_time <= c2.start_time or course.start_time >= c2.end_time):
-                return jsonify({'msg': '课程时间冲突，请选择其他课程'}), 400
-    # 添加选课
+                return jsonify({'msg': 'Course time conflict, please select another course'}), 400
+    # Add course enrollment
     new_enroll = CourseEnrollment(course_id=course_id, student_id=student_id)
     db.session.add(new_enroll)
     db.session.commit()
-    return jsonify({'msg': '选课成功'})
+    return jsonify({'msg': 'Course selection successful'})
 
 # drop
 @course_bp.route('/course/drop', methods=['POST'])
@@ -177,7 +177,7 @@ def get_quiz_list(course_id):
     if not quiz_data:
         return render_template('quiz_list.html', message="No quizzes available for this course.")
     
-    # 获取URL参数中的submitted标志
+    # Get submitted flag from URL parameter
     submitted = request.args.get('submitted')
     # Return all quizzes, course object and course_id for the template to use
     return render_template('quiz_list.html', quizzes=quiz_data, course=course, course_id=course_id, submitted=submitted)
@@ -223,7 +223,7 @@ def get_poll_list(course_id):
         print(f"DEBUG: Poll ID: {p.id}, Title: {p.title}, Created at: {p.created_at}")
     poll_data = []
     for poll in polls:
-        # 检查用户是否已参与该poll（通过检查是否有相关的submission）
+        # Check if user has participated in this poll (by checking for related submission)
         has_responded = db.session.query(Submission).join(QuestionResponse).join(Question).filter(
             Submission.student_id == user_id,
             Question.poll_id == poll.id
@@ -367,13 +367,13 @@ def start_quiz(course_id, quiz_id):
         }
         return render_template('quiz_start.html', error_message="You have reached the maximum number of attempts for this quiz.", quiz=quiz_data, course=course, course_id=course_id)
     
-    # 计算当前用户的尝试次数
+    # Calculate current user's attempt count
     current_attempt_count = Attempt.query.filter_by(
         user_id=user_id,
         quiz_id=quiz.id
     ).count()
     
-    # 创建新的尝试记录
+    # Create new attempt record
     new_attempt = Attempt(
         quiz_id=quiz.id,
         user_id=user_id,
@@ -406,7 +406,7 @@ def start_quiz(course_id, quiz_id):
         'id': quiz.id,
         'name': quiz.title,
         'description': quiz.description,
-        'used_attempts': current_attempt_count + 1,  # 更新为新的尝试次数
+        'used_attempts': current_attempt_count + 1,  # Update to new attempt count
         'max_attempts': quiz.attempt_limit
     }
     
@@ -658,7 +658,7 @@ def start_poll(course_id, poll_id):
             'id': question.id,
             'type': question.type,
             'content': question.content,
-            'points': 1  # 默认每个问题1分
+            'points': 1  # Default 1 point per question
         }
         
         # If it's an MCQ, include the choices

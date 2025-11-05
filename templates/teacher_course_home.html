@@ -26,7 +26,7 @@
         }
         .course-card h3 {
             margin-top: 0;
-            color: #8a1c32; /* 使用与学生页面一致的颜色 */
+            color: #8a1c32; /* Use same color as student page */
         }
         .course-card .code {
             color: #7f8c8d;
@@ -44,7 +44,7 @@
         }
         .course-card .actions a {
             padding: 8px 15px;
-            background: #8a1c32; /* 使用与学生页面一致的颜色 */
+            background: #8a1c32; /* Use same color as student page */
             color: white;
             text-decoration: none;
             border-radius: 4px;
@@ -52,7 +52,7 @@
             transition: background 0.2s;
         }
         .course-card .actions a:hover {
-            background: #6e1728; /* 深色变体 */
+            background: #6e1728; /* Dark variant */
         }
         .create-btn {
             display: inline-block;
@@ -72,7 +72,7 @@
             margin-bottom: 40px;
         }
         .section h2 {
-            color: #8a1c32; /* 使用与学生页面一致的颜色 */
+            color: #8a1c32; /* Use same color as student page */
             border-bottom: 2px solid #8a1c32;
             padding-bottom: 10px;
         }
@@ -86,17 +86,17 @@
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
-            <a href="/teacher_home" class="active">教师主页</a>
-            <div class="dropdown">
-                <a href="/teacher_course">我的课程</a>
+            <a href="/teacher_home" class="active">Teacher Dashboard</a>
+                <div class="dropdown">
+                    <a href="/teacher_course">My Courses</a>
                 <div class="dropdown-content" id="course-dropdown">
-                    <!-- 动态生成课程选项 -->
+                    <!-- Dynamically generate course options -->
                 </div>
             </div>
-            <a href="/profile">个人资料</a>
-            <a href="/activity">活动记录</a>
-            <a href="/messages">消息</a>
-            <a href="/logout">退出登录</a>
+            <a href="/profile">Profile</a>
+                <a href="/activity">Activity</a>
+                <a href="/messages">Messages</a>
+                <a href="/logout">Logout</a>
         </nav>
         <div class="bottom">
             Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
@@ -105,54 +105,54 @@
 
     <main class="main-content">
         <div id="teacher-home-section" class="section">
-            <h1>教师主页</h1>
+            <h1>Teacher Dashboard</h1>
             
-            <a href="/teacher_course/create" class="create-btn">创建新课程</a>
+            <a href="/teacher_course/create" class="create-btn">Create New Course</a>
             
-            <!-- 我的课程部分 -->
+            <!-- My Courses Section -->
             <div class="section">
-                <h2>我的课程</h2>
+                <h2>My Courses</h2>
                 {% if my_courses %}
                     <div class="course-container">
                         {% for course in my_courses %}
                             <div class="course-card">
                                 <h3>{{ course.name }}</h3>
-                                <div class="code">课程代码: {{ course.code }}</div>
-                                <div class="desc">{{ course.description[:100] }}{% if course.description|length > 100 %}...{% endif %}</div>
-                                <div>学分: {{ course.credit }} | 容量: {{ course.capacity }}</div>
-                                <div class="actions">
-                                    <a href="/teacher_course/{{ course.id }}">查看详情</a>
-                                    <a href="/teacher_course/{{ course.id }}/enrolled_list">管理学生</a>
-                                </div>
+                                <div class="code">Course Code: {{ course.code }}</div>
+                            <div class="desc">{{ course.description[:100] }}{% if course.description|length > 100 %}...{% endif %}</div>
+                            <div>Credits: {{ course.credit }} | Capacity: {{ course.capacity }}</div>
+                            <div class="actions">
+                                <a href="/teacher_course/{{ course.id }}">View Details</a>
+                                <a href="/teacher_course/{{ course.id }}/enrolled_list">Manage Students</a>
+                            </div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p>您还没有创建任何课程。</p>
+                    <p>You haven't created any courses yet.</p>
                 {% endif %}
             </div>
             
-            <!-- 其他课程部分 -->
+            <!-- Other Courses Section -->
             <div class="section">
-                <h2>其他课程</h2>
+                <h2>Other Courses</h2>
                 {% if other_courses %}
                     <div class="course-container">
                         {% for course in other_courses %}
                             <div class="course-card">
                                 <h3>{{ course.name }}</h3>
-                                <div class="code">课程代码: {{ course.code }}</div>
+                                <div class="code">Course Code: {{ course.code }}</div>
                                 <div class="desc">{{ course.description[:100] }}{% if course.description|length > 100 %}...{% endif %}</div>
-                                <div>学分: {{ course.credit }} | 容量: {{ course.capacity }}</div>
-                                <div>授课教师: {{ course.teacher.username }}</div>
+                                <div>Credits: {{ course.credit }} | Capacity: {{ course.capacity }}</div>
+                                <div>Instructor: {{ course.teacher.username }}</div>
                             </div>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p>没有其他课程。</p>
+                    <p>No other courses available.</p>
                 {% endif %}
             </div>
             
-            <!-- 显示消息 -->
+            <!-- Display message -->
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
                     <div class="messages">
@@ -169,17 +169,17 @@
     </main>
 </div>
 <script>
-    // Navigation is now handled through URL-based routing instead of JavaScript
+    // Navigation handled by URL routing
 </script>
 <script>
-        // 动态生成课程下拉菜单
+        // Dynamically generate course dropdown menu
         function populateCourseDropdown() {
             fetch('/teacher_course')
                 .then(response => response.json())
                 .then(data => {
                     const dropdown = document.getElementById('course-dropdown');
                     dropdown.innerHTML = '';
-                    // 假设data包含my_courses数组
+                    // Assume data contains my_courses array
                     if (data.my_courses) {
                         data.my_courses.forEach(course => {
                             const link = document.createElement('a');
@@ -192,7 +192,7 @@
                 .catch(error => console.error('Error loading courses:', error));
         }
 
-        // 页面加载完成后调用
+        // Call after page loads
         document.addEventListener('DOMContentLoaded', populateCourseDropdown);
     </script>
 </body>

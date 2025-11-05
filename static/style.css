@@ -1,4 +1,4 @@
-/* 全局样式 */
+/* Global Styles */
 body {
     margin: 0;
     font-family: 'Segoe UI', 'Arial', sans-serif;
@@ -7,7 +7,7 @@ body {
     padding: 0;
 }
 
-/* 登录/注册页面容器 */
+/* Login/Register Page Container */
 .auth-container {
     max-width: 400px;
     margin: 60px auto;
@@ -18,7 +18,7 @@ body {
     text-align: center;
 }
 
-/* 主应用容器（侧边栏+内容） */
+/* Main Application Container (Sidebar + Content) */
 .container {
     max-width: none;
     width: 100%;
@@ -30,7 +30,7 @@ body {
     height: 100vh;
 }
 
-/* 侧边栏样式 */
+/* Sidebar Styles */
 .sidebar {
     width: 240px;
     min-width: 240px;
@@ -86,7 +86,7 @@ body {
     color: #e0e0e0;
 }
 
-/* 主内容区域 */
+/* Main Content Area */
 .main-content {
     margin-left: 240px;
     flex: 1;
@@ -106,7 +106,7 @@ body {
     display: block;
 }
 
-/* 标题样式 */
+/* Heading Styles */
 h1 {
     color: #8a1c32;
     font-size: 2.5rem;
@@ -123,7 +123,7 @@ h2 {
     font-weight: 700;
 }
 
-/* 表单元素样式 */
+/* Form Element Styles */
 label {
     display: block;
     margin: 12px 0 6px 0;
@@ -166,7 +166,7 @@ button:hover {
     background: #d81e06;
 }
 
-/* 链接样式 */
+/* Link Styles */
 a {
     color: #b40101;
     text-decoration: none;
@@ -177,7 +177,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* 角色菜单样式 */
+/* Role Menu Styles */
 .role-menu {
     display: flex;
     justify-content: center;
@@ -200,7 +200,7 @@ a:hover {
     background: #f7eaea;
 }
 
-/* 课程选项卡按钮 */
+/* Course Tab Buttons */
 .course-tab-btn {
     font-size: 1.1rem;
     padding: 8px 24px;
@@ -220,7 +220,7 @@ a:hover {
     border-color: #b40101;
 }
 
-/* 课程项目样式 */
+/* Course Item Styles */
 .course-item {
     border-bottom: 1px solid #eee;
     padding: 16px 0;
@@ -273,7 +273,7 @@ a:hover {
     background: #a62c43;
 }
 
-/* 下拉菜单样式 */
+/* Dropdown Menu Styles */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -306,7 +306,7 @@ a:hover {
     color: rgb(255, 255, 255);
 }
 
-/* 消息样式 */
+/* Message Styles */
 #loginMsg, #registerMsg {
     color: #d81e06;
     margin: 8px 0 0 0;
@@ -314,13 +314,13 @@ a:hover {
     font-size: 1rem;
 }
 
-/* 课程列表 */
+/* Course List */
 #courses-list {
     font-size: 1.2rem;
     color: #222;
 }
 
-/* 测验/投票容器样式 */
+/* Quiz/Poll Container Styles */
 .quiz-container {
     max-width: 800px;
     margin: 0 auto;
@@ -359,7 +359,7 @@ a:hover {
     background: #a62c43;
 }
 
-/* 测验/投票列表样式 */
+/* Quiz/Poll List Styles */
 .quiz-link {
     display: block;
     padding: 16px 20px;
@@ -387,7 +387,7 @@ a:hover {
     color: #8a1c32;
 }
 
-/* 成功消息样式 */
+/* Success Message Styles */
 .success-message {
     background-color: #d4edda;
     color: #155724;
@@ -411,7 +411,7 @@ a:hover {
     }
 }
 
-/* 测验特定样式 - 来自quiz_start.html */
+/* Quiz Specific Styles - from quiz_start.html */
 .quiz-header {
     margin-bottom: 30px;
     padding-bottom: 20px;
@@ -445,7 +445,7 @@ a:hover {
     line-height: 1.5;
 }
 
-/* 投票特定样式 */
+/* Poll Specific Styles */
 .poll-header {
     margin-bottom: 30px;
     padding-bottom: 20px;
@@ -490,7 +490,7 @@ a:hover {
     line-height: 1.5;
 }
 
-/* 多选/单选样式 */
+/* Multiple Choice/Single Choice Styles */
 .choice {
     margin-bottom: 12px;
 }
@@ -521,7 +521,7 @@ a:hover {
     margin-bottom: 0;
 }
 
-/* 简答题样式 */
+/* Short Answer Styles */
 .short-answer textarea {
     width: 100%;
     min-height: 150px;
@@ -540,7 +540,7 @@ a:hover {
     box-shadow: 0 0 0 2px rgba(138, 28, 50, 0.1);
 }
 
-/* 提交按钮 */
+/* Submit Button */
 .poll-submit {
     text-align: center;
     margin-top: 40px;
@@ -564,7 +564,7 @@ a:hover {
     background-color: #a62c43;
 }
 
-/* 错误消息 */
+/* Error Message */
 .error-message {
     color: #d32f2f;
     margin: 20px 0;

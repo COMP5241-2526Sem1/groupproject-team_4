@@ -14,6 +14,6 @@ class Attempt(db.Model):
     attempt_count = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=func.now())
     
-    # 关联关系
+    # Relationship
     quiz = relationship('Quiz', backref='attempts')
     user = relationship('User', backref='attempts')

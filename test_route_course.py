@@ -32,7 +32,7 @@ class TestGetMyCourses(unittest.TestCase):
         # make sure all the tables are correct
         db.create_all()
 
-        # 插入测试数据
+        # Insert test data
         self.user = User(id=200, username='testuser123', password=generate_password_hash('Testpass123'))
         db.session.add(self.user)
 
@@ -41,17 +41,17 @@ class TestGetMyCourses(unittest.TestCase):
         self.app_context.pop()
 
     def test_not_logged_in(self):
-        # 模拟未登录状态
+        # Simulate not logged in state
         with self.client as c:
             response = c.get('/courses/my')
             self.assertEqual(response.status_code, 401)
             self.assertEqual(response.json, {'msg': 'Not logged in'})
 
     def test_no_enrolled_courses(self):
-        # 模拟已登录但未选课
+        # Simulate logged in but no courses selected
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['user_id'] = 200  # 模拟用户登录
+                sess['user_id'] = 200  # Simulate user login
             response = c.get('/courses/my')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, [])
@@ -59,23 +59,23 @@ class TestGetMyCourses(unittest.TestCase):
     def test_get_available_courses(self):
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['user_id'] = 200  # 模拟用户登录
-        # 测试获取可用课程
+                sess['user_id'] = 200  # Simulate user login
+        # Test getting available courses
         with self.client as c:
             response = c.get('/courses/available')
-            print("Response:", response.json)  # 打印响应
+            print("Response:", response.json)  # Print response
             self.assertEqual(response.status_code, 200)
             self.assertIsInstance(response.json, list)
 
     def test_with_enrolled_courses(self):
-        # 模拟已登录且已选课
+        # Simulate logged in with courses selected
         enrollment = CourseEnrollment(user_id=200, course_id=1)
         db.session.add(enrollment)
         db.session.commit()
 
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['user_id'] = 200  # 模拟用户登录
+                sess['user_id'] = 200  # Simulate user login
             response = c.get('/courses/my')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.json), 1)
@@ -83,34 +83,34 @@ class TestGetMyCourses(unittest.TestCase):
             self.assertEqual(response.json[0]['day_of_week'], "Mon")
 
     def test_add_course(self):
-        # 模拟添加课程
+        # Simulate adding course
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['user_id'] = 1  # 模拟用户登录
+                sess['user_id'] = 1  # Simulate user login
             response = c.post('/courses/add', json={'course_id': 1})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, {'msg': 'Course added successfully'})
 
-            # 验证课程列表是否包含新添加的课程
+            # Verify course list contains newly added course
             response = c.get('/courses/my')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.json), 1)
             self.assertEqual(response.json[0]['name'], "Math")
 
     def test_drop_course(self):
-        # 模拟删除课程
+        # Simulate deleting course
         enrollment = CourseEnrollment(user_id=1, course_id=1)
         db.session.add(enrollment)
         db.session.commit()
 
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['user_id'] = 1  # 模拟用户登录
+                sess['user_id'] = 1  # Simulate user login
             response = c.post('/courses/drop', json={'course_id': 1})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, {'msg': 'Course dropped successfully'})
 
-            # 验证课程列表是否已移除该课程
+            # Verify course list has removed the course
             response = c.get('/courses/my')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.json), 0)
