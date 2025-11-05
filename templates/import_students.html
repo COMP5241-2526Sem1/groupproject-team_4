@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>导入学生 - {{ course.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .import-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .file-upload {
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .file-label:hover {
+            background: #2980b9;
+        }
+        .upload-btn {
+            padding: 10px 30px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        .upload-btn:hover {
+            background: #219a52;
+        }
+        .upload-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .format-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            color: #666;
+        }
+        .info-button {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #95a5a6;
+            color: white;
+            text-align: center;
+            line-height: 20px;
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h3 {
+            margin: 0;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 15px 0;
+        }
+        .results-container {
+            margin-top: 30px;
+        }
+        .result-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .result-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .student-list {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .student-header {
+            background: #e9ecef;
+            padding: 10px 15px;
+            font-weight: bold;
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        .student-row {
+            display: flex;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .student-row:last-child {
+            border-bottom: none;
+        }
+        .id-col { width: 80px; }
+        .name-col { width: 150px; }
+        .email-col { flex: 1; }
+        .status-col { width: 100px; }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .nav-btn:hover {
+            background: #2980b9;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .warning {
+            color: #f39c12;
+        }
+    </style>
+    <script>
+        // 文件选择功能
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('file-name').textContent = file.name;
+                document.getElementById('upload-btn').disabled = false;
+            }
+        }
+        
+        // 显示CSV格式说明弹窗
+        function showFormatInfo() {
+            document.getElementById('format-modal').style.display = 'flex';
+        }
+        
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('format-modal').style.display = 'none';
+        }
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('format-modal')) {
+                closeModal();
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo" onclick="window.location.href='/teacher_home'">
+            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+        </div>
+
+        <nav>
+            <a href="/teacher_home">教师主页</a>
+            <a href="/teacher_course" style="background-color: #3498db; color: white;">课程管理</a>
+            <a href="/logout">退出登录</a>
+        </nav>
+
+        <div class="bottom">
+            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <h1>{{ course.name }} - 导入学生</h1>
+        
+        <div class="nav-buttons">
+            <a href="/teacher_course/{{ course.id }}" class="nav-btn">返回课程详情</a>
+            <a href="/teacher_course/{{ course.id }}/enrolled_list" class="nav-btn">已注册学生</a>
+            <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">未注册学生</a>
+        </div>
+        
+        <div class="import-container">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="file-upload">
+                    <label for="csv-file" class="file-label">选择CSV文件</label>
+                    <input type="file" id="csv-file" name="csv_file" accept=".csv" onchange="handleFileSelect(event)">
+                    <div id="file-name" style="margin-top: 10px; color: #666;">未选择文件</div>
+                    <div class="format-info">
+                        CSV格式要求
+                        <span class="info-button" onclick="showFormatInfo()">i</span>
+                    </div>
+                </div>
+                <button type="submit" id="upload-btn" class="upload-btn" disabled>上传并导入</button>
+            </form>
+        </div>
+        
+        <!-- 导入结果展示 -->
+        {% if imported_result %}
+        <div class="results-container">
+            <h3>导入结果</h3>
+            
+            <div class="result-section">
+                <div class="result-header">
+                    <span class="result-title">总结</span>
+                </div>
+                <p>成功解析: {{ imported_result.total_students }} 名学生</p>
+                <p>已在数据库中存在: {{ imported_result.existing_students }} 名学生</p>
+                <p>不在数据库中: {{ imported_result.missing_students }} 名学生</p>
+                <p>已注册本课程: {{ imported_result.already_enrolled }} 名学生</p>
+                <p>新注册本课程: {{ imported_result.newly_enrolled }} 名学生</p>
+            </div>
+            
+            {% if imported_result.enrolled_students %}
+            <div class="result-section">
+                <div class="result-header">
+                    <span class="result-title">已注册学生</span>
+                </div>
+                <div class="student-list">
+                    <div class="student-header">
+                        <div class="id-col">学生ID</div>
+                        <div class="name-col">学生姓名</div>
+                        <div class="email-col">邮箱</div>
+                        <div class="status-col">状态</div>
+                    </div>
+                    {% for student in imported_result.enrolled_students %}
+                    <div class="student-row">
+                        <div class="id-col">{{ student.id }}</div>
+                        <div class="name-col">{{ student.username }}</div>
+                        <div class="email-col">{{ student.email }}</div>
+                        <div class="status-col"><span class="warning">已注册</span></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if imported_result.not_enrolled_students %}
+            <div class="result-section">
+                <div class="result-header">
+                    <span class="result-title">新注册学生</span>
+                </div>
+                <div class="student-list">
+                    <div class="student-header">
+                        <div class="id-col">学生ID</div>
+                        <div class="name-col">学生姓名</div>
+                        <div class="email-col">邮箱</div>
+                        <div class="status-col">状态</div>
+                    </div>
+                    {% for student in imported_result.not_enrolled_students %}
+                    <div class="student-row">
+                        <div class="id-col">{{ student.id }}</div>
+                        <div class="name-col">{{ student.username }}</div>
+                        <div class="email-col">{{ student.email }}</div>
+                        <div class="status-col"><span class="success">已添加</span></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if imported_result.missing_students_list %}
+            <div class="result-section">
+                <div class="result-header">
+                    <span class="result-title">未在数据库中找到的学生</span>
+                </div>
+                <div class="student-list">
+                    <div class="student-header">
+                        <div class="id-col">学生ID</div>
+                        <div class="name-col">学生姓名</div>
+                        <div class="email-col">邮箱</div>
+                        <div class="status-col">状态</div>
+                    </div>
+                    {% for student in imported_result.missing_students_list %}
+                    <div class="student-row">
+                        <div class="id-col">{{ student.id }}</div>
+                        <div class="name-col">{{ student.username }}</div>
+                        <div class="email-col">{{ student.email }}</div>
+                        <div class="status-col"><span class="error">未找到</span></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- 显示消息 -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </main>
+</div>
+
+<!-- CSV格式说明弹窗 -->
+<div id="format-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>CSV文件格式说明</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <p>请确保您的CSV文件符合以下格式要求：</p>
+        <ol>
+            <li>文件必须是CSV（逗号分隔值）格式</li>
+            <li>文件必须包含以下列（第一行作为标题）：</li>
+        </ol>
+        <div class="code-block">student_id,username,email
+s00123456,张三,zhangsan@polyu.edu.hk
+s00123457,李四,lisi@polyu.edu.hk</div>
+        <p>注意事项：</p>
+        <ul>
+            <li>student_id：学生ID，用于匹配数据库中的学生</li>
+            <li>username：学生姓名</li>
+            <li>email：学生邮箱，必须使用polyu.edu.hk域名</li>
+            <li>系统将根据student_id检查学生是否存在于数据库中</li>
+            <li>如果学生存在但未注册该课程，将自动添加</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

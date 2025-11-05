@@ -89,6 +89,9 @@ app.register_blueprint(poll_bp)
 # Register course registration blueprint
 from routes.course_registration import course_registration_bp
 app.register_blueprint(course_registration_bp)
+# Register teacher course blueprint
+from routes.teacher_course import teacher_course_bp
+app.register_blueprint(teacher_course_bp)
 
 # Routes: Login and registration pages
 @app.route('/login')
@@ -106,7 +109,7 @@ def student_home():
 
 @app.route('/teacher_home')
 def teacher_home():
-    return render_template('role_home.html', role='Teacher')
+    return render_template('teacher_home.html')
 
 @app.route('/admin_home')
 def admin_home():

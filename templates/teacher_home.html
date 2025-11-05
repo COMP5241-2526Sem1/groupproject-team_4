@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+        </div>
+        <nav>
+            <a href="/teacher_course" class="active">My Courses</a>
+            <div class="dropdown">
+                <a href="/teacher_course">Manage Courses</a>
+                <div class="dropdown-content" id="course-dropdown">
+                    <!-- 动态生成课程选项 -->
+                </div>
+            </div>
+            <a href="/profile">Profile</a>
+            <a href="/activity">Activity</a>
+            <a href="/messages">Messages</a>
+            <a href="/logout">Sign Out</a>
+        </nav>
+        <div class="bottom">
+            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
+        </div>
+    </aside>
+    <main class="main-content">
+        <div id="courses-section" class="section">
+            <h2 style="color:#8a1c32;">My Courses</h2>
+            <div style="margin-bottom:24px;">
+                <button id="create-course-btn" style="background-color:#8a1c32;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;">
+                    Create New Course
+                </button>
+            </div>
+            {% if my_courses %}
+            <div class="courses-container">
+                {% for course in my_courses %}
+                <div class="course-card">
+                    <div class="course-header">
+                        <h3>{{ course.name }}</h3>
+                        <span class="course-code">{{ course.code }}</span>
+                    </div>
+                    <p class="course-description">{{ course.description }}</p>
+                    <div class="course-info">
+                        <span class="course-detail">Credits: {{ course.credit }}</span>
+                        <span class="course-detail">Capacity: {{ course.capacity }}</span>
+                        <span class="course-detail">{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</span>
+                    </div>
+                    <div class="course-actions">
+                        <a href="/teacher_course/{{ course.id }}" class="btn-view">View Details</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div id="course-msg" style="margin-top:24px;color:#333;font-size:1.1rem;">You don't have any courses yet. Click the button above to create your first course.</div>
+            {% endif %}
+            
+            {% if other_courses %}
+            <h3 style="color:#8a1c32;margin-top:40px;">Other Courses</h3>
+            <div class="courses-container">
+                {% for course in other_courses %}
+                <div class="course-card">
+                    <div class="course-header">
+                        <h3>{{ course.name }}</h3>
+                        <span class="course-code">{{ course.code }}</span>
+                    </div>
+                    <p class="course-description">{{ course.description }}</p>
+                    <div class="course-info">
+                        <span class="course-detail">Credits: {{ course.credit }}</span>
+                        <span class="course-detail">Capacity: {{ course.capacity }}</span>
+                        <span class="course-detail">{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        <div id="profile-section" class="section" style="display:none;"> </div>
+        <div id="activity-section" class="section" style="display:none;"> </div>
+        <div id="messages-section" class="section" style="display:none;"> </div>
+    </main>
+</div>
+<script>
+    // 导航通过URL路由处理
+    document.getElementById('create-course-btn').addEventListener('click', function() {
+        window.location.href = '/teacher_course/create';
+    });
+    
+    // 动态生成课程下拉菜单
+    document.addEventListener('DOMContentLoaded', function() {
+        // 如果有课程数据，直接在模板中渲染，这里保持下拉菜单功能
+        fetch('/teacher_course/list')
+            .then(response => response.json())
+            .then(courses => {
+                const dropdown = document.getElementById('course-dropdown');
+                dropdown.innerHTML = '';
+                courses.forEach(course => {
+                    const link = document.createElement('a');
+                    link.href = `/teacher_course/${course.id}`;
+                    link.textContent = course.name;
+                    dropdown.appendChild(link);
+                });
+            })
+            .catch(error => console.error('Error loading courses for dropdown:', error));
+    });
+</script>
+</body>
+</html>
