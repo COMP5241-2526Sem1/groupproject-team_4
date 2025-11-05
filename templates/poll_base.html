@@ -1,0 +1,148 @@
+{% extends 'base_course.html' %}
+
+{% block sidebar_links %}
+<a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}'">Course Home</a>
+<a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Poll List</a>
+<a href="/logout">Sign Out</a>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Poll-specific styles */
+    .poll-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .poll-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        color: #333;
+    }
+    .poll-options {
+        list-style-type: none;
+        padding: 0;
+    }
+    .poll-option {
+        padding: 15px;
+        margin-bottom: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .poll-option:hover {
+        background-color: #f0f0f0;
+        border-color: #ccc;
+    }
+    .poll-option.selected {
+        background-color: #e3f2fd;
+        border-color: #2196f3;
+    }
+    .poll-submit {
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+    }
+    .poll-submit:hover {
+        background-color: #1976d2;
+    }
+    .poll-results {
+        margin-top: 20px;
+    }
+    .result-bar {
+        height: 20px;
+        background-color: #2196f3;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        transition: width 1s ease-in-out;
+    }
+    
+    /* Poll List Styles */
+    .poll-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .poll-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 1px solid #ddd;
+    }
+    
+    .poll-item:hover {
+        background-color: #f5f8fa;
+        border-color: #2196F3;
+        box-shadow: 0 4px 8px rgba(33, 150, 243, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .poll-item:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(33, 150, 243, 0.15);
+    }
+    
+    .poll-item-content {
+        flex: 1;
+    }
+    
+    .poll-item-content h3 {
+        margin-top: 0;
+        margin-bottom: 8px;
+        color: #333;
+        font-size: 1.2em;
+    }
+    
+    .poll-item-content p {
+        margin: 4px 0;
+        color: #666;
+        font-size: 0.95em;
+    }
+    
+    .poll-item-action {
+        margin-left: 20px;
+    }
+    
+    .poll-item-action .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #2196F3;
+        color: white;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: background-color 0.3s;
+    }
+    
+    .poll-item-action .btn:hover {
+        background-color: #1976D2;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Common poll-related scripts
+    {% block poll_scripts %}{% endblock %}
+</script>
+{% endblock %}

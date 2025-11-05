@@ -1,0 +1,30 @@
+{% extends 'base_poll.html' %}
+
+{% block title %}Poll Info - {{ poll.title if poll else 'Student Home' }}{% endblock %}
+
+{% block main_content %}
+    {% if message %}
+        <div class="quiz-container">
+            <h1>Message</h1>
+            <p>{{ message }}</p>
+            <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to Poll List</button>
+        </div>
+    {% else %}
+        <div class="quiz-container">
+            <h1>{{ poll.title }}</h1>
+            {% if poll.description %}
+                <p><strong>Description:</strong> {{ poll.description }}</p>
+            {% endif %}
+            <p><strong>Poll Status:</strong> Active</p>
+            <p><strong>Created At:</strong> {{ poll.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            <div style="margin-top: 20px;">
+                {% if not has_submitted %}
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}/start'">Start Poll</button>
+                    <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to List</button>
+                {% else %}
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Return to Poll List</button>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

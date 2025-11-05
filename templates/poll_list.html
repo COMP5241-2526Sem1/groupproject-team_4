@@ -1,65 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Student Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>
-        // Quiz loading functionality is handled by server-side rendering
-        // rather than JavaScript to ensure proper data binding
-    </script>
-</head>
-<body>
-<div class="container">
-    <aside class="sidebar">
-        <div class="logo" onclick="window.location.href='/student_home'">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
-        </div>
+{% extends 'base_course_full.html' %}
 
-        <nav>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/announcement';">Announcement</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/calendar';">Calendar</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/content';">Content</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/quiz';">Quiz</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/mini_games';">Mini Games</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/grades';">Grades</a>
+{% block title %}Poll List - {{ course.name if course else 'Student Home' }}{% endblock %}
 
-            <a href="/logout">Sign Out</a>
-        </nav>
+{% block main_content %}
+    <h1>Poll List</h1>
+    <p>Course: {{ course.name if course else 'Unknown Course' }}</p>
+    
+    {% if message %}
+    <div class="success-message">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
 
-        <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <h1>Available Polls</h1>
-        {% if message %}
-        <div style="color: #2e7d32; margin: 20px 0; padding: 15px; background-color: #e8f5e9; border-radius: 5px; border-left: 4px solid #2e7d32;">
-            {{ message }}
-        </div>
-        {% endif %}
-        {% if polls %}
-            {% for poll in polls %}
+   {% if polls %}
+    <div class="quiz-list">
+        {% for poll in polls %}
+            <a href="/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}" class="poll-container-link">
                 <div class="quiz-container">
-                    <a href="{{ url_for('course.get_poll_info', course_id=course.code if course and course.code else course_id, poll_id=poll.id) }}" class="quiz-link">
-                        <h2>{{ poll.title }}</h2>
-                        <p>Created: {{ poll.created_at.strftime('%Y-%m-%d') }}</p>
-                        <p>Status: Active</p>
-                    </a>
+                    <h3>{{ poll.title }}</h3>
+                    <p>Created Date: {{ poll.created_at if poll.created_at else poll.created_date }}</p>
+                    <span class="btn">View Poll</span>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="quiz-container">
-                <p>{{ message or 'No polls available for this course yet.' }}</p>
-            </div>
-        {% endif %}
-    </main>
+            </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No polls available for this course.</p>
+    {% endif %}
 
-</div>
-
-</body>
-</html>
+{% endblock %}

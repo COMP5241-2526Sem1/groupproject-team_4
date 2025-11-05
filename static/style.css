@@ -123,6 +123,13 @@ h2 {
     font-weight: 700;
 }
 
+h3 {
+    font-size: 1.5rem;
+    color: #b40101;
+    margin-bottom: 12px;
+    margin-top: 2px;
+    font-weight: 600;
+}
 /* Form Element Styles */
 label {
     display: block;
@@ -668,4 +675,31 @@ a:hover {
     background-color: #ffebee;
     border-radius: 5px;
     border-left: 4px solid #d32f2f;
+}
+
+.quiz-container-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease;
+}
+
+.quiz-container-link:hover {
+    transform: translateY(-2px);
+}
+
+.quiz-container-link .quiz-container {
+    transition: box-shadow 0.2s ease;
+}
+
+.quiz-container-link:hover .quiz-container {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.quiz-container {
+    cursor: pointer;
+}
+
+.quiz-container-link .btn {
+    pointer-events: none;
 }

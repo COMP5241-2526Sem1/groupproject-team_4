@@ -1,62 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Poll Info - {{ poll.title if poll else 'Student Home' }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>
-        // Quiz loading functionality is handled by server-side rendering
-        // rather than JavaScript to ensure proper data binding
+{% extends 'poll_base.html' %}
 
-    </script>
-</head>
-<body>
-<div class="container">
-    <aside class="sidebar">
-        <div class="logo" onclick="window.location.href='/student_home'">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+{% block title %}Poll Info - {{ poll.title }}{% endblock %}
+
+{% block main_content %}
+
+        <div class="quiz-container">
+            <h1>{{ poll.title }}</h1>
+            {% if poll.description %}
+                <p><strong>Description:</strong> {{ poll.description }}</p>
+            {% endif %}
+            <div style="margin-top: 20px;">
+
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}/start'">Start Poll</button>
+                    <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to List</button>
+            </div>
         </div>
 
-        <nav>
-            <a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}'">Course Home</a>
-            <a href="#" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Poll List</a>
-            <a href="/logout">Sign Out</a>
-        </nav>
-
-        <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
-        </div>
-    </aside>
-
-    <main class="main-content">
-        {% if message %}
-            <div class="quiz-container">
-                <h1>Message</h1>
-                <p>{{ message }}</p>
-                <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to Poll List</button>
-            </div>
-        {% else %}
-            <div class="quiz-container">
-                <h1>{{ poll.title }}</h1>
-                {% if poll.description %}
-                    <p><strong>Description:</strong> {{ poll.description }}</p>
-                {% endif %}
-                <p><strong>Poll Status:</strong> Active</p>
-                <p><strong>Created At:</strong> {{ poll.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                <div style="margin-top: 20px;">
-                    {% if not has_submitted %}
-                        <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}/start'">Start Poll</button>
-                        <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to List</button>
-                    {% else %}
-                        <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Return to Poll List</button>
-                    {% endif %}
-                </div>
-            </div>
-        {% endif %}
-    </main>
-
-</div>
-
-</body>
-</html>
+    
+    </div>
+{% endblock %}

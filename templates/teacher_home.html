@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
 <div class="container">
     <aside class="sidebar">
         <div class="logo">
@@ -131,5 +128,4 @@
             .catch(error => console.error('Error loading courses for dropdown:', error));
     });
 </script>
-</body>
-</html>
+{% endblock %}
