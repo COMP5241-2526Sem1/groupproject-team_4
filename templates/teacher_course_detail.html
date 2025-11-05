@@ -91,7 +91,7 @@
         <nav>
             <a href="/teacher_home">Teacher Dashboard</a>
             <div class="dropdown">
-                <a href="/teacher_course" class="active">My Courses</a>
+                <a href="/teacher_course_list" class="active">My Courses</a>
                 <div class="dropdown-content" id="course-dropdown">
                     <!-- Dynamically generate course options -->
                 </div>
@@ -151,7 +151,7 @@
                 <a href="/teacher_course/{{ course.id }}/enrolled_list" class="action-btn">Enrolled Students</a>
                 <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="action-btn secondary">Add Students</a>
                 <a href="/teacher_course/{{ course.id }}/import_students" class="action-btn success">Import Students (CSV)</a>
-                <a href="/teacher_course" class="action-btn">Back to Course List</a>
+                <a href="/teacher_course_list" class="action-btn">Back to Course List</a>
             </div>
         </div>
         
@@ -170,7 +170,7 @@
 <script>
     // Dynamically generate course dropdown menu
     function populateCourseDropdown() {
-        fetch('/teacher_course')
+        fetch('/teacher_course_list/list')
             .then(response => response.json())
             .then(data => {
                 const dropdown = document.getElementById('course-dropdown');

@@ -46,10 +46,10 @@ def generate_course_code():
     return ''.join(random.choice(characters) for _ in range(6))
 
 # Teacher course homepage - Display all courses
-@teacher_course_bp.route('/teacher_course')
+@teacher_course_bp.route('/teacher_course_list')
 @login_required
 @teacher_required
-def teacher_course_home():
+def teacher_course_list():
     # Get current teacher ID
     teacher_id = session['user_id']
     
@@ -59,10 +59,10 @@ def teacher_course_home():
     # Get courses created by other teachers
     other_courses = Course.query.filter(Course.teacher_id != teacher_id).all()
     
-    return render_template('teacher_course_home.html', my_courses=my_courses, other_courses=other_courses)
+    return render_template('teacher_course_list.html', my_courses=my_courses, other_courses=other_courses)
 
 # API endpoint for teacher course list (for dropdown menu)
-@teacher_course_bp.route('/teacher_course/list')
+@teacher_course_bp.route('/teacher_course_list/list')
 @login_required
 @teacher_required
 def get_teacher_courses():
@@ -92,7 +92,7 @@ def teacher_course_detail(course_id):
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
         flash('You are not the teacher of this course, cannot access this page.')
-        return redirect(url_for('teacher_course.teacher_course_home'))
+        return redirect(url_for('teacher_course.teacher_course_list'))
     
     # Get the number of students enrolled in the course
     enrolled_count = CourseEnrollment.query.filter_by(course_id=course_id).count()
@@ -154,7 +154,7 @@ def enrolled_list(course_id):
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
         flash('You are not the teacher of this course, cannot access this page.')
-        return redirect(url_for('teacher_course.teacher_course_home'))
+        return redirect(url_for('teacher_course.teacher_course_list'))
     
     # Get search criteria
     department_filter = request.args.get('department')
@@ -198,7 +198,7 @@ def not_enrolled_list(course_id):
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
         flash('You are not the teacher of this course, cannot access this page.')
-        return redirect(url_for('teacher_course.teacher_course_home'))
+        return redirect(url_for('teacher_course.teacher_course_list'))
     
     # Get search criteria
     department_filter = request.args.get('department')
@@ -252,7 +252,7 @@ def import_students(course_id):
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
         flash('You are not the teacher of this course, cannot access this page.')
-        return redirect(url_for('teacher_course.teacher_course_home'))
+        return redirect(url_for('teacher_course.teacher_course_list'))
     
     # Handle CSV file upload
     if request.method == 'POST':

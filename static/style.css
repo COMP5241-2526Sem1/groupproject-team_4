@@ -411,6 +411,102 @@ a:hover {
     }
 }
 
+/* Data Table Styles */
+.table-responsive {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+    min-width: 600px;
+    border-radius: 5px 5px 0 0;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.data-table thead tr {
+    background-color: #8a1c32;
+    color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.data-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+    transition: background-color 0.3s ease;
+}
+
+.data-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.data-table tbody tr:last-of-type {
+    border-bottom: 2px solid #8a1c32;
+}
+
+.btn-view {
+    padding: 8px 16px;
+    background-color: #8a1c32;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-block;
+    margin-right: 8px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-view:hover {
+    background-color: #a62c43;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Create Button Styles */
+.create-btn {
+    padding: 12px 24px;
+    background-color: #8a1c32;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    display: inline-block;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.create-btn:hover {
+    background-color: #a62c43;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Data table button spacing */
+.data-table td {
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.data-table td:last-child {
+    white-space: nowrap;
+}
+
 /* Quiz Specific Styles - from quiz_start.html */
 .quiz-header {
     margin-bottom: 30px;
