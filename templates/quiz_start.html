@@ -1,6 +1,6 @@
 {% extends 'quiz_base.html' %}
 
-{% block title %}Start Quiz - {{ quiz.name }}{% endblock %}
+{% block title %}{{ quiz.title }} - Start Quiz{% endblock %}
 
 {% block quiz_scripts %}
     // Simple validation before submitting
@@ -18,18 +18,18 @@
     {% endif %}
     
     <div class="quiz-header">
-        <h1>{{ quiz.name }}</h1>
+        <h1>{{ quiz.title }}</h1>
         {% if quiz.description %}
         <div class="quiz-description">{{ quiz.description }}</div>
         {% endif %}
         <div class="quiz-info">
-            <p>Question Count: {{ questions|length }}</p>
+            <p>Question Count: {{ quiz.questions|length }}</p>
             <p>Duration: {{ quiz.duration }} minutes</p>
         </div>
     </div>
     
-    <form id="quiz-form" action="/course/{{ course_id }}/quiz/{{ quiz.id }}/submit" method="POST" onsubmit="return validateQuizForm();">
-        {% for question in questions %}
+    <form id="quiz-form" action="/course/{{ course.code if course and course.code else course_id }}/quiz/{{ quiz.id }}/submit" method="POST" onsubmit="return validateQuizForm();">
+        {% for question in quiz.questions %}
         <div class="question" data-type="{{ question.type }}">
             <div class="question-number">Question {{ loop.index }} ({{ question.points }} point{% if question.points > 1 %}s{% endif %})</div>
             <div class="question-content">{{ question.content }}</div>

@@ -8,7 +8,6 @@ flask built-in
 
 ## course home
 announcement
-calendar
 
 quiz: click, show all possible quiz (newest first)
 route course/3/quiz get quiz list

@@ -1,4 +1,4 @@
-{% extends 'base_course_full.html' %}
+{% extends 'poll_base.html' %}
 
 {% block title %}Poll List - {{ course.name if course else 'Student Home' }}{% endblock %}
 
@@ -15,7 +15,7 @@
    {% if polls %}
     <div class="quiz-list">
         {% for poll in polls %}
-            <a href="/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}" class="poll-container-link">
+            <a href="/course/{{ course.id }}/poll/{{ poll.id }}" class="poll-container-link">
                 <div class="quiz-container">
                     <h3>{{ poll.title }}</h3>
                     <p>Created Date: {{ poll.created_at if poll.created_at else poll.created_date }}</p>

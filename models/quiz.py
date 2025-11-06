@@ -15,6 +15,7 @@ class Quiz(db.Model):
     is_graded = Column(Boolean, default=False)
     visibility = Column(Enum('public', 'private', name='visibility_enum'), default='public')
     attempt_limit = Column(Integer, default=1)
+    duration = Column(Integer, default=30)  # Duration in minutes
     created_at = Column(db.DateTime, default=func.now())
     updated_at = Column(db.DateTime, default=func.now(), onupdate=func.now())
 

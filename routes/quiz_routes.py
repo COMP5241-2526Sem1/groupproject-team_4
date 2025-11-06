@@ -39,16 +39,15 @@ def get_quiz_list(course_id):
         has_responded = Submission.query.filter_by(quiz_id=quiz.id, student_id=user_id).first() is not None
         
         # Get attempt count
-        attempt_count = Attempt.query.filter_by(quiz_id=quiz.id, student_id=user_id).count()
+        attempt_count = Attempt.query.filter_by(quiz_id=quiz.id, user_id=user_id).count()
         
         quiz_data.append({
             'id': quiz.id,
-            'name': quiz.name,
+            'title': quiz.title,
             'description': quiz.description,
             'has_responded': has_responded,
             'used_attempts': attempt_count,
-            'max_attempts': quiz.max_attempts,
-            'deadline': quiz.deadline
+            'max_attempts': quiz.attempt_limit,
         })
     
     # Check for any messages (like successful submission)
@@ -83,48 +82,26 @@ def get_quiz_info(course_id, quiz_id):
     # Get quiz details
     quiz = Quiz.query.filter_by(id=quiz_id, course_id=course_id).first()
     if not quiz:
-        return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
-    
-    # Get quiz questions
-    questions = Question.query.filter_by(quiz_id=quiz_id).all()
-    
-    # Check if user has already submitted
-    has_responded = Submission.query.filter_by(quiz_id=quiz_id, student_id=user_id).first() is not None
+        return render_template('quiz_info.html', course=course, quizzes=[], error_message="Quiz not found"), 404
     
     # Get attempt count
-    attempt_count = Attempt.query.filter_by(quiz_id=quiz_id, student_id=user_id).count()
+    attempt_count = Attempt.query.filter_by(quiz_id=quiz_id, user_id=user_id).count()
     
     # Check if user can attempt again
-    can_attempt = not quiz.max_attempts or attempt_count < quiz.max_attempts
+    can_attempt = not quiz.attempt_limit or attempt_count < quiz.attempt_limit
     
     # Prepare questions with choices (for MCQ)
     quiz_data = {
         'id': quiz.id,
-        'name': quiz.name,
+        'title': quiz.title,
         'description': quiz.description,
-        'has_responded': has_responded,
         'used_attempts': attempt_count,
-        'max_attempts': quiz.max_attempts,
+        'max_attempts': quiz.attempt_limit,
         'can_attempt': can_attempt,
-        'deadline': quiz.deadline,
         'questions': []
     }
-    
-    for question in questions:
-        q_data = {
-            'id': question.id,
-            'content': question.content,
-            'type': question.type,
-            'points': question.points
-        }
-        
-        if question.type == 'mcq':
-            choices = Choice.query.filter_by(question_id=question.id).all()
-            q_data['choices'] = [{'id': c.id, 'content': c.content} for c in choices]
-        
-        quiz_data['questions'].append(q_data)
-    
-    return render_template('quiz_info.html', course=course, quiz=quiz_data)
+
+    return render_template('quiz_info.html', course=course, quiz=quiz_data, course_id=course_id)
 
 @quiz_bp.route('/course/<course_id>/quiz/<int:quiz_id>/start', methods=['GET'])
 def start_quiz(course_id, quiz_id):
@@ -149,20 +126,20 @@ def start_quiz(course_id, quiz_id):
         return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
     
     # Check if user has already submitted
-    has_responded = Submission.query.filter_by(quiz_id=quiz_id, student_id=user_id).first() is not None
+    has_responded = Submission.query.filter_by(quiz_id=quiz_id, user_id=user_id).first() is not None
     
     # Get attempt count
-    attempt_count = Attempt.query.filter_by(quiz_id=quiz_id, student_id=user_id).count()
+    attempt_count = Attempt.query.filter_by(quiz_id=quiz_id, user_id=user_id).count()
     
     # Check if user can attempt again
-    if quiz.max_attempts and attempt_count >= quiz.max_attempts:
+    if quiz.attempt_limit and attempt_count >= quiz.attempt_limit:
         return render_template('quiz_info.html', course=course, quiz={
             'id': quiz.id,
-            'name': quiz.name,
+            'title': quiz.title,
             'description': quiz.description,
             'has_responded': has_responded,
             'used_attempts': attempt_count,
-            'max_attempts': quiz.max_attempts,
+            'max_attempts': quiz.attempt_limit,
             'can_attempt': False
         }, error_message="You have reached the maximum number of attempts for this quiz"), 400
     
@@ -180,27 +157,24 @@ def start_quiz(course_id, quiz_id):
     # Prepare questions with choices
     quiz_data = {
         'id': quiz.id,
-        'name': quiz.name,
+        'title': quiz.title,
         'description': quiz.description,
-        'attempt_id': new_attempt.id
+        'duration': quiz.duration,
+        'has_responded': has_responded,
+        'used_attempts': attempt_count,
+        'max_attempts': quiz.attempt_limit,
+        'can_attempt': True,
+        'deadline': getattr(quiz, 'deadline', None),
+        'questions': [{
+            'id': q.id,
+            'content': q.content,
+            'type': q.type,
+            'points': q.points,
+            'choices': [{'id': c.id, 'content': c.content} for c in q.choices] if q.type == 'mcq' else []
+        } for q in questions]
     }
     
-    question_list = []
-    for question in questions:
-        q_data = {
-            'id': question.id,
-            'content': question.content,
-            'type': question.type,
-            'points': question.points
-        }
-        
-        if question.type == 'mcq':
-            choices = Choice.query.filter_by(question_id=question.id).all()
-            q_data['choices'] = [{'id': c.id, 'content': c.content} for c in choices]
-        
-        question_list.append(q_data)
-    
-    return render_template('quiz_start.html', course=course, quiz=quiz_data, questions=question_list, course_id=course_id)
+    return render_template('quiz_start.html', course=course, quiz=quiz_data, course_id=course_id)
 
 @quiz_bp.route('/course/<course_id>/quiz/<int:quiz_id>/submit', methods=['POST'])
 def submit_quiz(course_id, quiz_id):

@@ -11,8 +11,8 @@
             {% endif %}
             <div style="margin-top: 20px;">
 
-                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}/start'">Start Poll</button>
-                    <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to List</button>
+                    <button onclick="window.location.href='/course/{{ course_id }}/poll/{{ poll.id }}/start'">Start Poll</button>
+                    <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_id }}/poll'">Back to List</button>
             </div>
         </div>
 

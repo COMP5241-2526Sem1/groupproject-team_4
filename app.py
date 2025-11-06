@@ -109,7 +109,17 @@ def student_home():
 
 @app.route('/teacher_home')
 def teacher_home():
-    return render_template('teacher_home.html')
+    from models.course import Course
+    from flask import session
+    # Get current teacher ID from session
+    if 'user_id' in session:
+        teacher_id = session['user_id']
+        # Get courses created by the teacher
+        my_courses = Course.query.filter_by(teacher_id=teacher_id).all()
+        # Get courses created by other teachers
+        other_courses = Course.query.filter(Course.teacher_id != teacher_id).all()
+        return render_template('teacher_home.html', my_courses=my_courses, other_courses=other_courses)
+    return render_template('teacher_home.html', my_courses=[], other_courses=[])
 
 @app.route('/admin_home')
 def admin_home():

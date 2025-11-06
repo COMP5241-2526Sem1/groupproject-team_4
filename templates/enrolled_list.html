@@ -1,255 +1,221 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Enrolled Students - {{ course.name }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        .student-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-        .search-bar {
-            margin-bottom: 20px;
-        }
-        .search-bar input[type="text"] {
-            padding: 10px;
-            width: 300px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .search-bar button {
-            padding: 10px 15px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        .search-bar button:hover {
-            background: #2980b9;
-        }
-        .student-list {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .student-header {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            border-bottom: 1px solid #ddd;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-        }
-        .student-header input[type="checkbox"] {
-            margin-right: 15px;
-        }
-        .student-row {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #eee;
-            transition: background 0.2s;
-        }
-        .student-row:hover {
-            background: #f8f9fa;
-        }
-        .student-row:last-child {
-            border-bottom: none;
-        }
-        .student-row input[type="checkbox"] {
-            margin-right: 15px;
-        }
-        .student-info {
-            flex: 1;
-        }
-        .student-name {
-            font-weight: bold;
-            color: #333;
-        }
-        .student-detail {
-            color: #666;
-            font-size: 0.9em;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-            justify-content: space-between;
-        }
-        .control-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .select-btn,
-        .delete-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.2s;
-        }
-        .select-btn {
-            background: #95a5a6;
-            color: white;
-        }
-        .select-btn:hover {
-            background: #7f8c8d;
-        }
-        .delete-btn {
-            background: #e74c3c;
-            color: white;
-        }
-        .delete-btn:hover {
-            background: #c0392b;
-        }
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .nav-btn {
-            padding: 10px 20px;
-            background: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        .nav-btn:hover {
-            background: #2980b9;
-        }
-        .no-students {
-            text-align: center;
-            padding: 40px;
-            color: #7f8c8d;
-        }
-    </style>
-    <script>
-        // Select/Deselect all functionality
-        function toggleSelectAll() {
-            var selectAll = document.getElementById('selectAll');
-            var checkboxes = document.querySelectorAll('input[name="students[]"]');
-            
-            checkboxes.forEach(function(checkbox) {
-                checkbox.checked = selectAll.checked;
-            });
-        }
-        
-        // Deselect all functionality
-        function unselectAll() {
-            document.getElementById('selectAll').checked = false;
-            var checkboxes = document.querySelectorAll('input[name="students[]"]');
-            
-            checkboxes.forEach(function(checkbox) {
-                checkbox.checked = false;
-            });
-        }
-        
-        // Confirm deletion functionality
-        function confirmDelete() {
-            var selectedCount = document.querySelectorAll('input[name="students[]"]:checked').length;
-            
-            if (selectedCount === 0) {
-                alert('Please select at least one student to remove.');
-                return false;
-            }
-            
-            return confirm('Are you sure you want to remove the selected ' + selectedCount + ' students?');
-        }
-    </script>
-</head>
-<body>
-<div class="container">
-    <aside class="sidebar">
-        <div class="logo" onclick="window.location.href='/teacher_home'">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
-        </div>
+{% extends 'teacher_course_base.html' %}
 
-        <nav>
-            <a href="/teacher_home">Teacher Home</a>
-            <a href="/teacher_course_list" style="background-color: #3498db; color: white;">Course Management</a>
-            <a href="/logout">Logout</a>
-        </nav>
+{% block course_title %}Enrolled Students - {{ course.name }}{% endblock %}
 
-        <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
-        </div>
-    </aside>
+{% block course_content %}
+<style>
+    .student-container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-top: 20px;
+    }
+    .search-bar {
+        margin-bottom: 20px;
+    }
+    .search-bar input[type="text"] {
+        padding: 10px;
+        width: 300px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    .search-bar button {
+        padding: 10px 15px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+    .search-bar button:hover {
+        background: #2980b9;
+    }
+    .student-list {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .student-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+    }
+    .student-header input[type="checkbox"] {
+        margin-right: 15px;
+    }
+    .student-row {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #eee;
+        transition: background 0.2s;
+    }
+    .student-row:hover {
+        background: #f8f9fa;
+    }
+    .student-row:last-child {
+        border-bottom: none;
+    }
+    .student-row input[type="checkbox"] {
+        margin-right: 15px;
+    }
+    .student-info {
+        flex: 1;
+    }
+    .student-name {
+        font-weight: bold;
+        color: #333;
+    }
+    .student-detail {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        justify-content: space-between;
+    }
+    .control-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    .select-btn,
+    .delete-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.2s;
+    }
+    .select-btn {
+        background: #95a5a6;
+        color: white;
+    }
+    .select-btn:hover {
+        background: #7f8c8d;
+    }
+    .delete-btn {
+        background: #e74c3c;
+        color: white;
+    }
+    .delete-btn:hover {
+        background: #c0392b;
+    }
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    .nav-btn {
+        padding: 10px 20px;
+        background: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+    .nav-btn:hover {
+        background: #2980b9;
+    }
+    .no-students {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
+    }
+</style>
 
-    <main class="main-content">
-        <h1>{{ course.name }} - Enrolled Students</h1>
-        
-        <div class="action-buttons">
-            <div class="nav-buttons">
-                <a href="/teacher_course/{{ course.id }}" class="nav-btn">Back to Course Details</a>
-                <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
-                <a href="/teacher_course/{{ course.id }}/import_students" class="nav-btn">Import Students</a>
-            </div>
-        </div>
-        
-        <div class="search-bar">
-            <form method="GET" action="">
-                <input type="text" name="department" placeholder="Search by department" value="{{ request.args.get('department', '') }}">
-                <button type="submit">Search</button>
-            </form>
-        </div>
-        
-        <div class="student-container">
-            <form method="POST" onsubmit="return confirmDelete();">
-                <div class="student-list">
-                    {% if students %}
-                        <div class="student-header">
-                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> Select All
-                            <div style="margin-left: 30px; font-weight: normal;">Total: {{ students|length }} students</div>
-                        </div>
-                        
-                        {% for student in students %}
-                        <div class="student-row">
-                            <input type="checkbox" name="students[]" value="{{ student.id }}">
-                            <div class="student-info">
-                                <div class="student-name">{{ student.username }}</div>
-                                <div class="student-detail">ID: {{ student.id }} | Email: {{ student.email }} | Department: {{ student.department or 'Not set' }}</div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="no-students">
-                            <p>No students enrolled in this course.</p>
-                        </div>
-                    {% endif %}
+<h1>{{ course.name }} - Enrolled Students</h1>
+
+<div class="action-buttons">
+    <div class="nav-buttons">
+        <a href="/teacher_course/{{ course.id }}" class="nav-btn">Back to Course Details</a>
+        <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
+        <a href="/teacher_course/{{ course.id }}/import_students" class="nav-btn">Import Students</a>
+    </div>
+</div>
+
+<div class="search-bar">
+    <form method="GET" action="">
+        <input type="text" name="department" placeholder="Search by department" value="{{ request.args.get('department', '') }}">
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+<div class="student-container">
+    <form method="POST" onsubmit="return confirmDelete();">
+        <div class="student-list">
+            {% if students %}
+                <div class="student-header">
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> Select All
+                    <div style="margin-left: 30px; font-weight: normal;">Total: {{ students|length }} students</div>
                 </div>
                 
-                {% if students %}
-                <div class="action-buttons">
-                    <div class="control-buttons">
-                        <button type="button" class="select-btn" onclick="toggleSelectAll()">Select All</button>
-                        <button type="button" class="select-btn" onclick="unselectAll()">Deselect All</button>
+                {% for student in students %}
+                <div class="student-row">
+                    <input type="checkbox" name="students[]" value="{{ student.id }}">
+                    <div class="student-info">
+                        <div class="student-name">{{ student.username }}</div>
+                        <div class="student-detail">ID: {{ student.id }} | Email: {{ student.email }} | Department: {{ student.department or 'Not set' }}</div>
                     </div>
-                    <button type="submit" class="delete-btn">Remove Selected Students</button>
                 </div>
-                {% endif %}
-            </form>
-        </div>
-        
-        <!-- Display messages -->
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="messages">
-                    {% for message in messages %}
-                        <div class="flash-message">{{ message }}</div>
-                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <div class="no-students">
+                    <p>No students enrolled in this course.</p>
                 </div>
             {% endif %}
-        {% endwith %}
-    </main>
+        </div>
+        
+        {% if students %}
+        <div class="action-buttons">
+            <div class="control-buttons">
+                <button type="button" class="select-btn" onclick="toggleSelectAll()">Select All</button>
+                <button type="button" class="select-btn" onclick="unselectAll()">Deselect All</button>
+            </div>
+            <button type="submit" class="delete-btn">Remove Selected Students</button>
+        </div>
+        {% endif %}
+    </form>
 </div>
-</body>
-</html>
+
+<script>
+    // Select/Deselect all functionality
+    function toggleSelectAll() {
+        var selectAll = document.getElementById('selectAll');
+        var checkboxes = document.querySelectorAll('input[name="students[]"]');
+        
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = selectAll.checked;
+        });
+    }
+    
+    // Deselect all functionality
+    function unselectAll() {
+        document.getElementById('selectAll').checked = false;
+        var checkboxes = document.querySelectorAll('input[name="students[]"]');
+        
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = false;
+        });
+    }
+    
+    // Confirm deletion functionality
+    function confirmDelete() {
+        var selectedCount = document.querySelectorAll('input[name="students[]"]:checked').length;
+        
+        if (selectedCount === 0) {
+            alert('Please select at least one student to remove.');
+            return false;
+        }
+        
+        return confirm('Are you sure you want to remove the selected ' + selectedCount + ' students?');
+    }
+</script>
+{% endblock %}

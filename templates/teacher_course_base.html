@@ -1,5 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'teacher_home.html' %}
+
 {% block title %}{% block course_title %}LEARN@POLYU - Teacher Courses{% endblock %}{% endblock %}
+
 {% block content %}
 <div class="container">
     <aside class="sidebar">
@@ -17,7 +19,6 @@
             </div>
             <a href="/profile">Profile</a>
             <a href="/activity">Activity</a>
-            <a href="/messages">Messages</a>
             <a href="/logout">Logout</a>
         </nav>
         <div class="bottom">
@@ -68,6 +69,9 @@
     }
 
     // Call after page loads
-    document.addEventListener('DOMContentLoaded', populateCourseDropdown);
+    document.addEventListener('DOMContentLoaded', function() {
+        populateCourseDropdown();
+        // Keep existing scripts from teacher_home.html if needed
+    });
 </script>
 {% endblock %}

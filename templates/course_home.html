@@ -9,9 +9,6 @@
         function loadAnnouncement() {
             document.querySelector('.main-content').innerHTML = '<h1>Announcement</h1><p>This is the announcement section.</p>';
         }
-        function loadCalendar() {
-            document.querySelector('.main-content').innerHTML = '<h1>Calendar</h1><p>This is the calendar section.</p>';
-        }
         function loadContent() {
             document.querySelector('.main-content').innerHTML = '<h1>Content</h1><p>This is the content section.</p>';
         }
@@ -42,7 +39,6 @@
 
         <nav>
             <a href="#" onclick="loadAnnouncement()">Announcement</a>
-            <a href="#" onclick="loadCalendar()">Calendar</a>
             <a href="#" onclick="">Content</a>
             <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/quiz';">Quiz</a>
             <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/poll';">Poll</a>
@@ -52,10 +48,6 @@
 
             <a href="/logout">Sign Out</a>
         </nav>
-
-        <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
-        </div>
     </aside>
 
     <main class="main-content">

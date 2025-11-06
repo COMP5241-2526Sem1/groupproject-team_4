@@ -1,12 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Course Registration</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-</head>
-<body>
+{% extends 'student_home.html' %}
+
+{% block title %}Course Registration{% endblock %}
+
+{% block content %}
+{% set active_nav = 'course_registration' %}
 <div class="container">
     <aside class="sidebar">
         <div class="logo">
@@ -21,25 +18,21 @@
                     <!-- Dynamically generate course options -->
                 </div>
             </div>
-            <a href="/profile">Profile</a>
             <a href="/activity">Activity</a>
-            <a href="/course_registration" class="active">Courses</a>
+            <a href="/course_registration" class="active">Course Registration</a>
             <a href="/calendar">Calendar</a>
-            <a href="/messages">Messages</a>
             <a href="/grades">Grades</a>
             <a href="/assist">Assist</a>
+                        <a href="/profile">Profile</a>
             <a href="/logout">Sign Out</a>
         </nav>
-        <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
-        </div>
     </aside>
     <main class="main-content">
         <div id="courses-section" class="section">
             <h1>Course Registration</h1>
             <div style="display:flex;gap:32px;margin-bottom:32px;">
                 <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">Add Courses</button>
-        <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">View Schedule</button>
+                <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">View Schedule</button>
             </div>
             <div id="add-course-area">
                 <h2 style="color:#8a1c32;">Available Courses</h2>
@@ -135,27 +128,25 @@
     // Initial load
     loadAvailableCourses();
     loadMyCourses();
-</script>
-<script>
-        // Dynamically generate course dropdown menu
-        function populateCourseDropdown() {
-            fetch('/course/my')
-                .then(response => response.json())
-                .then(courses => {
-                    const dropdown = document.getElementById('course-dropdown');
-                    dropdown.innerHTML = '';
-                    courses.forEach(course => {
-                        const link = document.createElement('a');
-                        link.href = `/course/${course.id}`; // or `/course/${course.code}`
-                        link.textContent = course.name;
-                        dropdown.appendChild(link);
-                    });
-                })
-                .catch(error => console.error('Error loading courses:', error));
-        }
+    
+    // Dynamically generate course dropdown menu
+    function populateCourseDropdown() {
+        fetch('/course/my')
+            .then(response => response.json())
+            .then(courses => {
+                const dropdown = document.getElementById('course-dropdown');
+                dropdown.innerHTML = '';
+                courses.forEach(course => {
+                    const link = document.createElement('a');
+                    link.href = `/course/${course.id}`; // or `/course/${course.code}`
+                    link.textContent = course.name;
+                    dropdown.appendChild(link);
+                });
+            })
+            .catch(error => console.error('Error loading courses:', error));
+    }
 
-        // Call after page loads
-        document.addEventListener('DOMContentLoaded', populateCourseDropdown);
-    </script>
-</body>
-</html>
+    // Call after page loads
+    document.addEventListener('DOMContentLoaded', populateCourseDropdown);
+</script>
+{% endblock %}
