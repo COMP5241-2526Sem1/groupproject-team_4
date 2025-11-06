@@ -69,7 +69,7 @@ def create_user_table():
                     role user_role_enum NOT NULL,
                     email VARCHAR(100),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    department_id INTEGER REFERENCES department(id)
+                    department_code VARCHAR(10) REFERENCES department(name)
                 );
                 """
             ))

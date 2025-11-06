@@ -125,10 +125,7 @@ def teacher_home():
 def admin_home():
     return render_template('role_home.html', role='Admin')
 
-@app.route('/course/<int:course_id>')
-def course_by_id(course_id):
-    course = Course.query.get_or_404(course_id)
-    return render_template('course_home.html', course=course)
+
 
 
 @app.route('/course/<string:course_code>')

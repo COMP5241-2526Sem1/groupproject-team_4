@@ -1,8 +1,8 @@
 {% extends 'course_base.html' %}
 
 {% block sidebar_links %}
-<a href="/course/{{ course.id if course and course.id else course_id }}">Course Home</a>
-<a href="/course/{{ course.id if course and course.id else course_id }}/poll">Poll List</a>
+<a href="/course/{{ course.code if course and course.code else course_code }}">Course Home</a>
+    <a href="/course/{{ course.code if course and course.code else course_code }}/poll">Poll List</a>
 <a href="/logout">Sign Out</a>
 {% endblock %}
 

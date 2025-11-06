@@ -9,7 +9,7 @@ class Quiz(db.Model):
     __tablename__ = 'quiz'
 
     id = Column(Integer, primary_key=True)
-    course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
+    course_code = Column(String(20), ForeignKey('course.code'), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text)
     created_by = Column(Integer, ForeignKey('user.id'), nullable=False)

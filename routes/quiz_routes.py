@@ -12,10 +12,10 @@ from database import db
 
 quiz_bp = Blueprint('quiz', __name__)
 
-@quiz_bp.route('/course/<course_id>/quiz', methods=['GET'])
-def get_quiz_list(course_id):
+@quiz_bp.route('/course/<course_code>/quiz', methods=['GET'])
+def get_quiz_list(course_code):
     # First, verify if the course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -25,12 +25,12 @@ def get_quiz_list(course_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course",course=course), 403
     
     # Get all quizzes for the course
-    quizzes = Quiz.query.filter_by(course_id=course_id).all()
+    quizzes = Quiz.query.filter_by(course_code=course_code).all()
     
     # Prepare data for the template
     quiz_data = []
@@ -62,10 +62,10 @@ def get_quiz_list(course_id):
     # Render the template with the quiz data
     return render_template('quiz_list.html', course=course, quizzes=quiz_data, message=message)
 
-@quiz_bp.route('/course/<course_id>/quiz/<int:quiz_id>', methods=['GET'])
-def get_quiz_info(course_id, quiz_id):
+@quiz_bp.route('/course/<course_code>/quiz/<int:quiz_id>', methods=['GET'])
+def get_quiz_info(course_code, quiz_id):
     # Verify course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -75,12 +75,12 @@ def get_quiz_info(course_id, quiz_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
     
     # Get quiz details
-    quiz = Quiz.query.filter_by(id=quiz_id, course_id=course_id).first()
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
     if not quiz:
         return render_template('quiz_info.html', course=course, quizzes=[], error_message="Quiz not found"), 404
     
@@ -101,12 +101,12 @@ def get_quiz_info(course_id, quiz_id):
         'questions': []
     }
 
-    return render_template('quiz_info.html', course=course, quiz=quiz_data, course_id=course_id)
+    return render_template('quiz_info.html', course=course, quiz=quiz_data, course_code=course_code)
 
-@quiz_bp.route('/course/<course_id>/quiz/<int:quiz_id>/start', methods=['GET'])
-def start_quiz(course_id, quiz_id):
+@quiz_bp.route('/course/<course_code>/quiz/<int:quiz_id>/start', methods=['GET'])
+def start_quiz(course_code, quiz_id):
     # Verify course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -116,12 +116,12 @@ def start_quiz(course_id, quiz_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
     
     # Get quiz
-    quiz = Quiz.query.filter_by(id=quiz_id, course_id=course_id).first()
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
     if not quiz:
         return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
     
@@ -174,12 +174,12 @@ def start_quiz(course_id, quiz_id):
         } for q in questions]
     }
     
-    return render_template('quiz_start.html', course=course, quiz=quiz_data, course_id=course_id)
+    return render_template('quiz_start.html', course=course, quiz=quiz_data, course_code=course_code)
 
-@quiz_bp.route('/course/<course_id>/quiz/<int:quiz_id>/submit', methods=['POST'])
-def submit_quiz(course_id, quiz_id):
+@quiz_bp.route('/course/<course_code>/quiz/<int:quiz_id>/submit', methods=['POST'])
+def submit_quiz(course_code, quiz_id):
     # Verify course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -189,12 +189,12 @@ def submit_quiz(course_id, quiz_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
     
     # Get quiz
-    quiz = Quiz.query.filter_by(id=quiz_id, course_id=course_id).first()
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
     if not quiz:
         return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
     
@@ -291,4 +291,4 @@ def submit_quiz(course_id, quiz_id):
         del session['current_attempt_id']
     
     # Redirect to quiz list with success message
-    return redirect(f'/course/{course_id}/quiz?submitted=1')
+    return redirect(f'/course/{course_code}/quiz?submitted=1')

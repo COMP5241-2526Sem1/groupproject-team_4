@@ -23,7 +23,7 @@ def test_quiz_direct_model():
             print(f'✓ Quiz ID: {quiz.id}')
             print(f'✓ Quiz name (direct property): {quiz.name}')
             print(f'✓ Quiz description: {quiz.description}')
-            print(f'✓ Course ID: {quiz.course_id}')
+            print(f'✓ Course Code: {quiz.course_code}')
             print(f'✓ Created by: {quiz.created_by}')
             print(f'✓ Duration: {quiz.duration} minutes')
             print(f'✓ Points: {quiz.point}')

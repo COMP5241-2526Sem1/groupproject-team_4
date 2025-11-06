@@ -69,7 +69,7 @@ class TestGetMyCourses(unittest.TestCase):
 
     def test_with_enrolled_courses(self):
         # Simulate logged in with courses selected
-        enrollment = CourseEnrollment(user_id=200, course_id=1)
+        enrollment = CourseEnrollment(student_id=200, course_code='MATH101')
         db.session.add(enrollment)
         db.session.commit()
 
@@ -87,7 +87,7 @@ class TestGetMyCourses(unittest.TestCase):
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['user_id'] = 1  # Simulate user login
-            response = c.post('/courses/add', json={'course_id': 1})
+            response = c.post('/courses/add', json={'course_code': 'MATH101'})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, {'msg': 'Course added successfully'})
 
@@ -99,14 +99,14 @@ class TestGetMyCourses(unittest.TestCase):
 
     def test_drop_course(self):
         # Simulate deleting course
-        enrollment = CourseEnrollment(user_id=1, course_id=1)
+        enrollment = CourseEnrollment(student_id=1, course_code='MATH101')
         db.session.add(enrollment)
         db.session.commit()
 
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['user_id'] = 1  # Simulate user login
-            response = c.post('/courses/drop', json={'course_id': 1})
+            response = c.post('/courses/drop', json={'course_code': 'MATH101'})
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json, {'msg': 'Course dropped successfully'})
 

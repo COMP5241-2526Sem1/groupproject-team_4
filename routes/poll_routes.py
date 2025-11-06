@@ -11,10 +11,10 @@ from database import db
 
 poll_bp = Blueprint('poll', __name__)
 
-@poll_bp.route('/course/<course_id>/poll', methods=['GET'])
-def get_poll_list(course_id):
+@poll_bp.route('/course/<course_code>/poll', methods=['GET'])
+def get_poll_list(course_code):
     # First, verify if the course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -24,12 +24,12 @@ def get_poll_list(course_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
     
     # Get all polls for the course
-    polls = Poll.query.filter_by(course_id=course_id).all()
+    polls = Poll.query.filter_by(course_code=course_code).all()
     
     # Prepare data for the template
     poll_data = []
@@ -61,10 +61,10 @@ def get_poll_list(course_id):
     # Render the template with the poll data
     return render_template('poll_list.html', course=course, polls=poll_data, message=message)
 
-@poll_bp.route('/course/<course_id>/poll/<int:poll_id>', methods=['GET'])
-def get_poll_info(course_id, poll_id):
+@poll_bp.route('/course/<course_code>/poll/<int:poll_id>', methods=['GET'])
+def get_poll_info(course_code, poll_id):
     # Verify course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -74,12 +74,12 @@ def get_poll_info(course_id, poll_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
     
     # Get poll details
-    poll = Poll.query.filter_by(id=poll_id, course_id=course_id).first()
+    poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
     
@@ -118,10 +118,10 @@ def get_poll_info(course_id, poll_id):
     
     return render_template('poll_info.html', course=course, poll=poll_data)
 
-@poll_bp.route('/course/<course_id>/poll/<int:poll_id>/start', methods=['GET'])
-def start_poll(course_id, poll_id):
+@poll_bp.route('/course/<course_code>/poll/<int:poll_id>/start', methods=['GET'])
+def start_poll(course_code, poll_id):
     # Verify course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -131,12 +131,12 @@ def start_poll(course_id, poll_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
     
     # Get poll
-    poll = Poll.query.filter_by(id=poll_id, course_id=course_id).first()
+    poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
     
@@ -148,7 +148,7 @@ def start_poll(course_id, poll_id):
     ).first() is not None
     
     if has_responded:
-        return redirect(f'/course/{course_id}/poll?already_submitted=1')
+        return redirect(f'/course/{course_code}/poll?already_submitted=1')
     
     # Get poll questions
     questions = Question.query.filter_by(poll_id=poll_id).all()
@@ -174,12 +174,12 @@ def start_poll(course_id, poll_id):
         
         question_list.append(q_data)
     
-    return render_template('poll_start.html', course=course, poll=poll_data, questions=question_list, course_id=course_id)
+    return render_template('poll_start.html', course=course, poll=poll_data, questions=question_list, course_code=course_code)
 
-@poll_bp.route('/course/<course_id>/poll/<int:poll_id>/submit', methods=['POST'])
-def submit_poll(course_id, poll_id):
+@poll_bp.route('/course/<course_code>/poll/<int:poll_id>/submit', methods=['POST'])
+def submit_poll(course_code, poll_id):
     # Verify course exists
-    course = Course.query.get(course_id)
+    course = Course.query.get(course_code)
     if not course:
         return render_template('course_home.html', error_message="Course not found"), 404
     
@@ -189,12 +189,12 @@ def submit_poll(course_id, poll_id):
         return redirect(url_for('auth.login'))
     
     # Check enrollment
-    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_id=course_id).first()
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
     
     # Get poll
-    poll = Poll.query.filter_by(id=poll_id, course_id=course_id).first()
+    poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
     
@@ -206,7 +206,7 @@ def submit_poll(course_id, poll_id):
     ).first() is not None
     
     if has_responded:
-        return redirect(f'/course/{course_id}/poll?already_submitted=1')
+        return redirect(f'/course/{course_code}/poll?already_submitted=1')
     
     # Get all questions for this poll
     questions = Question.query.filter_by(poll_id=poll_id).all()
@@ -247,4 +247,4 @@ def submit_poll(course_id, poll_id):
     db.session.commit()
     
     # Redirect to poll list with success message
-    return redirect(f'/course/{course_id}/poll?submitted=1')
+    return redirect(f'/course/{course_code}/poll?submitted=1')

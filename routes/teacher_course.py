@@ -82,12 +82,12 @@ def get_teacher_courses():
     return jsonify(course_list)
 
 # Teacher course detail page
-@teacher_course_bp.route('/teacher_course/<int:course_id>')
+@teacher_course_bp.route('/teacher_course/<course_code>')
 @login_required
 @teacher_required
-def teacher_course_detail(course_id):
+def teacher_course_detail(course_code):
     # Get course information
-    course = Course.query.get_or_404(course_id)
+    course = Course.query.get_or_404(course_code)
     
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
@@ -95,7 +95,7 @@ def teacher_course_detail(course_id):
         return redirect(url_for('teacher_course.teacher_course_list'))
     
     # Get the number of students enrolled in the course
-    enrolled_count = CourseEnrollment.query.filter_by(course_id=course_id).count()
+    enrolled_count = CourseEnrollment.query.filter_by(course_code=course_code).count()
     
     return render_template('teacher_course_detail.html', course=course, enrolled_count=enrolled_count)
 
@@ -113,12 +113,39 @@ def create_course():
         day_of_week = request.form['day_of_week']
         start_time = request.form['start_time']
         end_time = request.form['end_time']
-        department_id = request.form.get('department_id')  # Optional field
+        department_code = request.form.get('department_code')  # Optional field
         
-        # Generate unique course code
-        code = generate_course_code()
-        while Course.query.filter_by(code=code).first():
+        # If department_code is provided, use it; otherwise try to extract from course code format
+        final_department_code = department_code if department_code else None
+        final_course_number = None
+        
+        # If course name follows department format (e.g., COMP1010), extract components
+        import re
+        dept_pattern = re.match(r'^([A-Za-z]+)(\d+)$', name.replace(" ", ""))
+        if dept_pattern:
+            final_department_code = dept_pattern.group(1).upper()
+            final_course_number = dept_pattern.group(2)
+        
+        # Generate unique course code if not provided in format
+        if not final_department_code or not final_course_number:
             code = generate_course_code()
+            while Course.query.filter_by(code=code).first():
+                code = generate_course_code()
+            # Try to extract department from name or use default
+            if not final_department_code:
+                name_pattern = re.match(r'^([A-Za-z]+)', name)
+                final_department_code = name_pattern.group(1).upper() if name_pattern else 'DEPT'
+            if not final_course_number:
+                final_course_number = code[:4]  # Use part of generated code
+        else:
+            # Use the extracted format
+            code = final_department_code + final_course_number
+            # Ensure uniqueness
+            counter = 1
+            original_code = code
+            while Course.query.filter_by(code=code).first():
+                code = f"{original_code}_{counter}"
+                counter += 1
         
         # Create new course
         new_course = Course(
@@ -131,7 +158,8 @@ def create_course():
             day_of_week=day_of_week,
             start_time=start_time,
             end_time=end_time,
-            department_id=department_id if department_id else None
+            department_code=final_department_code,
+            course_number=final_course_number
         )
         
         # Save to database
@@ -139,17 +167,17 @@ def create_course():
         db.session.commit()
         
         flash('Course created successfully!')
-        return redirect(url_for('teacher_course.teacher_course_detail', course_id=new_course.id))
+        return redirect(url_for('teacher_course.teacher_course_detail', course_code=new_course.code))
     
     return render_template('create_course.html')
 
 # Enrolled students list page
-@teacher_course_bp.route('/teacher_course/<int:course_id>/enrolled_list', methods=['GET', 'POST'])
+@teacher_course_bp.route('/teacher_course/<course_code>/enrolled_list', methods=['GET', 'POST'])
 @login_required
 @teacher_required
-def enrolled_list(course_id):
+def enrolled_list(course_code):
     # Get course information
-    course = Course.query.get_or_404(course_id)
+    course = Course.query.get_or_404(course_code)
     
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
@@ -163,7 +191,7 @@ def enrolled_list(course_id):
     enrolled_students = db.session.query(User).join(
         CourseEnrollment, User.id == CourseEnrollment.student_id
     ).filter(
-        CourseEnrollment.course_id == course_id
+        CourseEnrollment.course_code == course_code
     )
     
     # Apply department filter
@@ -178,22 +206,22 @@ def enrolled_list(course_id):
         if student_ids:
             # Delete selected student enrollment records
             CourseEnrollment.query.filter(
-                CourseEnrollment.course_id == course_id,
+                CourseEnrollment.course_code == course_code,
                 CourseEnrollment.student_id.in_(student_ids)
             ).delete(synchronize_session=False)
             db.session.commit()
             flash(f'Successfully removed {len(student_ids)} students from the course.')
-        return redirect(url_for('teacher_course.enrolled_list', course_id=course_id))
+        return redirect(url_for('teacher_course.enrolled_list', course_code=course_code))
     
     return render_template('enrolled_list.html', course=course, students=enrolled_students)
 
 # Not enrolled students list page
-@teacher_course_bp.route('/teacher_course/<int:course_id>/not_enrolled_list', methods=['GET', 'POST'])
+@teacher_course_bp.route('/teacher_course/<course_code>/not_enrolled_list', methods=['GET', 'POST'])
 @login_required
 @teacher_required
-def not_enrolled_list(course_id):
+def not_enrolled_list(course_code):
     # Get course information
-    course = Course.query.get_or_404(course_id)
+    course = Course.query.get_or_404(course_code)
     
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
@@ -208,7 +236,7 @@ def not_enrolled_list(course_id):
         User.role == 'student',
         User.id.notin_(
             db.session.query(CourseEnrollment.student_id)
-            .filter(CourseEnrollment.course_id == course_id)
+            .filter(CourseEnrollment.course_code == course_code)
         )
     )
     
@@ -223,31 +251,31 @@ def not_enrolled_list(course_id):
         student_ids = request.form.getlist('students[]')
         if student_ids:
             # Check course capacity
-            current_enrolled = CourseEnrollment.query.filter_by(course_id=course_id).count()
+            current_enrolled = CourseEnrollment.query.filter_by(course_code=course_code).count()
             if current_enrolled + len(student_ids) > course.capacity:
                 flash('The number of students to add exceeds the course capacity limit.')
-                return redirect(url_for('teacher_course.not_enrolled_list', course_id=course_id))
+                return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))
             
             # Add selected students
             for student_id in student_ids:
                 enrollment = CourseEnrollment(
-                    course_id=course_id,
+                    course_code=course_code,
                     student_id=student_id
                 )
                 db.session.add(enrollment)
             db.session.commit()
             flash(f'Successfully added {len(student_ids)} students to the course.')
-        return redirect(url_for('teacher_course.not_enrolled_list', course_id=course_id))
+        return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))
     
     return render_template('not_enrolled_list.html', course=course, students=not_enrolled_students)
 
 # CSV import students page
-@teacher_course_bp.route('/teacher_course/<int:course_id>/import_students', methods=['GET', 'POST'])
+@teacher_course_bp.route('/teacher_course/<course_code>/import_students', methods=['GET', 'POST'])
 @login_required
 @teacher_required
-def import_students(course_id):
+def import_students(course_code):
     # Get course information
-    course = Course.query.get_or_404(course_id)
+    course = Course.query.get_or_404(course_code)
     
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
@@ -314,7 +342,7 @@ def import_students(course_id):
             
             # Check if student is already enrolled in the course
             enrollment = CourseEnrollment.query.filter_by(
-                course_id=course_id,
+                course_code=course_code,
                 student_id=student.id
             ).first()
             
@@ -326,14 +354,14 @@ def import_students(course_id):
         # If there are unenrolled students and auto-add is selected
         if request.form.get('auto_enroll') == '1' and not_enrolled_students:
             # Check course capacity
-            current_enrolled = CourseEnrollment.query.filter_by(course_id=course_id).count()
+            current_enrolled = CourseEnrollment.query.filter_by(course_code=course_code).count()
             if current_enrolled + len(not_enrolled_students) > course.capacity:
                 flash('The number of students to add exceeds the course capacity limit, not automatically added.')
             else:
                 # Auto add students
                 for student in not_enrolled_students:
                     enrollment = CourseEnrollment(
-                        course_id=course_id,
+                        course_code=course_code,
                         student_id=student.id
                     )
                     db.session.add(enrollment)

@@ -101,7 +101,7 @@
         fetch('/course/add', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({course_id:cid})
+            body:JSON.stringify({course_code:cid})
         }).then(r=>r.json()).then(data=>{
             document.getElementById('course-msg').innerText = data.msg;
             loadAvailableCourses();
@@ -114,7 +114,7 @@
         fetch('/course/drop', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({course_id:cid})
+            body:JSON.stringify({course_code:cid})
         }).then(r=>r.json()).then(data=>{
             document.getElementById('course-msg').innerText = data.msg;
             loadAvailableCourses();
