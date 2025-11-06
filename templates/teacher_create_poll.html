@@ -1,0 +1,168 @@
+{% extends 'teacher_course_base.html' %}
+
+{% block course_title %}{{ course.name }} - Create Poll{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-poll-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .page-header h1 {
+        color: #8a1c32;
+        margin: 0;
+    }
+    
+    .poll-info {
+        background: #e8f4f8;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3498db;
+    }
+    
+    .poll-info p {
+        margin: 5px 0;
+        color: #2c3e50;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #8a1c32;
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-primary {
+        background: #8a1c32;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #6e1728;
+    }
+    
+    .btn-secondary {
+        background: #7f8c8d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #6c7b7d;
+    }
+    
+    .help-text {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="create-poll-container">
+    <div class="page-header">
+        <h1>Create New Poll</h1>
+        <p style="color: #7f8c8d; margin-top: 10px;">Create a new poll for {{ course.name }}</p>
+    </div>
+    
+    <div class="poll-info">
+        <p><strong>Note:</strong> Polls are ungraded and always visible to students.</p>
+        <p>Students can see questions, their responses, and class statistics immediately after submission.</p>
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Poll Name *</label>
+            <input type="text" id="name" name="name" required placeholder="Enter poll name">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Enter poll description (optional)"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="duration">Duration (minutes)</label>
+                <input type="number" id="duration" name="duration" value="15" min="1" max="60">
+                <div class="help-text">Time allowed for the poll</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="attempt_limit">Attempt Limit</label>
+                <input type="number" id="attempt_limit" name="attempt_limit" value="1" min="1" max="5">
+                <div class="help-text">Maximum number of attempts allowed</div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Poll</button>
+            <a href="{{ url_for('poll.teacher_poll_list', course_code=course.code) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

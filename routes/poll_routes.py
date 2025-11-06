@@ -147,7 +147,11 @@ def start_poll(course_code, poll_id):
         Submission.poll_id == poll_id
     ).first() is not None
     
-    if has_responded:
+    # Check if user is teacher (teachers can respond multiple times)
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    
+    if has_responded and not is_teacher:
         return redirect(f'/course/{course_code}/poll?already_submitted=1')
     
     # Get poll questions
@@ -197,6 +201,153 @@ def get_poll_results(course_code, poll_id):
     poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
+
+
+# Teacher poll management routes
+@poll_bp.route('/teacher/course/<course_code>/poll', methods=['GET'])
+def teacher_poll_list(course_code):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get all polls for the course
+    polls = Poll.query.filter_by(course_code=course_code).all()
+    
+    return render_template('teacher_poll_list.html', course=course, polls=polls)
+
+@poll_bp.route('/teacher/course/<course_code>/poll/create', methods=['GET', 'POST'])
+def teacher_create_poll(course_code):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    if request.method == 'POST':
+        # Create new poll (always visible for polls)
+        poll = Poll(
+            course_code=course_code,
+            name=request.form['name'],
+            description=request.form['description'],
+            created_by=user_id,
+            duration=int(request.form.get('duration', 30)),
+            attempt_limit=int(request.form.get('attempt_limit', 5)),
+            point=0,  # Polls are ungraded
+            point_in_course=0,
+            # Polls should always be visible
+            after_submitted_question_visible=True,
+            after_submitted_student_response_visible=True,
+            after_submitted_sample_response_visible=True,
+            after_submitted_class_response_visible=True
+        )
+        
+        db.session.add(poll)
+        db.session.commit()
+        
+        flash('Poll created successfully!')
+        return redirect(url_for('poll.teacher_poll_list', course_code=course_code))
+    
+    return render_template('teacher_create_poll.html', course=course)
+
+@poll_bp.route('/teacher/course/<course_code>/poll/<int:poll_id>/edit', methods=['GET', 'POST'])
+def teacher_edit_poll(course_code, poll_id):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get poll
+    poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
+    if not poll:
+        return render_template('course_home.html', error_message="Poll not found"), 404
+    
+    if request.method == 'POST':
+        # Update poll
+        poll.name = request.form['name']
+        poll.description = request.form['description']
+        poll.duration = int(request.form.get('duration', 30))
+        poll.attempt_limit = int(request.form.get('attempt_limit', 5))
+        # Polls remain ungraded and always visible
+        poll.point = 0
+        poll.point_in_course = 0
+        poll.after_submitted_question_visible = True
+        poll.after_submitted_student_response_visible = True
+        poll.after_submitted_sample_response_visible = True
+        poll.after_submitted_class_response_visible = True
+        
+        db.session.commit()
+        
+        flash('Poll updated successfully!')
+        return redirect(url_for('poll.teacher_poll_list', course_code=course_code))
+    
+    return render_template('teacher_edit_poll.html', course=course, poll=poll)
+
+@poll_bp.route('/teacher/course/<course_code>/poll/<int:poll_id>/delete', methods=['POST'])
+def teacher_delete_poll(course_code, poll_id):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get poll
+    poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
+    if not poll:
+        return render_template('course_home.html', error_message="Poll not found"), 404
+    
+    # Delete poll (cascade will delete questions and choices)
+    db.session.delete(poll)
+    db.session.commit()
+    
+    flash('Poll deleted successfully!')
+    return redirect(url_for('poll.teacher_poll_list', course_code=course_code))
     
     # Get user's submission
     submission = Submission.query.filter_by(poll_id=poll_id, user_id=user_id).first()

@@ -1,0 +1,219 @@
+{% extends 'teacher_course_base.html' %}
+
+{% block course_title %}{{ course.name }} - Create Quiz{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-quiz-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .page-header h1 {
+        color: #8a1c32;
+        margin: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #8a1c32;
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .visibility-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+    }
+    
+    .visibility-section h3 {
+        color: #8a1c32;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+        transform: scale(1.2);
+    }
+    
+    .checkbox-group label {
+        margin-bottom: 0;
+        font-weight: normal;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-primary {
+        background: #8a1c32;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #6e1728;
+    }
+    
+    .btn-secondary {
+        background: #7f8c8d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #6c7b7d;
+    }
+    
+    .help-text {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="create-quiz-container">
+    <div class="page-header">
+        <h1>Create New Quiz</h1>
+        <p style="color: #7f8c8d; margin-top: 10px;">Create a new quiz for {{ course.name }}</p>
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Quiz Name *</label>
+            <input type="text" id="name" name="name" required placeholder="Enter quiz name">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Enter quiz description (optional)"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="duration">Duration (minutes)</label>
+                <input type="number" id="duration" name="duration" value="30" min="1" max="180">
+                <div class="help-text">Time allowed for the quiz</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="attempt_limit">Attempt Limit</label>
+                <input type="number" id="attempt_limit" name="attempt_limit" value="5" min="1" max="10">
+                <div class="help-text">Maximum number of attempts allowed</div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="point">Total Points</label>
+                <input type="number" id="point" name="point" value="100" min="1" max="1000">
+                <div class="help-text">Total points for this quiz</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="point_in_course">Points in Course</label>
+                <input type="number" id="point_in_course" name="point_in_course" value="0" min="0" max="100">
+                <div class="help-text">Weight in overall course grade</div>
+            </div>
+        </div>
+        
+        <div class="visibility-section">
+            <h3>Post-Submission Visibility Settings</h3>
+            <p style="color: #7f8c8d; margin-bottom: 15px;">Control what students can see after submitting the quiz</p>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="question_visible" name="question_visible" checked>
+                <label for="question_visible">Show questions after submission</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="student_response_visible" name="student_response_visible">
+                <label for="student_response_visible">Show student's own responses</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="sample_response_visible" name="sample_response_visible">
+                <label for="sample_response_visible">Show correct answers</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="class_response_visible" name="class_response_visible">
+                <label for="class_response_visible">Show class statistics</label>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Quiz</button>
+            <a href="{{ url_for('quiz.teacher_quiz_list', course_code=course.code) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

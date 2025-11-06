@@ -87,8 +87,12 @@ def get_quiz_info(course_code, quiz_id):
     # Get attempt count
     attempt_count = Attempt.query.filter_by(quiz_id=quiz_id, user_id=user_id).count()
     
-    # Check if user can attempt again
-    can_attempt = not quiz.attempt_limit or attempt_count < quiz.attempt_limit
+    # Check if user is teacher (teachers have unlimited attempts)
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    
+    # Check if user can attempt again (teachers always can)
+    can_attempt = is_teacher or not quiz.attempt_limit or attempt_count < quiz.attempt_limit
     
     # Prepare questions with choices (for MCQ)
     quiz_data = {
@@ -131,8 +135,11 @@ def start_quiz(course_code, quiz_id):
     # Get attempt count
     attempt_count = Attempt.query.filter_by(quiz_id=quiz_id, user_id=user_id).count()
     
-    # Check if user can attempt again
-    if quiz.attempt_limit and attempt_count >= quiz.attempt_limit:
+    # Check if user can attempt again (teachers always can)
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    
+    if not is_teacher and quiz.attempt_limit and attempt_count >= quiz.attempt_limit:
         return render_template('quiz_info.html', course=course, quiz={
             'id': quiz.id,
             'name': quiz.name,
@@ -197,6 +204,153 @@ def get_quiz_results(course_code, quiz_id):
     quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
     if not quiz:
         return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
+
+
+# Teacher quiz management routes
+@quiz_bp.route('/teacher/course/<course_code>/quiz', methods=['GET'])
+def teacher_quiz_list(course_code):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get all quizzes for the course
+    quizzes = Quiz.query.filter_by(course_code=course_code).all()
+    
+    return render_template('teacher_quiz_list.html', course=course, quizzes=quizzes)
+
+@quiz_bp.route('/teacher/course/<course_code>/quiz/create', methods=['GET', 'POST'])
+def teacher_create_quiz(course_code):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    if request.method == 'POST':
+        # Create new quiz
+        quiz = Quiz(
+            course_code=course_code,
+            name=request.form['name'],
+            description=request.form['description'],
+            created_by=user_id,
+            duration=int(request.form.get('duration', 30)),
+            attempt_limit=int(request.form.get('attempt_limit', 5)),
+            point=int(request.form.get('point', 100)),
+            point_in_course=int(request.form.get('point_in_course', 0)),
+            # Visibility settings
+            after_submitted_question_visible=request.form.get('question_visible', 'false') == 'true',
+            after_submitted_student_response_visible=request.form.get('student_response_visible', 'false') == 'true',
+            after_submitted_sample_response_visible=request.form.get('sample_response_visible', 'false') == 'true',
+            after_submitted_class_response_visible=request.form.get('class_response_visible', 'false') == 'true'
+        )
+        
+        db.session.add(quiz)
+        db.session.commit()
+        
+        flash('Quiz created successfully!')
+        return redirect(url_for('quiz.teacher_quiz_list', course_code=course_code))
+    
+    return render_template('teacher_create_quiz.html', course=course)
+
+@quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/edit', methods=['GET', 'POST'])
+def teacher_edit_quiz(course_code, quiz_id):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return render_template('course_home.html', error_message="Quiz not found"), 404
+    
+    if request.method == 'POST':
+        # Update quiz
+        quiz.name = request.form['name']
+        quiz.description = request.form['description']
+        quiz.duration = int(request.form.get('duration', 30))
+        quiz.attempt_limit = int(request.form.get('attempt_limit', 5))
+        quiz.point = int(request.form.get('point', 100))
+        quiz.point_in_course = int(request.form.get('point_in_course', 0))
+        # Visibility settings
+        quiz.after_submitted_question_visible = request.form.get('question_visible', 'false') == 'true'
+        quiz.after_submitted_student_response_visible = request.form.get('student_response_visible', 'false') == 'true'
+        quiz.after_submitted_sample_response_visible = request.form.get('sample_response_visible', 'false') == 'true'
+        quiz.after_submitted_class_response_visible = request.form.get('class_response_visible', 'false') == 'true'
+        
+        db.session.commit()
+        
+        flash('Quiz updated successfully!')
+        return redirect(url_for('quiz.teacher_quiz_list', course_code=course_code))
+    
+    return render_template('teacher_edit_quiz.html', course=course, quiz=quiz)
+
+@quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/delete', methods=['POST'])
+def teacher_delete_quiz(course_code, quiz_id):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return render_template('course_home.html', error_message="Quiz not found"), 404
+    
+    # Delete quiz (cascade will delete questions and choices)
+    db.session.delete(quiz)
+    db.session.commit()
+    
+    flash('Quiz deleted successfully!')
+    return redirect(url_for('quiz.teacher_quiz_list', course_code=course_code))
     
     # Get user's submission
     submission = Submission.query.filter_by(quiz_id=quiz_id, user_id=user_id).first()
