@@ -6,6 +6,7 @@ from models.poll import Poll
 from models.question import Question
 from models.choice import Choice
 from models.question_response import QuestionResponse
+from models.submission import Submission
 from database import db
 
 poll_bp = Blueprint('poll', __name__)
@@ -33,15 +34,16 @@ def get_poll_list(course_id):
     # Prepare data for the template
     poll_data = []
     for poll in polls:
-        # Check if the user has already responded
-        has_responded = QuestionResponse.query.join(Question).filter(
-            Question.poll_id == poll.id,
-            QuestionResponse.student_id == user_id
+        # Check if the user has already responded through submission
+        has_responded = QuestionResponse.query.join(Submission).filter(
+            QuestionResponse.submission_id == Submission.id,
+            Submission.user_id == user_id,
+            Submission.poll_id == poll.id
         ).first() is not None
         
         poll_data.append({
             'id': poll.id,
-            'title': poll.title,
+            'name': poll.name,
             'description': poll.description,
             'has_responded': has_responded,
             'deadline': poll.deadline
@@ -84,16 +86,17 @@ def get_poll_info(course_id, poll_id):
     # Get poll questions
     questions = Question.query.filter_by(poll_id=poll_id).all()
     
-    # Check if user has already responded
-    has_responded = QuestionResponse.query.join(Question).filter(
-        Question.poll_id == poll_id,
-        QuestionResponse.student_id == user_id
+    # Check if user has already responded through submission
+    has_responded = QuestionResponse.query.join(Submission).filter(
+        QuestionResponse.submission_id == Submission.id,
+        Submission.user_id == user_id,
+        Submission.poll_id == poll_id
     ).first() is not None
     
     # Prepare questions with choices (for MCQ)
     poll_data = {
         'id': poll.id,
-        'title': poll.title,
+        'name': poll.name,
         'description': poll.description,
         'has_responded': has_responded,
         'deadline': poll.deadline,
@@ -137,10 +140,11 @@ def start_poll(course_id, poll_id):
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
     
-    # Check if user has already responded
-    has_responded = QuestionResponse.query.join(Question).filter(
-        Question.poll_id == poll_id,
-        QuestionResponse.student_id == user_id
+    # Check if user has already responded through submission
+    has_responded = QuestionResponse.query.join(Submission).filter(
+        QuestionResponse.submission_id == Submission.id,
+        Submission.user_id == user_id,
+        Submission.poll_id == poll_id
     ).first() is not None
     
     if has_responded:
@@ -152,7 +156,7 @@ def start_poll(course_id, poll_id):
     # Prepare questions with choices
     poll_data = {
         'id': poll.id,
-        'title': poll.title,
+        'name': poll.name,
         'description': poll.description
     }
     
@@ -194,10 +198,11 @@ def submit_poll(course_id, poll_id):
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
     
-    # Check if user has already responded
-    has_responded = QuestionResponse.query.join(Question).filter(
-        Question.poll_id == poll_id,
-        QuestionResponse.student_id == user_id
+    # Check if user has already responded through submission
+    has_responded = QuestionResponse.query.join(Submission).filter(
+        QuestionResponse.submission_id == Submission.id,
+        Submission.user_id == user_id,
+        Submission.poll_id == poll_id
     ).first() is not None
     
     if has_responded:
@@ -205,6 +210,14 @@ def submit_poll(course_id, poll_id):
     
     # Get all questions for this poll
     questions = Question.query.filter_by(poll_id=poll_id).all()
+    
+    # Create submission record
+    submission = Submission(
+        user_id=user_id,
+        poll_id=poll_id
+    )
+    db.session.add(submission)
+    db.session.flush()  # To get the submission ID
     
     # Process answers
     for question in questions:
@@ -214,7 +227,7 @@ def submit_poll(course_id, poll_id):
         if question.type == 'mcq':
             # Create response for MCQ
             response = QuestionResponse(
-                student_id=user_id,
+                submission_id=submission.id,
                 question_id=question.id,
                 choice_id=user_answer,  # This could be None if no answer provided
                 text_answer=None
@@ -223,7 +236,7 @@ def submit_poll(course_id, poll_id):
         elif question.type == 'saq':
             # Create response for short answer question
             response = QuestionResponse(
-                student_id=user_id,
+                submission_id=submission.id,
                 question_id=question.id,
                 choice_id=None,
                 text_answer=user_answer  # This could be None if no answer provided

@@ -3,7 +3,7 @@ from datetime import datetime
 from database import db
 
 class User(db.Model):
-    __tablename__ = 'users'
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
@@ -11,12 +11,11 @@ class User(db.Model):
     email = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)  # User's department (nullable)
-    department = db.relationship('Department', backref='users')
+    department = db.relationship('Department', backref='user')
 
     courses = db.relationship('Course', backref='teacher', lazy=True)
     enrollments = db.relationship('CourseEnrollment', backref='student', lazy=True)
     submissions = db.relationship('Submission', backref='student', lazy=True)
     grades = db.relationship('Grade', backref='student', lazy=True)
-    sent_notifications = db.relationship('Notification', foreign_keys='Notification.sender_id', backref='sender', lazy=True)
-    received_notifications = db.relationship('Notification', foreign_keys='Notification.receiver_id', backref='receiver', lazy=True)
-    logs = db.relationship('SystemLog', backref='user', lazy=True)
+
+    

@@ -1,6 +1,6 @@
 {% extends 'base_poll.html' %}
 
-{% block title %}Poll Info - {{ poll.title if poll else 'Student Home' }}{% endblock %}
+{% block title %}Poll Info - {{ poll.name if poll else 'Student Home' }}{% endblock %}
 
 {% block main_content %}
     {% if message %}
@@ -11,7 +11,7 @@
         </div>
     {% else %}
         <div class="quiz-container">
-            <h1>{{ poll.title }}</h1>
+            <h1>{{ poll.name }}</h1>
             {% if poll.description %}
                 <p><strong>Description:</strong> {{ poll.description }}</p>
             {% endif %}

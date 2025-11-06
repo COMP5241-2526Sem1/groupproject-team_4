@@ -30,18 +30,23 @@ def init_db():
     try:
         with app.app_context():
             # Dynamically import models to avoid circular imports
-            from models.user import Users
-            from models.system_log import SystemLog
+            from models.department import Department
+            from models.user import User
+
             from models.submission import Submission
             from models.quiz import Quiz
+            from models.poll import Poll
+            from models.word_cloud import WordCloud
+            from models.minigame import Minigame
+            from models.short_answer import ShortAnswer
             from models.question import Question
-            from models.notification import Notification
+
             from models.grade import Grade
             from models.course_enrollment import CourseEnrollment
             from models.course import Course
             from models.choice import Choice
 
-            models = [Users, SystemLog, Submission, Quiz, Question, Notification, Grade, CourseEnrollment, Course, Choice]
+            models = [Department, User, Submission, Quiz, Poll, WordCloud, Minigame, ShortAnswer, Question, Grade, CourseEnrollment, Course, Choice]
             for model in models:
                 try:
                     model.__table__.create(db.engine)
@@ -59,9 +64,12 @@ def create_user_table():
                 """
                 CREATE TABLE IF NOT EXISTS "user" (
                     id SERIAL PRIMARY KEY,
-                    name VARCHAR(80) NOT NULL,
-                    email VARCHAR(120) UNIQUE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    username VARCHAR(50) UNIQUE NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
+                    role user_role_enum NOT NULL,
+                    email VARCHAR(100),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    department_id INTEGER REFERENCES department(id)
                 );
                 """
             ))

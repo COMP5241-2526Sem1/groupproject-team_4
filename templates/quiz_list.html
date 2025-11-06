@@ -1,10 +1,10 @@
 {% extends 'quiz_base.html' %}
 
-{% block title %}Quiz List - {{ course.title if course else 'Student Home' }}{% endblock %}
+{% block title %}Quiz List - {{ course.name if course else 'Student Home' }}{% endblock %}
 
 {% block main_content %}
     <h1>Quiz List</h1>
-    <p>Course: {{ course.title if course else 'Unknown Course' }}</p>
+    <p>Course: {{ course.name if course else 'Unknown Course' }}</p>
     
     {% if message %}
     <div class="success-message">
@@ -18,14 +18,14 @@
         {% if quiz.used_attempts < quiz.max_attempts %}
         <a href="/course/{{ course.id }}/quiz/{{ quiz.id }}" class="quiz-container-link">
             <div class="quiz-container">
-                <h3>{{ quiz.title }}</h3>
+                <h3>{{ quiz.name }}</h3>
                 <p>Used Attempts: {{ quiz.used_attempts }}/{{ quiz.max_attempts }}</p>
                 <span class="btn">View Quiz</span>
             </div>
         </a>
         {% else %}
         <div class="quiz-container">
-            <h1>{{ quiz.title }}</h1>
+            <h1>{{ quiz.name }}</h1>
             <p>Used Attempts: {{ quiz.used_attempts }}/{{ quiz.max_attempts }}</p>
             <span class="quiz-completed">Quiz Completed</span>
         </div>

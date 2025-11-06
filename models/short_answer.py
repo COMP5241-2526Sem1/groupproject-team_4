@@ -3,9 +3,10 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import db
 
-class Poll(db.Model):
-    __tablename__ = 'poll'
 
+class ShortAnswer(db.Model):
+    __tablename__ = 'short_answer'
+    
     id = Column(Integer, primary_key=True)
     course_id = Column(Integer, ForeignKey('course.id'), nullable=False)
     name = Column(String(255), nullable=False)
@@ -18,9 +19,9 @@ class Poll(db.Model):
     attempt_limit = Column(Integer, default=5)
     point = Column(Integer, default=100)
     point_in_course = Column(Integer, default=0)
-
-    # Relationships
-    questions = relationship("Question", backref="poll", cascade="all, delete-orphan",
-                           foreign_keys='Question.poll_id')
-    course = relationship('Course', backref='polls')
-    creator = relationship('User', backref='created_polls')
+    
+    # Relationship to questions
+    questions = relationship('Question', backref='short_answer', cascade='all, delete-orphan',
+                           foreign_keys='Question.short_answer_id')
+    course = relationship('Course', backref='short_answers')
+    creator = relationship('User', backref='created_short_answers')

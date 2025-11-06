@@ -6,10 +6,9 @@ class QuestionResponse(db.Model):
     __tablename__ = 'question_response'
 
     id = Column(Integer, primary_key=True)
-    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)
+    submission_id = Column(Integer, ForeignKey('submission.id'), nullable=False)  # 通过 submission 关联到用户
     question_id = Column(Integer, ForeignKey('question.id'), nullable=False)
-    # if mcq, content is user choice(eg, A or ABD)
-    # if saq, content is some text
-    content = Column(Text)
-    is_correct = Column(Boolean)
+    choice_id = Column(Integer, ForeignKey('choice.id'), nullable=True)  # 用于多选题
+    text_answer = Column(Text, nullable=True)  # 用于简答题
+    is_correct = Column(Boolean, default=False)
     points = Column(Float, default=0.0)

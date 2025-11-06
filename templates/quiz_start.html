@@ -1,6 +1,6 @@
 {% extends 'quiz_base.html' %}
 
-{% block title %}{{ quiz.title }} - Start Quiz{% endblock %}
+{% block title %}{{ quiz.name }} - Start Quiz{% endblock %}
 
 {% block quiz_scripts %}
     // Simple validation before submitting
@@ -18,7 +18,7 @@
     {% endif %}
     
     <div class="quiz-header">
-        <h1>{{ quiz.title }}</h1>
+        <h1>{{ quiz.name }}</h1>
         {% if quiz.description %}
         <div class="quiz-description">{{ quiz.description }}</div>
         {% endif %}

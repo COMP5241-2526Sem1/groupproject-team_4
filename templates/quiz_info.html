@@ -1,6 +1,6 @@
 {% extends 'quiz_base.html' %}
 
-{% block title %}Quiz Info - {{ quiz.title if quiz else 'Student Home' }}{% endblock %}
+{% block title %}Quiz Info - {{ quiz.name if quiz else 'Student Home' }}{% endblock %}
 
 {% block main_content %}
     {% if message %}
@@ -11,7 +11,7 @@
         </div>
     {% else %}
         <div class="quiz-container">
-            <h1>{{ quiz.title }}</h1>
+            <h1>{{ quiz.name }}</h1>
             {% if quiz.description %}
                 <p><strong>Description:</strong> {{ quiz.description }}</p>
             {% endif %}

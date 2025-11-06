@@ -21,7 +21,7 @@ try:
 except Exception as e:
     print(f"PostgreSQL Database Connection Failed!: {e}")
 
-from models import User, Course, CourseEnrollment, Submission, Grade, Notification, SystemLog, Quiz, Question, Choice, QuestionResponse, Poll
+from models import *
 try:
     with app.app_context():
         print(app.app_context)

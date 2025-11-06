@@ -36,14 +36,14 @@ def get_quiz_list(course_id):
     quiz_data = []
     for quiz in quizzes:
         # Check if the user has already responded
-        has_responded = Submission.query.filter_by(quiz_id=quiz.id, student_id=user_id).first() is not None
+        has_responded = Submission.query.filter_by(quiz_id=quiz.id, user_id=user_id).first() is not None
         
         # Get attempt count
         attempt_count = Attempt.query.filter_by(quiz_id=quiz.id, user_id=user_id).count()
         
         quiz_data.append({
             'id': quiz.id,
-            'title': quiz.title,
+            'name': quiz.name,
             'description': quiz.description,
             'has_responded': has_responded,
             'used_attempts': attempt_count,
@@ -93,7 +93,7 @@ def get_quiz_info(course_id, quiz_id):
     # Prepare questions with choices (for MCQ)
     quiz_data = {
         'id': quiz.id,
-        'title': quiz.title,
+        'name': quiz.name,
         'description': quiz.description,
         'used_attempts': attempt_count,
         'max_attempts': quiz.attempt_limit,
@@ -135,7 +135,7 @@ def start_quiz(course_id, quiz_id):
     if quiz.attempt_limit and attempt_count >= quiz.attempt_limit:
         return render_template('quiz_info.html', course=course, quiz={
             'id': quiz.id,
-            'title': quiz.title,
+            'name': quiz.name,
             'description': quiz.description,
             'has_responded': has_responded,
             'used_attempts': attempt_count,
@@ -147,7 +147,7 @@ def start_quiz(course_id, quiz_id):
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     
     # Create new attempt
-    new_attempt = Attempt(quiz_id=quiz_id, student_id=user_id)
+    new_attempt = Attempt(quiz_id=quiz_id, user_id=user_id)
     db.session.add(new_attempt)
     db.session.commit()
     
@@ -157,7 +157,7 @@ def start_quiz(course_id, quiz_id):
     # Prepare questions with choices
     quiz_data = {
         'id': quiz.id,
-        'title': quiz.title,
+        'name': quiz.name,
         'description': quiz.description,
         'duration': quiz.duration,
         'has_responded': has_responded,
@@ -211,6 +211,21 @@ def submit_quiz(course_id, quiz_id):
     # Get all questions for this quiz
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
     
+    # Create submission record first to get the ID
+    submission = Submission(
+        user_id=user_id,
+        quiz_id=quiz_id,
+        attempt_id=attempt_id,
+        score=total_points,
+        is_passed=all_answers_correct  # This is a simple pass/fail logic
+    )
+    db.session.add(submission)
+    db.session.flush()  # To get the submission ID
+    
+    # Update attempt with score
+    attempt.score = total_points
+    attempt.is_completed = True
+    
     # Process answers
     total_points = 0
     all_answers_correct = True
@@ -225,7 +240,7 @@ def submit_quiz(course_id, quiz_id):
                 all_answers_correct = False
                 # Create response with empty answer
                 response = QuestionResponse(
-                    attempt_id=attempt_id,
+                    submission_id=submission.id,
                     question_id=question.id,
                     choice_id=None,
                     text_answer=None,
@@ -247,7 +262,7 @@ def submit_quiz(course_id, quiz_id):
                     
                     # Create response
                     response = QuestionResponse(
-                        attempt_id=attempt_id,
+                        submission_id=submission.id,
                         question_id=question.id,
                         choice_id=choice.id,
                         text_answer=None,
@@ -261,27 +276,13 @@ def submit_quiz(course_id, quiz_id):
             
             # Create response
             response = QuestionResponse(
-                attempt_id=attempt_id,
+                submission_id=submission.id,
                 question_id=question.id,
                 choice_id=None,
                 text_answer=user_answer,
                 is_correct=False  # Mark as incorrect until manually graded
             )
             db.session.add(response)
-    
-    # Update attempt with score
-    attempt.score = total_points
-    attempt.is_completed = True
-    
-    # Create submission record
-    submission = Submission(
-        student_id=user_id,
-        quiz_id=quiz_id,
-        attempt_id=attempt_id,
-        score=total_points,
-        is_passed=all_answers_correct  # This is a simple pass/fail logic
-    )
-    db.session.add(submission)
     
     # Save all changes
     db.session.commit()

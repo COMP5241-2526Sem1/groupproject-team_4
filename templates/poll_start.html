@@ -1,6 +1,6 @@
 {% extends 'poll_base.html' %}
 
-{% block title %}Start Poll - {{ poll.title }}{% endblock %}
+{% block title %}Start Poll - {{ poll.name }}{% endblock %}
 
 {% block poll_scripts %}
     // Enhanced experience for poll submission
@@ -18,7 +18,7 @@
     {% endif %}
     
     <div class="poll-header">
-          <h1>{{ poll.title }}</h1>
+          <h1>{{ poll.name }}</h1>
         {% if poll.description %}
         <div class="poll-description">{{ poll.description }}</div>
         {% endif %}

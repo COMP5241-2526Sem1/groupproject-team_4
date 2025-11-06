@@ -10,7 +10,7 @@ class Attempt(db.Model):
 
     id = Column(Integer, primary_key=True)
     quiz_id = Column(Integer, ForeignKey('quiz.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     attempt_count = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=func.now())
     

@@ -13,7 +13,7 @@
         {% for poll in polls %}
             <div class="quiz-container">
                 <a href="{{ url_for('course.get_poll_info', course_id=course.code if course and course.code else course_id, poll_id=poll.id) }}" class="quiz-link">
-                    <h2>{{ poll.title }}</h2>
+                    <h2>{{ poll.name }}</h2>
                     <p>Created: {{ poll.created_at.strftime('%Y-%m-%d') }}</p>
                     <p>Status: Active</p>
                 </a>
