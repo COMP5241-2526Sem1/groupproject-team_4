@@ -27,12 +27,7 @@ INSERT INTO "user" (id, username, password_hash, role, email, department_id, cre
 
 -- Level 2: Courses
 
-INSERT INTO course (id, code, name, description, department_id, teacher_id, created_at, credit, capacity, day_of_week, start_time, end_time) VALUES
-(1, 'COMP101', 'Introduction to Programming', 'Learn fundamental programming concepts using Python', 1, 1, NOW(), 3, 30, 'Mon', '09:00:00', '11:00:00'),
-(2, 'COMP201', 'Data Structures', 'Advanced data structures and algorithms', 1, 1, NOW(), 3, 25, 'Wed', '14:00:00', '16:00:00'),
-(3, 'MATH101', 'Calculus I', 'Differential calculus fundamentals', 2, 2, NOW(), 4, 35, 'Tue', '10:00:00', '12:00:00'),
-(4, 'PHYS101', 'Physics I', 'Mechanics and thermodynamics', 3, 3, NOW(), 4, 28, 'Thu', '13:00:00', '15:00:00'),
-(5, 'ENG101', 'English Composition', 'Academic writing and communication', 5, 4, NOW(), 3, 20, 'Fri', '11:00:00', '13:00:00');
+x
 
 -- Level 3: Tasks (Base tasks for inheritance)
 
@@ -45,9 +40,9 @@ INSERT INTO poll (id, course_id, name, description, created_by, created_at, star
 (4, 1, 'Course Feedback Poll', 'Help us improve the course', 1, NOW(), NOW() - INTERVAL '3 days', NOW() + INTERVAL '4 days', 15, 1, 0, 0),
 (5, 3, 'Learning Style Poll', 'What helps you learn best?', 2, NOW(), NOW() - INTERVAL '1 day', NOW() + INTERVAL '6 days', 10, 1, 0, 0);
 
-INSERT INTO short_answer (id, course_id, name, description, created_by, created_at, start_datetime, end_datetime, duration, attempt_limit, point, point_in_course) VALUES
-(6, 1, 'Code Review Assignment', 'Review and improve given code', 1, NOW(), NOW() - INTERVAL '2 days', NOW() + INTERVAL '8 days', 60, 1, 100, 30),
-(7, 4, 'Physics Lab Report', 'Write a lab report on pendulum experiment', 3, NOW(), NOW() - INTERVAL '1 day', NOW() + INTERVAL '12 days', 120, 1, 100, 35);
+    INSERT INTO short_answer (id, course_id, name, description, created_by, created_at, start_datetime, end_datetime, duration, attempt_limit, point, point_in_course) VALUES
+    (6, 1, 'Code Review Assignment', 'Review and improve given code', 1, NOW(), NOW() - INTERVAL '2 days', NOW() + INTERVAL '8 days', 60, 1, 100, 30),
+    (7, 4, 'Physics Lab Report', 'Write a lab report on pendulum experiment', 3, NOW(), NOW() - INTERVAL '1 day', NOW() + INTERVAL '12 days', 120, 1, 100, 35);
 
 INSERT INTO word_cloud (id, course_id, name, description, created_by, created_at, start_datetime, end_datetime, duration, attempt_limit, point, point_in_course) VALUES
 (8, 1, 'Python Keywords Cloud', 'Contribute to class word cloud', 1, NOW(), NOW() - INTERVAL '1 day', NOW() + INTERVAL '3 days', 5, 10, 10, 5),
