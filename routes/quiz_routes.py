@@ -176,6 +176,108 @@ def start_quiz(course_code, quiz_id):
     
     return render_template('quiz_start.html', course=course, quiz=quiz_data, course_code=course_code)
 
+@quiz_bp.route('/course/<course_code>/quiz/<int:quiz_id>/results', methods=['GET'])
+def get_quiz_results(course_code, quiz_id):
+    # Verify course exists
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    # Check user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check enrollment
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
+    if not enrollment:
+        return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
+    
+    # Get quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
+    
+    # Get user's submission
+    submission = Submission.query.filter_by(quiz_id=quiz_id, user_id=user_id).first()
+    if not submission:
+        return render_template('quiz_results.html', course=course, quiz=quiz, error_message="No submission found for this quiz"), 404
+    
+    # Get all question responses for this submission
+    responses = QuestionResponse.query.filter_by(submission_id=submission.id).all()
+    
+    # Prepare results data based on visibility settings
+    results_data = {
+        'id': quiz.id,
+        'name': quiz.name,
+        'description': quiz.description,
+        'score': submission.score,
+        'submitted_at': submission.submitted_at,
+        'visibility': {
+            'question_visible': quiz.after_submitted_question_visible,
+            'student_response_visible': quiz.after_submitted_student_response_visible,
+            'sample_response_visible': quiz.after_submitted_sample_response_visible,
+            'class_response_visible': quiz.after_submitted_class_response_visible
+        },
+        'questions': []
+    }
+    
+    for response in responses:
+        question = Question.query.get(response.question_id)
+        if not question:
+            continue
+            
+        question_data = {
+            'id': question.id,
+            'content': question.content,
+            'type': question.type,
+            'points': question.points,
+            'user_answer': None,
+            'is_correct': None,
+            'correct_answer': None
+        }
+        
+        # Show question content if visible
+        if quiz.after_submitted_question_visible:
+            question_data['content'] = question.content
+        else:
+            question_data['content'] = "[Question content hidden]"
+        
+        # Show student response if visible
+        if quiz.after_submitted_student_response_visible:
+            if question.type == 'mcq':
+                if response.choice_id:
+                    choice = Choice.query.get(response.choice_id)
+                    if choice:
+                        question_data['user_answer'] = choice.content
+                        question_data['is_correct'] = response.is_correct
+            elif question.type == 'saq':
+                question_data['user_answer'] = response.text_answer
+        else:
+            question_data['user_answer'] = "[Your response is hidden]"
+        
+        # Show correct answer if visible
+        if quiz.after_submitted_sample_response_visible and question.type == 'mcq':
+            correct_choice = Choice.query.filter_by(question_id=question.id, is_correct=True).first()
+            if correct_choice:
+                question_data['correct_answer'] = correct_choice.content
+        
+        results_data['questions'].append(question_data)
+    
+    # Get class statistics if visible
+    if quiz.after_submitted_class_response_visible:
+        all_submissions = Submission.query.filter_by(quiz_id=quiz_id).all()
+        total_students = len(all_submissions)
+        if total_students > 0:
+            total_score = sum(sub.score for sub in all_submissions)
+            average_score = total_score / total_students
+            results_data['class_statistics'] = {
+                'total_students': total_students,
+                'average_score': average_score
+            }
+    
+    return render_template('quiz_results.html', course=course, quiz=results_data, course_code=course_code)
+
 @quiz_bp.route('/course/<course_code>/quiz/<int:quiz_id>/submit', methods=['POST'])
 def submit_quiz(course_code, quiz_id):
     # Verify course exists
@@ -290,5 +392,5 @@ def submit_quiz(course_code, quiz_id):
     if 'current_attempt_id' in session:
         del session['current_attempt_id']
     
-    # Redirect to quiz list with success message
-    return redirect(f'/course/{course_code}/quiz?submitted=1')
+    # Redirect to quiz results page with visibility controls
+    return redirect(url_for('quiz.get_quiz_results', course_code=course_code, quiz_id=quiz_id))

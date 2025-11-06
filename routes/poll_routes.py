@@ -176,6 +176,117 @@ def start_poll(course_code, poll_id):
     
     return render_template('poll_start.html', course=course, poll=poll_data, questions=question_list, course_code=course_code)
 
+@poll_bp.route('/course/<course_code>/poll/<int:poll_id>/results', methods=['GET'])
+def get_poll_results(course_code, poll_id):
+    # Verify course exists
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    # Check user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    # Check enrollment
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
+    if not enrollment:
+        return render_template('course_home.html', error_message="You are not enrolled in this course"), 403
+    
+    # Get poll
+    poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
+    if not poll:
+        return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
+    
+    # Get user's submission
+    submission = Submission.query.filter_by(poll_id=poll_id, user_id=user_id).first()
+    if not submission:
+        return render_template('poll_results.html', course=course, poll=poll, error_message="No submission found for this poll"), 404
+    
+    # Get all question responses for this submission
+    responses = QuestionResponse.query.filter_by(submission_id=submission.id).all()
+    
+    # Prepare results data based on poll visibility settings (always visible for polls)
+    results_data = {
+        'id': poll.id,
+        'name': poll.name,
+        'description': poll.description,
+        'submitted_at': submission.submitted_at,
+        'visibility': {
+            'question_visible': True,  # Polls always show questions
+            'student_response_visible': True,  # Polls always show responses
+            'sample_response_visible': True,  # Polls always show sample responses
+            'class_response_visible': True   # Polls always show class responses
+        },
+        'questions': []
+    }
+    
+    for response in responses:
+        question = Question.query.get(response.question_id)
+        if not question:
+            continue
+            
+        question_data = {
+            'id': question.id,
+            'content': question.content,
+            'type': question.type,
+            'user_answer': None,
+            'correct_answer': None,
+            'class_responses': []
+        }
+        
+        # Show question content (always visible for polls)
+        question_data['content'] = question.content
+        
+        # Show student response (always visible for polls)
+        if question.type == 'mcq':
+            if response.choice_id:
+                choice = Choice.query.get(response.choice_id)
+                if choice:
+                    question_data['user_answer'] = choice.content
+        elif question.type == 'saq':
+            question_data['user_answer'] = response.text_answer
+        
+        # Show class responses (always visible for polls)
+        if question.type == 'mcq':
+            # Get all responses for this question across all submissions
+            all_responses = QuestionResponse.query.join(Submission).filter(
+                QuestionResponse.question_id == question.id,
+                Submission.poll_id == poll_id
+            ).all()
+            
+            # Count responses for each choice
+            choice_counts = {}
+            total_responses = len(all_responses)
+            
+            for resp in all_responses:
+                if resp.choice_id:
+                    choice = Choice.query.get(resp.choice_id)
+                    if choice:
+                        if choice.content not in choice_counts:
+                            choice_counts[choice.content] = 0
+                        choice_counts[choice.content] += 1
+            
+            # Calculate percentages
+            for choice_text, count in choice_counts.items():
+                percentage = (count / total_responses * 100) if total_responses > 0 else 0
+                question_data['class_responses'].append({
+                    'choice': choice_text,
+                    'count': count,
+                    'percentage': round(percentage, 1)
+                })
+        
+        results_data['questions'].append(question_data)
+    
+    # Get class statistics (always visible for polls)
+    all_submissions = Submission.query.filter_by(poll_id=poll_id).all()
+    total_students = len(all_submissions)
+    results_data['class_statistics'] = {
+        'total_students': total_students
+    }
+    
+    return render_template('poll_results.html', course=course, poll=results_data, course_code=course_code)
+
 @poll_bp.route('/course/<course_code>/poll/<int:poll_id>/submit', methods=['POST'])
 def submit_poll(course_code, poll_id):
     # Verify course exists
@@ -246,5 +357,5 @@ def submit_poll(course_code, poll_id):
     # Save all changes
     db.session.commit()
     
-    # Redirect to poll list with success message
-    return redirect(f'/course/{course_code}/poll?submitted=1')
+    # Redirect to poll results page with visibility controls
+    return redirect(url_for('poll.get_poll_results', course_code=course_code, poll_id=poll_id))

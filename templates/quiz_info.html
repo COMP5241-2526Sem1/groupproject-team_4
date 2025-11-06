@@ -22,7 +22,12 @@
                     <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}/start'">Start Quiz</button>
                     <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_code }}/quiz'">Back to List</button>
                 {% else %}
-                    <button onclick="window.location.href='/course/{{ course_code }}/quiz'">Return to Quiz List</button>
+                    {% if quiz.used_attempts > 0 %}
+                        <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}/results'">View Results</button>
+                        <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_code }}/quiz'">Return to Quiz List</button>
+                    {% else %}
+                        <button onclick="window.location.href='/course/{{ course_code }}/quiz'">Return to Quiz List</button>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
