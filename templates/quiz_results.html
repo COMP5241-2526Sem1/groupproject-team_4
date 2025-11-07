@@ -187,5 +187,28 @@
             background: #007bff;
             color: white;
         }
+        
+        /* Disable hover effects for buttons on results page */
+        .action-buttons button:hover {
+            background-color: inherit;
+            color: inherit;
+            border-color: inherit;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Disable hover effects for quiz container */
+        .quiz-container {
+            transition: none !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .quiz-container:hover {
+            background-color: inherit !important;
+            border-color: inherit !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
     </style>
 {% endblock %}

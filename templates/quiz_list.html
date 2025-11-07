@@ -1,4 +1,4 @@
-{% extends 'quiz_base.html' %}
+{% extends 'course_base.html' %}
 
 {% block title %}Quiz List - {{ course.name if course else 'Student Home' }}{% endblock %}
 
@@ -72,9 +72,13 @@
     }
     
     .completed-btn {
-        background: #28a745;
+        background: #8a1c32;
         color: white;
-        cursor: default;
+        cursor: pointer;
+    }
+    
+    .completed-btn:hover {
+        background: #6e1728;
     }
     
     .no-quizzes {
@@ -101,6 +105,18 @@
         color: #28a745;
     }
 </style>
+{% endblock %}
+
+{% block sidebar_links %}
+<a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2];">Course Home</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/announcement';">Announcement</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/content';">Content</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/quiz';" style="background-color: #8a1c32; color: white;">Quiz</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/mini_games';">Mini Games</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/grades';">Grades</a>
+    <a href="/logout">Sign Out</a>
 {% endblock %}
 
 {% block main_content %}
