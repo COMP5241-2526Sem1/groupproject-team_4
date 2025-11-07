@@ -142,5 +142,22 @@ def index():
 def favicon():
     return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+# Route for testing Add Question functionality
+@app.route('/test_add_question')
+def test_add_question():
+    return send_from_directory('.', 'test_add_question_js.html')
+
+@app.route('/test_add_question_function')
+def test_add_question_function():
+    return send_from_directory('.', 'test_add_question_function.html')
+
+@app.route('/test_function_exists')
+def test_function_exists():
+    return send_from_directory('.', 'test_function_exists.html')
+
+@app.route('/test_quiz_functions')
+def test_quiz_functions():
+    return send_from_directory('.', 'test_quiz_functions.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

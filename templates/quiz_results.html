@@ -85,6 +85,13 @@
                 {% if quiz.visibility.question_visible or quiz.visibility.student_response_visible %}
                     <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}'">View Quiz Details</button>
                 {% endif %}
+                
+                <!-- View Response button with visibility logic -->
+                {% if quiz.visibility.question_visible or quiz.visibility.student_response_visible or quiz.visibility.sample_response_visible or quiz.visibility.class_response_visible %}
+                    <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}'">View Response</button>
+                {% else %}
+                    <button disabled style="background-color: #6c757d; cursor: not-allowed;" title="Response visibility is disabled for this quiz">Response Invisible</button>
+                {% endif %}
             </div>
         {% endif %}
     </div>

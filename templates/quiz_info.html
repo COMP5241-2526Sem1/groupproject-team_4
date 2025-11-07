@@ -23,15 +23,10 @@
                 <p><strong>Max Attempts:</strong> {{ quiz.max_attempts }}</p>
             {% endif %}
             
-            {% if message %}
-                <div class="alert alert-info" style="background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 16px; text-align: center;">
-                    <strong>📋 Notice:</strong> {{ message }}
-                </div>
-            {% endif %}
-            
-            {% if quiz.used_attempts > 0 and results_preview and results_preview.questions %}
-                <div class="quiz-preview" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #495057; margin-bottom: 15px;">📋 Quiz Preview</h3>
+            <!-- Results preview section - always show if user has attempts -->
+            {% if quiz.used_attempts > 0 and results_preview %}
+                <div class="results-preview" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <h3 style="color: #495057; margin-bottom: 15px;">📊 Your Results Preview</h3>
                     
                     {% if results_preview.score is not none %}
                         <div class="results-summary" style="background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
@@ -86,76 +81,9 @@
                         </div>
                     {% endif %}
                     
-                    <!-- Add action buttons based on visibility settings -->
-                    <div style="margin-top: 20px; text-align: center;">
-                        {% if results_preview.visibility.student_response_visible %}
-                            <button onclick="alert('My Response feature coming soon!')" style="margin-right: 10px; background: #17a2b8;">📋 My Response</button>
-                        {% endif %}
-                        
-                        {% if results_preview.visibility.sample_response_visible %}
-                            <button onclick="alert('Sample Answer feature coming soon!')" style="margin-right: 10px; background: #28a745;">✅ Sample Answer</button>
-                        {% endif %}
-                    </div>
-                </div>
-                </div>
-            {% elif results_preview %}
-                <div class="results-preview" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                    <h3 style="color: #495057; margin-bottom: 15px;">📊 Your Results Preview</h3>
-                    
-                    <div class="results-summary" style="background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-                        <h4 style="color: #495057; margin-bottom: 10px;">Summary</h4>
-                        <p><strong>Score:</strong> {{ "%.1f"|format(results_preview.score) }}%</p>
-                        <p><strong>Submitted:</strong> {{ results_preview.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                        
-                        {% if results_preview.class_statistics %}
-                            <div class="class-statistics" style="background: #e9ecef; padding: 10px; border-radius: 3px; margin-top: 10px;">
-                                <h5 style="color: #495057; margin-bottom: 5px;">Class Statistics</h5>
-                                <p><strong>Total students:</strong> {{ results_preview.class_statistics.total_students }}</p>
-                                <p><strong>Class average:</strong> {{ "%.1f"|format(results_preview.class_statistics.average_score) }}%</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    {% if results_preview.questions %}
-                        <div class="question-preview">
-                            <h4 style="color: #495057; margin-bottom: 10px;">Question Details</h4>
-                            {% for question in results_preview.questions %}
-                                <div class="question-preview-item" style="border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin: 10px 0; background: white;">
-                                    {% if question.content %}
-                                        <div class="question-content" style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 3px;">
-                                            <strong>Question {{ loop.index }}:</strong> {{ question.content }}
-                                            <span style="color: #6c757d;">[{{ question.points }} points]</span>
-                                        </div>
-                                    {% endif %}
-                                    
-                                    {% if question.user_answer %}
-                                        <div class="student-response" style="margin: 10px 0; padding: 8px; background: #e3f2fd; border-radius: 3px;">
-                                            <strong>Your Answer:</strong> {{ question.user_answer }}
-                                            {% if question.is_correct is not none %}
-                                                <span style="margin-left: 10px;">
-                                                    {% if question.is_correct %}
-                                                        <span style="color: #28a745; font-weight: bold;">✓ Correct</span>
-                                                    {% else %}
-                                                        <span style="color: #dc3545; font-weight: bold;">✗ Incorrect</span>
-                                                    {% endif %}
-                                                </span>
-                                            {% endif %}
-                                        </div>
-                                    {% endif %}
-                                    
-                                    {% if question.correct_answer %}
-                                        <div class="correct-answer" style="margin: 10px 0; padding: 8px; background: #e8f5e8; border-radius: 3px;">
-                                            <strong>Correct Answer:</strong> {{ question.correct_answer }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    
                     <div style="text-align: center; margin-top: 15px;">
                         <p style="color: #6c757d; font-size: 14px;">
-                            <em>This is a preview of your results. Click "View Results" below for the complete detailed view.</em>
+                            <em>This is a preview of your results. Click "View Response" below for the complete detailed view.</em>
                         </p>
                     </div>
                 </div>
@@ -164,15 +92,13 @@
             <div style="margin-top: 20px;">
                 {% if quiz.can_attempt %}
                     <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}/start'">Start Quiz</button>
-                    <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_code }}/quiz'">Back to List</button>
-                {% else %}
-                    {% if quiz.used_attempts > 0 %}
-                        <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}/results'">View Results</button>
-                        <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_code }}/quiz'">Return to Quiz List</button>
-                    {% else %}
-                        <button onclick="window.location.href='/course/{{ course_code }}/quiz'">Return to Quiz List</button>
-                    {% endif %}
                 {% endif %}
+                
+                {% if quiz.used_attempts > 0 %}
+                    <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}/results'">View Response</button>
+                {% endif %}
+                
+                <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_code }}/quiz'">Return to Quiz List</button>
             </div>
         {% endif %}
     </div>

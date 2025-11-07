@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
+from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template, flash
 from models.course import Course
 from models.course_enrollment import CourseEnrollment
 from models.user import User

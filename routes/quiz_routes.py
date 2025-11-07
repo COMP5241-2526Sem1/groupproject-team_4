@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template
+from flask import Blueprint, request, jsonify, session, redirect, url_for, render_template, flash
 from models.course import Course
 from models.course_enrollment import CourseEnrollment
 from models.user import User
@@ -94,7 +94,7 @@ def get_quiz_info(course_code, quiz_id):
     # Get quiz details
     quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
     if not quiz:
-        return render_template('quiz_info.html', course=None, quiz=None, quizzes=[], error_message="Quiz not found"), 404
+        return render_template('quiz_info.html', course=None, quiz=None, quizzes=[], course_code=course_code, error_message="Quiz not found"), 404
     
     # Get attempt count
     attempt_count = Attempt.query.filter_by(quiz_id=quiz_id, user_id=user_id).count()
@@ -275,7 +275,7 @@ def start_quiz(course_code, quiz_id):
     # Get quiz
     quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
     if not quiz:
-        return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
+        return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found", course_code=course_code), 404
     
     # Check if quiz is currently available (within start and end datetime)
     current_time = datetime.now()
@@ -298,7 +298,7 @@ def start_quiz(course_code, quiz_id):
             'can_attempt': False,
             'start_datetime': quiz.start_datetime,
             'end_datetime': quiz.end_datetime
-        }, error_message="This quiz is not currently available"), 400
+        }, course_code=course_code, error_message="This quiz is not currently available"), 400
     
     # Check if user has already submitted
     has_responded = Submission.query.filter_by(quiz_id=quiz_id, user_id=user_id).first() is not None
@@ -318,7 +318,7 @@ def start_quiz(course_code, quiz_id):
             'can_attempt': False,
             'start_datetime': quiz.start_datetime,
             'end_datetime': quiz.end_datetime
-        }, error_message="You have reached the maximum number of attempts for this quiz"), 400
+        }, course_code=course_code, error_message="You have reached the maximum number of attempts for this quiz"), 400
     
     # Get quiz questions
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
@@ -374,7 +374,7 @@ def get_quiz_results(course_code, quiz_id):
     # Get quiz
     quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
     if not quiz:
-        return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found"), 404
+        return render_template('quiz_list.html', course=course, quizzes=[], error_message="Quiz not found", course_code=course_code), 404
     
     # Check if user is a teacher
     user = User.query.get(user_id)
@@ -390,7 +390,7 @@ def get_quiz_results(course_code, quiz_id):
     # Get user's submission
     submission = Submission.query.filter_by(quiz_id=quiz_id, user_id=user_id).first()
     if not submission:
-        return render_template('quiz_results.html', course=course, quiz=quiz, error_message="No submission found for this quiz. You need to complete the quiz before viewing results."), 404
+        return render_template('quiz_results.html', course=course, quiz=quiz, error_message="No submission found for this quiz. You need to complete the quiz before viewing results.", course_code=course_code), 404
     
     # Get all question responses for this submission
     responses = QuestionResponse.query.filter_by(submission_id=submission.id).all()
@@ -404,7 +404,7 @@ def get_quiz_results(course_code, quiz_id):
     )
     
     if not has_visible_feedback:
-        return render_template('quiz_results.html', course=course, quiz=quiz, error_message="Quiz feedback is not available for this quiz. Contact your teacher for more information."), 200
+        return render_template('quiz_results.html', course=course, quiz=quiz, error_message="Quiz feedback is not available for this quiz. Contact your teacher for more information.", course_code=course_code), 200
     
     # Prepare results data based on visibility settings
     results_data = {
@@ -524,6 +524,19 @@ def teacher_create_quiz(course_code):
         return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
     
     if request.method == 'POST':
+        # Calculate total points from questions first
+        total_points = 0
+        question_prefix = f'questions['
+        
+        # Parse form data to calculate total points
+        for key, value in request.form.items():
+            if key.startswith(question_prefix):
+                parts = key.split('][')
+                if len(parts) >= 2:
+                    field_name = parts[1].replace(']', '')
+                    if field_name == 'points':
+                        total_points += int(value) if value.isdigit() else 0
+        
         # Create new quiz
         quiz = Quiz(
             course_code=course_code,
@@ -532,7 +545,7 @@ def teacher_create_quiz(course_code):
             created_by=user_id,
             duration=int(request.form.get('duration', 30)),
             attempt_limit=int(request.form.get('attempt_limit', 5)),
-            point=int(request.form.get('point', 100)),
+            point=total_points,  # Use calculated total points
             point_in_course=int(request.form.get('point_in_course', 0)),
             # Visibility settings
             after_submitted_question_visible=request.form.get('question_visible', 'false') == 'true',
@@ -541,7 +554,81 @@ def teacher_create_quiz(course_code):
             after_submitted_class_response_visible=request.form.get('class_response_visible', 'false') == 'true'
         )
         
+        # Handle start and end datetime
+        start_datetime_str = request.form.get('start_datetime')
+        end_datetime_str = request.form.get('end_datetime')
+        
+        if start_datetime_str:
+            quiz.start_datetime = datetime.strptime(start_datetime_str, '%Y-%m-%dT%H:%M')
+        else:
+            quiz.start_datetime = None
+            
+        if end_datetime_str:
+            quiz.end_datetime = datetime.strptime(end_datetime_str, '%Y-%m-%dT%H:%M')
+        else:
+            quiz.end_datetime = None
+        
         db.session.add(quiz)
+        db.session.flush()  # This assigns the quiz.id
+        
+        # Process questions
+        # Parse form data to extract questions
+        question_prefix = f'questions['
+        questions_dict = {}
+        
+        for key, value in request.form.items():
+            if key.startswith(question_prefix):
+                # Parse keys like "questions[1][type]" or "questions[1][content]"
+                parts = key.split('][')
+                if len(parts) >= 2:
+                    question_num = parts[0].replace('questions[', '')
+                    field_name = parts[1].replace(']', '')
+                    
+                    if question_num not in questions_dict:
+                        questions_dict[question_num] = {}
+                    
+                    questions_dict[question_num][field_name] = value
+        
+        # Process parsed questions
+        for question_num, question_data in questions_dict.items():
+            if 'type' in question_data and 'content' in question_data:
+                # Create question
+                question = Question(
+                    quiz_id=quiz.id,
+                    type=question_data['type'],
+                    content=question_data['content'],
+                    points=int(question_data.get('points', 1))
+                )
+                db.session.add(question)
+                db.session.flush()  # This assigns the question.id
+                
+                # Handle question type specific data
+                if question_data['type'] == 'mcq':
+                    # Process choices
+                    correct_choice = question_data.get('correct_choice')
+                    
+                    # Find all choice fields for this question
+                    choice_prefix = f'questions[{question_num}][choices]'
+                    for choice_key, choice_content in request.form.items():
+                        if choice_key.startswith(choice_prefix) and choice_content.strip():
+                            # Extract choice number
+                            choice_num = choice_key.split('][')[2].replace(']', '') if len(choice_key.split('][')) >= 3 else '1'
+                            
+                            choice = Choice(
+                                question_id=question.id,
+                                content=choice_content.strip(),
+                                is_correct=(str(choice_num) == str(correct_choice))
+                            )
+                            db.session.add(choice)
+                
+                elif question_data['type'] == 'saq':
+                    # Handle short answer question
+                    expected_answer = question_data.get('expected_answer', '').strip()
+                    if expected_answer:
+                        # For SAQ, we can store the expected answer in a ShortAnswer model
+                        # or handle it differently based on requirements
+                        pass
+        
         db.session.commit()
         
         flash('Quiz created successfully!')
@@ -574,18 +661,135 @@ def teacher_edit_quiz(course_code, quiz_id):
         return render_template('course_home.html', course=course, error_message="Quiz not found"), 404
     
     if request.method == 'POST':
+        # Calculate total points from questions first
+        total_points = 0
+        question_prefix = f'questions['
+        
+        # Parse form data to calculate total points
+        for key, value in request.form.items():
+            if key.startswith(question_prefix):
+                parts = key.split('][')
+                if len(parts) >= 2:
+                    field_name = parts[1].replace(']', '')
+                    if field_name == 'points':
+                        total_points += int(value) if value.isdigit() else 0
+        
         # Update quiz
         quiz.name = request.form['name']
         quiz.description = request.form['description']
         quiz.duration = int(request.form.get('duration', 30))
         quiz.attempt_limit = int(request.form.get('attempt_limit', 5))
-        quiz.point = int(request.form.get('point', 100))
+        quiz.point = total_points  # Use calculated total points
         quiz.point_in_course = int(request.form.get('point_in_course', 0))
+        
+        # Handle start and end datetime
+        start_datetime_str = request.form.get('start_datetime')
+        end_datetime_str = request.form.get('end_datetime')
+        
+        if start_datetime_str:
+            quiz.start_datetime = datetime.strptime(start_datetime_str, '%Y-%m-%dT%H:%M')
+        else:
+            quiz.start_datetime = None
+            
+        if end_datetime_str:
+            quiz.end_datetime = datetime.strptime(end_datetime_str, '%Y-%m-%dT%H:%M')
+        else:
+            quiz.end_datetime = None
+        
         # Visibility settings
         quiz.after_submitted_question_visible = request.form.get('question_visible', 'false') == 'true'
         quiz.after_submitted_student_response_visible = request.form.get('student_response_visible', 'false') == 'true'
         quiz.after_submitted_sample_response_visible = request.form.get('sample_response_visible', 'false') == 'true'
         quiz.after_submitted_class_response_visible = request.form.get('class_response_visible', 'false') == 'true'
+        
+        # Process questions
+        existing_question_ids = set()
+        question_data = {}
+        
+        # Parse form data to extract question information
+        for key, value in request.form.items():
+            if key.startswith('questions['):
+                # Parse keys like "questions[1][type]" or "questions[1][content]"
+                parts = key.split('][')
+                if len(parts) >= 2:
+                    question_num = parts[0].replace('questions[', '')
+                    field_name = parts[1].replace(']', '')
+                    
+                    if question_num not in question_data:
+                        question_data[question_num] = {}
+                    
+                    if field_name == 'choices' and len(parts) >= 3:
+                        # Handle choice data: questions[1][choices][1]
+                        choice_num = parts[2].replace(']', '')
+                        if 'choices' not in question_data[question_num]:
+                            question_data[question_num]['choices'] = {}
+                        question_data[question_num]['choices'][choice_num] = value
+                    elif field_name == 'correct_choice':
+                        question_data[question_num]['correct_choice'] = value
+                    else:
+                        question_data[question_num][field_name] = value
+        
+        # Process each question
+        for question_num, data in question_data.items():
+            question_id = data.get('id')
+            question_type = data.get('type')
+            question_content = data.get('content')
+            question_points = int(data.get('points', 10))
+            
+            if question_id:
+                # Update existing question
+                question = Question.query.filter_by(id=question_id, quiz_id=quiz_id).first()
+                if question:
+                    question.type = question_type
+                    question.content = question_content
+                    question.points = question_points
+                    existing_question_ids.add(question_id)
+                    
+                    # Update choices for MCQ questions
+                    if question_type == 'mcq' and 'choices' in data:
+                        # Remove existing choices
+                        Choice.query.filter_by(question_id=question_id).delete()
+                        
+                        # Add new choices
+                        correct_choice_num = data.get('correct_choice')
+                        for choice_num, choice_content in data['choices'].items():
+                            if choice_content.strip():
+                                choice = Choice(
+                                    question_id=question_id,
+                                    content=choice_content.strip(),
+                                    is_correct=(choice_num == correct_choice_num)
+                                )
+                                db.session.add(choice)
+            else:
+                # Create new question
+                question = Question(
+                    quiz_id=quiz_id,
+                    type=question_type,
+                    content=question_content,
+                    points=question_points
+                )
+                db.session.add(question)
+                db.session.flush()  # This assigns the question.id
+                
+                # Add choices for MCQ questions
+                if question_type == 'mcq' and 'choices' in data:
+                    correct_choice_num = data.get('correct_choice')
+                    for choice_num, choice_content in data['choices'].items():
+                        if choice_content.strip():
+                            choice = Choice(
+                                question_id=question.id,
+                                content=choice_content.strip(),
+                                is_correct=(choice_num == correct_choice_num)
+                            )
+                            db.session.add(choice)
+        
+        # Soft delete questions that are no longer in the form (mark as inactive)
+        for question in quiz.questions:
+            if question.id not in existing_question_ids:
+                # Instead of deleting, we could add an 'is_active' field to the Question model
+                # For now, we'll keep the deletion behavior but add a comment about the alternative
+                # TODO: Consider adding 'is_active' field to Question model for soft deletion
+                db.session.delete(question)
         
         db.session.commit()
         
@@ -593,6 +797,54 @@ def teacher_edit_quiz(course_code, quiz_id):
         return redirect(url_for('quiz.teacher_quiz_list', course_code=course_code))
     
     return render_template('teacher_edit_quiz.html', course=course, quiz=quiz)
+
+@quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/questions', methods=['GET'])
+def get_quiz_questions(course_code, quiz_id):
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return jsonify({'error': 'Course not found'}), 404
+    
+    if course.teacher_id != user_id:
+        return jsonify({'error': 'Not authorized for this course'}), 403
+    
+    # Get quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return jsonify({'error': 'Quiz not found'}), 404
+    
+    # Get all questions with their choices
+    questions = []
+    for question in quiz.questions:
+        question_data = {
+            'id': question.id,
+            'type': question.type,
+            'content': question.content,
+            'points': question.points,
+            'choices': []
+        }
+        
+        # Add choices for MCQ questions
+        if question.type == 'mcq':
+            for choice in question.choices:
+                question_data['choices'].append({
+                    'id': choice.id,
+                    'content': choice.content,
+                    'is_correct': choice.is_correct
+                })
+        
+        questions.append(question_data)
+    
+    return jsonify({'questions': questions})
 
 @quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/delete', methods=['POST'])
 def teacher_delete_quiz(course_code, quiz_id):
@@ -618,7 +870,20 @@ def teacher_delete_quiz(course_code, quiz_id):
     if not quiz:
         return render_template('course_home.html', error_message="Quiz not found"), 404
     
-    # Delete quiz (cascade will delete questions and choices)
+    # Delete all related data before deleting the quiz
+    # 1. Delete all question responses for submissions related to this quiz
+    submissions = Submission.query.filter_by(quiz_id=quiz_id).all()
+    for submission in submissions:
+        # Delete all question responses for this submission
+        QuestionResponse.query.filter_by(submission_id=submission.id).delete()
+    
+    # 2. Delete all submissions for this quiz
+    Submission.query.filter_by(quiz_id=quiz_id).delete()
+    
+    # 3. Delete all attempts for this quiz
+    Attempt.query.filter_by(quiz_id=quiz_id).delete()
+    
+    # 4. Delete quiz (cascade will delete questions and choices)
     db.session.delete(quiz)
     db.session.commit()
     
@@ -650,12 +915,12 @@ def submit_quiz(course_code, quiz_id):
     # Get current attempt ID from session
     attempt_id = session.get('current_attempt_id')
     if not attempt_id:
-        return render_template('quiz_start.html', course=course, quiz=quiz, error_message="No active quiz attempt found"), 400
+        return render_template('quiz_start.html', course=course, quiz=quiz, error_message="No active quiz attempt found", course_code=course_code), 400
     
     # Get the attempt
     attempt = Attempt.query.filter_by(id=attempt_id, user_id=user_id, quiz_id=quiz_id).first()
     if not attempt:
-        return render_template('quiz_start.html', course=course, quiz=quiz, error_message="Invalid quiz attempt"), 400
+        return render_template('quiz_start.html', course=course, quiz=quiz, error_message="Invalid quiz attempt", course_code=course_code), 400
     
     # Get all questions for this quiz
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
