@@ -11,11 +11,11 @@
             {% endif %}
             <div style="margin-top: 20px;">
             {% if poll.used_attempts > 0 %}
-                <button onclick="window.location.href='/course/{{ course_code }}/poll/{{ poll.id }}/results'">View Results</button>
-                <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_code }}/poll'">Back to List</button>
+                <button onclick="window.location.href='/course/{{ course.code }}/poll/{{ poll.id }}/results'">View Results</button>
+                <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code }}/poll'">Back to List</button>
             {% else %}
-                <button onclick="window.location.href='/course/{{ course_code }}/poll/{{ poll.id }}/start'">Start Poll</button>
-                <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course_code }}/poll'">Back to List</button>
+                <button onclick="window.location.href='/course/{{ course.code }}/poll/{{ poll.id }}/start'">Start Poll</button>
+                <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code }}/poll'">Back to List</button>
             {% endif %}
         </div>
         </div>

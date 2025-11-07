@@ -7,7 +7,7 @@
         <div class="quiz-container">
             <h1>Message</h1>
             <p>{{ message }}</p>
-            <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to Poll List</button>
+            <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/poll'">Back to Poll List</button>
         </div>
     {% else %}
         <div class="quiz-container">
@@ -19,10 +19,10 @@
             <p><strong>Created At:</strong> {{ poll.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
             <div style="margin-top: 20px;">
                 {% if not has_submitted %}
-                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll/{{ poll.id }}/start'">Start Poll</button>
-                    <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Back to List</button>
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/poll/{{ poll.id }}/start'">Start Poll</button>
+            <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/poll'">Back to List</button>
                 {% else %}
-                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_id }}/poll'">Return to Poll List</button>
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/poll'">Return to Poll List</button>
                 {% endif %}
             </div>
         </div>

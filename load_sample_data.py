@@ -14,7 +14,7 @@ def load_sample_data():
     with app.app_context():
         try:
             # Read the SQL file
-            with open('sample_data_with_ids.sql', 'r', encoding='utf-8') as f:
+            with open('sample_data_refactored.sql', 'r', encoding='utf-8') as f:
                 sql_content = f.read()
             
             # Split SQL content into individual statements

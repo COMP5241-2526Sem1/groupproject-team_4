@@ -31,7 +31,7 @@ def get_available_course():
     for c in course:
         enrolled_count = CourseEnrollment.query.filter_by(course_code=c.code).count()
         result.append({
-            'id': c.id,
+            'code': c.code,
             'name': c.name,
             'description': c.description,
             'credit': c.credit,
@@ -58,7 +58,7 @@ def get_my_course():
     result = []
     for c in course_sorted:
         result.append({
-            'id': c.id,
+            'code': c.code,
             'name': c.name,
             'description': c.description,
             'credit': c.credit,

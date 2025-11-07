@@ -30,10 +30,10 @@
         </div>
     </div>
     
-    <form id="poll-form" action="/course/{{ course_code }}/poll/{{ poll.id }}/submit" method="POST" onsubmit="return enhancePollForm();">
+    <form id="poll-form" action="/course/{{ course.code }}/poll/{{ poll.id }}/submit" method="POST" onsubmit="return enhancePollForm();">
         {% for question in questions %}
         <div class="question" data-type="{{ question.type }}">
-            <div class="question-number">Question {{ loop.index }} ({{ question.points }} point{% if question.points > 1 %}s{% endif %})</div>
+            <div class="question-number">Question {{ loop.index }}</div>
             <div class="question-content">{{ question.content }}</div>
             
             {% if question.type == 'mcq' %}

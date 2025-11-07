@@ -74,9 +74,8 @@ def get_teacher_courses():
     
     # Return course list in JSON format
     course_list = [{
-        'id': course.id,
-        'name': course.name,
-        'code': course.code
+        'code': course.code,
+        'name': course.name
     } for course in courses]
     
     return jsonify(course_list)
@@ -204,13 +203,20 @@ def enrolled_list(course_code):
     if request.method == 'POST':
         student_ids = request.form.getlist('students[]')
         if student_ids:
-            # Delete selected student enrollment records
-            CourseEnrollment.query.filter(
-                CourseEnrollment.course_code == course_code,
-                CourseEnrollment.student_id.in_(student_ids)
-            ).delete(synchronize_session=False)
-            db.session.commit()
-            flash(f'Successfully removed {len(student_ids)} students from the course.')
+            try:
+                # Delete selected student enrollment records
+                deleted_count = CourseEnrollment.query.filter(
+                    CourseEnrollment.course_code == course_code,
+                    CourseEnrollment.student_id.in_(student_ids)
+                ).delete(synchronize_session=False)
+                db.session.commit()
+                if deleted_count > 0:
+                    flash(f'Successfully removed {deleted_count} students from the course.', 'success')
+                else:
+                    flash('No students were removed.', 'warning')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error removing students: {str(e)}', 'error')
         return redirect(url_for('teacher_course.enrolled_list', course_code=course_code))
     
     return render_template('enrolled_list.html', course=course, students=enrolled_students)
@@ -220,52 +226,72 @@ def enrolled_list(course_code):
 @login_required
 @teacher_required
 def not_enrolled_list(course_code):
-    # Get course information
     course = Course.query.get_or_404(course_code)
     
-    # Check if the user is the teacher of this course
+    # Check if the teacher owns this course
     if course.teacher_id != session['user_id']:
-        flash('You are not the teacher of this course, cannot access this page.')
+        flash('You can only manage students in your own courses.', 'error')
         return redirect(url_for('teacher_course.teacher_course_list'))
     
-    # Get search criteria
-    department_filter = request.args.get('department')
-    
-    # Get not enrolled students
-    not_enrolled_students = User.query.filter(
-        User.role == 'student',
-        User.id.notin_(
-            db.session.query(CourseEnrollment.student_id)
-            .filter(CourseEnrollment.course_code == course_code)
-        )
-    )
-    
-    # Apply department filter
-    if department_filter:
-        not_enrolled_students = not_enrolled_students.filter(User.department == department_filter)
-    
-    not_enrolled_students = not_enrolled_students.all()
-    
-    # Handle adding students
     if request.method == 'POST':
         student_ids = request.form.getlist('students[]')
         if student_ids:
-            # Check course capacity
-            current_enrolled = CourseEnrollment.query.filter_by(course_code=course_code).count()
-            if current_enrolled + len(student_ids) > course.capacity:
-                flash('The number of students to add exceeds the course capacity limit.')
-                return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))
-            
-            # Add selected students
-            for student_id in student_ids:
-                enrollment = CourseEnrollment(
-                    course_code=course_code,
-                    student_id=student_id
-                )
-                db.session.add(enrollment)
-            db.session.commit()
-            flash(f'Successfully added {len(student_ids)} students to the course.')
+            try:
+                # Check course capacity
+                enrolled_count = CourseEnrollment.query.filter_by(course_code=course_code).count()
+                available_slots = course.capacity - enrolled_count
+                
+                if available_slots <= 0:
+                    flash('Course is at full capacity. No students can be added.', 'warning')
+                    return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))
+                
+                # Only add students up to available capacity
+                students_to_add = min(len(student_ids), available_slots)
+                added_count = 0
+                
+                for i in range(students_to_add):
+                    student_id = student_ids[i]
+                    # Check if student is already enrolled
+                    existing = CourseEnrollment.query.filter_by(
+                        course_code=course_code, 
+                        student_id=student_id
+                    ).first()
+                    
+                    if not existing:
+                        enrollment = CourseEnrollment(
+                            course_code=course_code,
+                            student_id=student_id
+                        )
+                        db.session.add(enrollment)
+                        added_count += 1
+                
+                if added_count > 0:
+                    db.session.commit()
+                    flash(f'Successfully added {added_count} student(s) to the course.', 'success')
+                    if students_to_add < len(student_ids):
+                        flash(f'Course capacity reached. {len(student_ids) - students_to_add} student(s) could not be added.', 'warning')
+                else:
+                    flash('No students were added (they may already be enrolled).', 'warning')
+                    
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding students: {str(e)}', 'error')
+                
         return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))
+    
+    # Get not enrolled students with department filtering
+    department = request.args.get('department', '')
+    query = User.query.filter(User.role == 'student')
+    
+    if department:
+        query = query.filter(User.department == department)
+    
+    # Exclude already enrolled students
+    enrolled_student_ids = db.session.query(CourseEnrollment.student_id).filter(
+        CourseEnrollment.course_code == course_code
+    ).subquery()
+    
+    not_enrolled_students = query.filter(~User.id.in_(enrolled_student_ids)).all()
     
     return render_template('not_enrolled_list.html', course=course, students=not_enrolled_students)
 
@@ -274,138 +300,211 @@ def not_enrolled_list(course_code):
 @login_required
 @teacher_required
 def import_students(course_code):
-    # Get course information
     course = Course.query.get_or_404(course_code)
     
     # Check if the user is the teacher of this course
     if course.teacher_id != session['user_id']:
-        flash('You are not the teacher of this course, cannot access this page.')
+        flash('You can only manage students in your own courses.', 'error')
         return redirect(url_for('teacher_course.teacher_course_list'))
     
-    # Handle CSV file upload
     if request.method == 'POST':
-        # Check if a file is uploaded
-        if 'csv_file' not in request.files or request.files['csv_file'].filename == '':
-            flash('Please select a CSV file to upload.')
+        if 'csv_file' not in request.files:
+            flash('No file uploaded.', 'error')
             return redirect(request.url)
         
-        csv_file = request.files['csv_file']
-        
-        # Check file type
-        if not csv_file.filename.endswith('.csv'):
-            flash('Please upload a CSV format file.')
+        file = request.files['csv_file']
+        if file.filename == '':
+            flash('No file selected.', 'error')
             return redirect(request.url)
         
-        # Parse CSV file
-        csv_data = []
-        try:
-            # Read CSV file content
-            stream = io.StringIO(csv_file.stream.read().decode('utf-8'))
-            reader = csv.DictReader(stream)
-            
-            # Check if CSV format is correct
-            required_columns = ['student_id', 'email']  # At least student_id or email is required
-            if not any(col in reader.fieldnames for col in required_columns):
-                flash('CSV file format is incorrect, must contain at least student_id or email column.')
-                return redirect(request.url)
-            
-            csv_data = list(reader)
-        except Exception as e:
-            flash(f'Error parsing CSV file: {str(e)}')
-            return redirect(request.url)
+        if file and file.filename.endswith('.csv'):
+            try:
+                csv_content = file.read().decode('utf-8')
+                csv_reader = csv.DictReader(csv_content.splitlines())
+                
+                added_count = 0
+                skipped_count = 0
+                invalid_rows = 0
+                
+                # Check current capacity
+                enrolled_count = CourseEnrollment.query.filter_by(course_code=course_code).count()
+                available_slots = course.capacity - enrolled_count
+                
+                for row_num, row in enumerate(csv_reader, start=2):
+                    try:
+                        student_id = row.get('student_id', '').strip()
+                        email = row.get('email', '').strip()
+                        
+                        # Validate row data
+                        if not student_id and not email:
+                            invalid_rows += 1
+                            continue
+                        
+                        # Find student by ID or email
+                        student = None
+                        if student_id:
+                            try:
+                                student_id_int = int(student_id)
+                                student = User.query.filter_by(id=student_id_int, role='student').first()
+                            except ValueError:
+                                invalid_rows += 1
+                                continue
+                        elif email:
+                            student = User.query.filter_by(email=email, role='student').first()
+                        
+                        if student:
+                            # Check if already enrolled
+                            existing = CourseEnrollment.query.filter_by(
+                                course_code=course_code,
+                                student_id=student.id
+                            ).first()
+                            
+                            if not existing and available_slots > 0:
+                                enrollment = CourseEnrollment(
+                                    course_code=course_code,
+                                    student_id=student.id
+                                )
+                                db.session.add(enrollment)
+                                added_count += 1
+                                available_slots -= 1
+                            else:
+                                skipped_count += 1
+                        else:
+                            skipped_count += 1
+                            
+                    except Exception as e:
+                        invalid_rows += 1
+                        continue
+                
+                if added_count > 0:
+                    db.session.commit()
+                    flash(f'CSV import completed successfully. Added {added_count} students.', 'success')
+                else:
+                    flash('No students were added from the CSV file.', 'warning')
+                
+                # Provide detailed feedback
+                messages = []
+                if skipped_count > 0:
+                    messages.append(f'{skipped_count} skipped (already enrolled or not found)')
+                if invalid_rows > 0:
+                    messages.append(f'{invalid_rows} invalid rows')
+                if available_slots <= 0 and added_count == 0:
+                    messages.append('Course is at full capacity')
+                
+                if messages:
+                    flash('Details: ' + ', '.join(messages), 'info')
+                
+            except UnicodeDecodeError:
+                flash('Error reading CSV file. Please ensure it\'s properly encoded (UTF-8).', 'error')
+            except csv.Error as e:
+                flash(f'CSV format error: {str(e)}', 'error')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error processing CSV file: {str(e)}', 'error')
+        else:
+            flash('Please upload a valid CSV file (.csv extension required).', 'error')
+    
+    return render_template('import_students.html', course=course)
+
+
+@teacher_course_bp.route('/teacher_course/<course_code>/bulk_remove', methods=['POST'])
+@login_required
+@teacher_required
+def bulk_remove_students(course_code):
+    course = Course.query.get_or_404(course_code)
+    
+    # Check if the teacher owns this course
+    if course.teacher_id != current_user.id:
+        flash('You can only manage students in your own courses.', 'error')
+        return redirect(url_for('teacher_course.teacher_course_list'))
+    
+    student_ids = request.form.getlist('student_ids[]')
+    
+    if not student_ids:
+        flash('No students selected for removal.', 'warning')
+        return redirect(url_for('teacher_course.enrolled_list', course_code=course_code))
+    
+    try:
+        removed_count = 0
         
-        # Process student data
-        enrolled_students = []
-        not_enrolled_students = []
-        errors = []
-        
-        for row in csv_data:
-            student = None
-            
-            # Try to find by student ID
-            if 'student_id' in row and row['student_id']:
-                # Convert student_id to integer type
-                try:
-                    student_id = int(row['student_id'])
-                    student = User.query.filter_by(id=student_id, role='student').first()
-                except ValueError:
-                    # If conversion fails, continue trying to find by email
-                    student = None
-            
-            # If not found, try to find by email
-            if not student and 'email' in row and row['email']:
-                student = User.query.filter_by(email=row['email'], role='student').first()
-            
-            if not student:
-                errors.append(f"Student not found: {row}")
-                continue
-            
-            # Check if student is already enrolled in the course
+        for student_id in student_ids:
             enrollment = CourseEnrollment.query.filter_by(
-                course_code=course_code,
-                student_id=student.id
+                course_code=course.code,
+                student_id=student_id
             ).first()
             
             if enrollment:
-                enrolled_students.append(student)
-            else:
-                not_enrolled_students.append(student)
+                db.session.delete(enrollment)
+                removed_count += 1
         
-        # If there are unenrolled students and auto-add is selected
-        if request.form.get('auto_enroll') == '1' and not_enrolled_students:
-            # Check course capacity
-            current_enrolled = CourseEnrollment.query.filter_by(course_code=course_code).count()
-            if current_enrolled + len(not_enrolled_students) > course.capacity:
-                flash('The number of students to add exceeds the course capacity limit, not automatically added.')
-            else:
-                # Auto add students
-                for student in not_enrolled_students:
-                    enrollment = CourseEnrollment(
-                        course_code=course_code,
-                        student_id=student.id
-                    )
-                    db.session.add(enrollment)
-                db.session.commit()
-                flash(f'Successfully added {len(not_enrolled_students)} students to the course automatically.')
-                enrolled_students.extend(not_enrolled_students)
-                not_enrolled_students = []
-        
-        # Prepare import result data structure
-        imported_result = {
-            'total_students': len(csv_data),
-            'existing_students': len(enrolled_students) + len(not_enrolled_students),
-            'missing_students': len(errors),
-            'already_enrolled': len(enrolled_students),
-            'newly_enrolled': len(not_enrolled_students),
-            'enrolled_students': enrolled_students,
-            'not_enrolled_students': not_enrolled_students,
-            'missing_students_list': []
-        }
-        
-        # Convert error messages to student list format
-        if errors:
-            for error in errors:
-                # Try to parse student information
-                try:
-                    # Simple parsing of student data from error messages
-                    # Format: "Student not found: {'student_id': '123', 'username': 'John Doe', 'email': 'xxx@polyu.edu.hk}"
-                    student_data = eval(error[15:])  # Remove "Student not found: " prefix
-                    imported_result['missing_students_list'].append({
-                        'id': student_data.get('student_id', ''),
-                        'username': student_data.get('username', ''),
-                        'email': student_data.get('email', '')
-                    })
-                except:
-                    # If parsing fails, add a basic entry
-                    imported_result['missing_students_list'].append({
-                        'id': '',
-                        'username': '',
-                        'email': error
-                    })
-        
-        # Display import results
-        return render_template('import_students.html', 
-                              course=course, 
-                              imported_result=imported_result)
+        if removed_count > 0:
+            db.session.commit()
+            flash(f'Successfully removed {removed_count} students from the course.', 'success')
+        else:
+            flash('No students were removed (none found in course).', 'warning')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error removing students: {str(e)}', 'error')
     
-    return render_template('import_students.html', course=course)
+    return redirect(url_for('teacher_course.enrolled_list', course_code=course_code))
+
+
+@teacher_course_bp.route('/teacher_course/<course_code>/bulk_add', methods=['POST'])
+@login_required
+@teacher_required
+def bulk_add_students(course_code):
+    course = Course.query.get_or_404(course_code)
+    
+    # Check if the teacher owns this course
+    if course.teacher_id != current_user.id:
+        flash('You can only manage students in your own courses.', 'error')
+        return redirect(url_for('teacher_course.teacher_course_list'))
+    
+    student_ids = request.form.getlist('student_ids[]')
+    
+    if not student_ids:
+        flash('No students selected for addition.', 'warning')
+        return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))
+    
+    try:
+        # Check current capacity
+        enrolled_count = CourseEnrollment.query.filter_by(course_code=course.code).count()
+        available_slots = course.capacity - enrolled_count
+        
+        if available_slots <= 0:
+            flash('Course is at full capacity. No students can be added.', 'error')
+            return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))
+        
+        added_count = 0
+        
+        for student_id in student_ids:
+            # Check if already enrolled
+            existing = CourseEnrollment.query.filter_by(
+                course_code=course.code,
+                student_id=student_id
+            ).first()
+            
+            if not existing and available_slots > 0:
+                enrollment = CourseEnrollment(
+                    course_code=course.code,
+                    student_id=student_id
+                )
+                db.session.add(enrollment)
+                added_count += 1
+                available_slots -= 1
+        
+        if added_count > 0:
+            db.session.commit()
+            flash(f'Successfully added {added_count} students to the course.', 'success')
+            
+            if available_slots <= 0 and len(student_ids) > added_count:
+                flash('Course capacity reached. Some students were not added.', 'warning')
+        else:
+            flash('No students were added (all already enrolled).', 'warning')
+            
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error adding students: {str(e)}', 'error')
+    
+    return redirect(url_for('teacher_course.not_enrolled_list', course_code=course_code))

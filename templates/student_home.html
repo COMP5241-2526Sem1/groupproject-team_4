@@ -68,7 +68,7 @@
                     dropdown.innerHTML = '';
                     courses.forEach(course => {
                         const link = document.createElement('a');
-                        link.href = `/course/${course.id}`; // or `/course/${course.code}`
+                        link.href = `/course/${course.code}`;
                         link.textContent = course.name;
                         dropdown.appendChild(link);
                     });

@@ -93,8 +93,8 @@
                     <div class="desc">{{ course.description[:100] }}{% if course.description|length > 100 %}...{% endif %}</div>
                     <div>Credits: {{ course.credit }} | Capacity: {{ course.capacity }}</div>
                     <div class="actions">
-                        <a href="/teacher_course/{{ course.id }}">View Details</a>
-                        <a href="/teacher_course/{{ course.id }}/enrolled_list">Manage Students</a>
+                        <a href="/teacher_course/{{ course.code }}">View Details</a>
+                        <a href="/teacher_course/{{ course.code }}/enrolled_list">Manage Students</a>
                     </div>
                     </div>
                 {% endfor %}

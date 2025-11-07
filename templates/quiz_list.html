@@ -15,21 +15,19 @@
     {% if quizzes %}
     <div class="quiz-list">
         {% for quiz in quizzes %}
-        {% if quiz.used_attempts < quiz.max_attempts %}
-        <a href="/course/{{ course.id }}/quiz/{{ quiz.id }}" class="quiz-container-link">
+        <a href="/course/{{ course.code }}/quiz/{{ quiz.id }}" class="quiz-container-link">
             <div class="quiz-container">
                 <h3>{{ quiz.name }}</h3>
+                <p>Start Date: {{ quiz.start_datetime.strftime('%Y-%m-%d %H:%M') if quiz.start_datetime else 'N/A' }}</p>
+                <p>End Date: {{ quiz.end_datetime.strftime('%Y-%m-%d %H:%M') if quiz.end_datetime else 'N/A' }}</p>
                 <p>Used Attempts: {{ quiz.used_attempts }}/{{ quiz.max_attempts }}</p>
+                {% if quiz.used_attempts < quiz.max_attempts %}
                 <span class="btn">View Quiz</span>
+                {% else %}
+                <span class="quiz-completed">Quiz Completed</span>
+                {% endif %}
             </div>
         </a>
-        {% else %}
-        <div class="quiz-container">
-            <h1>{{ quiz.name }}</h1>
-            <p>Used Attempts: {{ quiz.used_attempts }}/{{ quiz.max_attempts }}</p>
-            <span class="quiz-completed">Quiz Completed</span>
-        </div>
-        {% endif %}
         {% endfor %}
     </div>
     {% else %}

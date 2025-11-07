@@ -8,6 +8,7 @@ from models.choice import Choice
 from models.question_response import QuestionResponse
 from models.submission import Submission
 from database import db
+from datetime import datetime
 
 poll_bp = Blueprint('poll', __name__)
 
@@ -31,22 +32,37 @@ def get_poll_list(course_code):
     # Get all polls for the course
     polls = Poll.query.filter_by(course_code=course_code).all()
     
+    # Check if user is teacher (teachers have unlimited attempts)
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    
     # Prepare data for the template
     poll_data = []
     for poll in polls:
-        # Check if the user has already responded through submission
-        has_responded = QuestionResponse.query.join(Submission).filter(
-            QuestionResponse.submission_id == Submission.id,
-            Submission.user_id == user_id,
-            Submission.poll_id == poll.id
-        ).first() is not None
+        # Get submission count (similar to attempt count for quizzes)
+        submission_count = Submission.query.filter_by(poll_id=poll.id, user_id=user_id).count()
+        
+        # Check if user can attempt again (teachers always can)
+        can_attempt = is_teacher or not poll.attempt_limit or submission_count < poll.attempt_limit
+        
+        # Check if poll is currently available (within start and end datetime)
+        current_time = datetime.now()
+        is_available = True
+        if poll.start_datetime and current_time < poll.start_datetime:
+            is_available = False
+        if poll.end_datetime and current_time > poll.end_datetime:
+            is_available = False
         
         poll_data.append({
             'id': poll.id,
             'name': poll.name,
             'description': poll.description,
-            'has_responded': has_responded,
-            'deadline': poll.deadline
+            'used_attempts': submission_count,
+            'max_attempts': poll.attempt_limit if poll.attempt_limit else 0,
+            'can_attempt': can_attempt,
+            'start_datetime': poll.start_datetime,
+            'end_datetime': poll.end_datetime,
+            'is_available': is_available
         })
     
     # Check for any messages (like successful submission)
@@ -83,23 +99,34 @@ def get_poll_info(course_code, poll_id):
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
     
+    # Get submission count (similar to attempt count for quizzes)
+    submission_count = Submission.query.filter_by(poll_id=poll_id, user_id=user_id).count()
+    
+    # Check if user is teacher (teachers have unlimited attempts)
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    
+    # Check if user can attempt again (teachers always can)
+    can_attempt = is_teacher or not poll.attempt_limit or submission_count < poll.attempt_limit
+    
+    # If student has used all attempts and cannot view results (no submissions), redirect to poll list
+    # Students can only view results if they have at least one submission
+    if not is_teacher and not can_attempt and submission_count == 0:
+        return redirect(f'/course/{course_code}/poll')
+    
     # Get poll questions
     questions = Question.query.filter_by(poll_id=poll_id).all()
-    
-    # Check if user has already responded through submission
-    has_responded = QuestionResponse.query.join(Submission).filter(
-        QuestionResponse.submission_id == Submission.id,
-        Submission.user_id == user_id,
-        Submission.poll_id == poll_id
-    ).first() is not None
     
     # Prepare questions with choices (for MCQ)
     poll_data = {
         'id': poll.id,
         'name': poll.name,
         'description': poll.description,
-        'has_responded': has_responded,
-        'deadline': poll.deadline,
+        'used_attempts': submission_count,
+        'max_attempts': poll.attempt_limit if poll.attempt_limit else 0,
+        'can_attempt': can_attempt,
+        'start_datetime': poll.start_datetime,
+        'end_datetime': poll.end_datetime,
         'questions': []
     }
     
@@ -140,18 +167,37 @@ def start_poll(course_code, poll_id):
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
     
-    # Check if user has already responded through submission
-    has_responded = QuestionResponse.query.join(Submission).filter(
-        QuestionResponse.submission_id == Submission.id,
-        Submission.user_id == user_id,
-        Submission.poll_id == poll_id
-    ).first() is not None
+    # Get submission count (similar to attempt count for quizzes)
+    submission_count = Submission.query.filter_by(poll_id=poll_id, user_id=user_id).count()
     
-    # Check if user is teacher (teachers can respond multiple times)
+    # Check if user is teacher (teachers have unlimited attempts)
     user = User.query.get(user_id)
     is_teacher = user and user.role == 'teacher'
     
-    if has_responded and not is_teacher:
+    # Check if user can attempt again (teachers always can)
+    can_attempt = is_teacher or not poll.attempt_limit or submission_count < poll.attempt_limit
+    
+    # Check if poll is currently available (within start and end datetime)
+    current_time = datetime.now()
+    is_available = True
+    if poll.start_datetime and current_time < poll.start_datetime:
+        is_available = False
+    if poll.end_datetime and current_time > poll.end_datetime:
+        is_available = False
+    
+    if not is_available:
+        return render_template('poll_info.html', course=course, poll={
+            'id': poll.id,
+            'name': poll.name,
+            'description': poll.description,
+            'used_attempts': submission_count,
+            'max_attempts': poll.attempt_limit if poll.attempt_limit else 0,
+            'can_attempt': False,
+            'start_datetime': poll.start_datetime,
+            'end_datetime': poll.end_datetime
+        }, error_message="This poll is not currently available"), 400
+    
+    if not can_attempt:
         return redirect(f'/course/{course_code}/poll?already_submitted=1')
     
     # Get poll questions
@@ -201,6 +247,106 @@ def get_poll_results(course_code, poll_id):
     poll = Poll.query.filter_by(id=poll_id, course_code=course_code).first()
     if not poll:
         return render_template('poll_list.html', course=course, polls=[], error_message="Poll not found"), 404
+    
+    # Get submission count to validate access
+    submission_count = Submission.query.filter_by(poll_id=poll_id, user_id=user_id).count()
+    
+    # Check if user is teacher (teachers can always view results)
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    
+    # Students can only view results if they have at least one submission
+    if not is_teacher and submission_count == 0:
+        return redirect(f'/course/{course_code}/poll')
+    
+    # Get user's submission
+    submission = Submission.query.filter_by(poll_id=poll_id, user_id=user_id).first()
+    if not submission:
+        return render_template('poll_results.html', course=course, poll=poll, error_message="No submission found for this poll"), 404
+    
+    # Get all question responses for this submission
+    responses = QuestionResponse.query.filter_by(submission_id=submission.id).all()
+    
+    # Prepare results data based on poll visibility settings (always visible for polls)
+    results_data = {
+        'id': poll.id,
+        'name': poll.name,
+        'description': poll.description,
+        'submitted_at': submission.submitted_at,
+        'visibility': {
+            'question_visible': True,  # Polls always show questions
+            'student_response_visible': True,  # Polls always show responses
+            'sample_response_visible': True,  # Polls always show sample responses
+            'class_response_visible': True   # Polls always show class responses
+        },
+        'questions': []
+    }
+    
+    for response in responses:
+        question = Question.query.get(response.question_id)
+        if not question:
+            continue
+            
+        question_data = {
+            'id': question.id,
+            'content': question.content,
+            'type': question.type,
+            'user_answer': None,
+            'correct_answer': None,
+            'class_responses': []
+        }
+        
+        # Show question content (always visible for polls)
+        question_data['content'] = question.content
+        
+        # Show student response (always visible for polls)
+        if question.type == 'mcq':
+            if response.choice_id:
+                choice = Choice.query.get(response.choice_id)
+                if choice:
+                    question_data['user_answer'] = choice.content
+        elif question.type == 'saq':
+            question_data['user_answer'] = response.text_answer
+        
+        # Show class responses (always visible for polls)
+        if question.type == 'mcq':
+            # Get all responses for this question across all submissions
+            all_responses = QuestionResponse.query.join(Submission).filter(
+                QuestionResponse.question_id == question.id,
+                Submission.poll_id == poll_id
+            ).all()
+            
+            # Count responses for each choice
+            choice_counts = {}
+            total_responses = len(all_responses)
+            
+            for resp in all_responses:
+                if resp.choice_id:
+                    choice = Choice.query.get(resp.choice_id)
+                    if choice:
+                        if choice.content not in choice_counts:
+                            choice_counts[choice.content] = 0
+                        choice_counts[choice.content] += 1
+            
+            # Calculate percentages
+            for choice_text, count in choice_counts.items():
+                percentage = (count / total_responses * 100) if total_responses > 0 else 0
+                question_data['class_responses'].append({
+                    'choice': choice_text,
+                    'count': count,
+                    'percentage': round(percentage, 1)
+                })
+        
+        results_data['questions'].append(question_data)
+    
+    # Get class statistics (always visible for polls)
+    all_submissions = Submission.query.filter_by(poll_id=poll_id).all()
+    total_students = len(all_submissions)
+    results_data['class_statistics'] = {
+        'total_students': total_students
+    }
+    
+    return render_template('poll_results.html', course=course, poll=results_data, course_code=course_code)
 
 
 # Teacher poll management routes
@@ -348,95 +494,6 @@ def teacher_delete_poll(course_code, poll_id):
     
     flash('Poll deleted successfully!')
     return redirect(url_for('poll.teacher_poll_list', course_code=course_code))
-    
-    # Get user's submission
-    submission = Submission.query.filter_by(poll_id=poll_id, user_id=user_id).first()
-    if not submission:
-        return render_template('poll_results.html', course=course, poll=poll, error_message="No submission found for this poll"), 404
-    
-    # Get all question responses for this submission
-    responses = QuestionResponse.query.filter_by(submission_id=submission.id).all()
-    
-    # Prepare results data based on poll visibility settings (always visible for polls)
-    results_data = {
-        'id': poll.id,
-        'name': poll.name,
-        'description': poll.description,
-        'submitted_at': submission.submitted_at,
-        'visibility': {
-            'question_visible': True,  # Polls always show questions
-            'student_response_visible': True,  # Polls always show responses
-            'sample_response_visible': True,  # Polls always show sample responses
-            'class_response_visible': True   # Polls always show class responses
-        },
-        'questions': []
-    }
-    
-    for response in responses:
-        question = Question.query.get(response.question_id)
-        if not question:
-            continue
-            
-        question_data = {
-            'id': question.id,
-            'content': question.content,
-            'type': question.type,
-            'user_answer': None,
-            'correct_answer': None,
-            'class_responses': []
-        }
-        
-        # Show question content (always visible for polls)
-        question_data['content'] = question.content
-        
-        # Show student response (always visible for polls)
-        if question.type == 'mcq':
-            if response.choice_id:
-                choice = Choice.query.get(response.choice_id)
-                if choice:
-                    question_data['user_answer'] = choice.content
-        elif question.type == 'saq':
-            question_data['user_answer'] = response.text_answer
-        
-        # Show class responses (always visible for polls)
-        if question.type == 'mcq':
-            # Get all responses for this question across all submissions
-            all_responses = QuestionResponse.query.join(Submission).filter(
-                QuestionResponse.question_id == question.id,
-                Submission.poll_id == poll_id
-            ).all()
-            
-            # Count responses for each choice
-            choice_counts = {}
-            total_responses = len(all_responses)
-            
-            for resp in all_responses:
-                if resp.choice_id:
-                    choice = Choice.query.get(resp.choice_id)
-                    if choice:
-                        if choice.content not in choice_counts:
-                            choice_counts[choice.content] = 0
-                        choice_counts[choice.content] += 1
-            
-            # Calculate percentages
-            for choice_text, count in choice_counts.items():
-                percentage = (count / total_responses * 100) if total_responses > 0 else 0
-                question_data['class_responses'].append({
-                    'choice': choice_text,
-                    'count': count,
-                    'percentage': round(percentage, 1)
-                })
-        
-        results_data['questions'].append(question_data)
-    
-    # Get class statistics (always visible for polls)
-    all_submissions = Submission.query.filter_by(poll_id=poll_id).all()
-    total_students = len(all_submissions)
-    results_data['class_statistics'] = {
-        'total_students': total_students
-    }
-    
-    return render_template('poll_results.html', course=course, poll=results_data, course_code=course_code)
 
 @poll_bp.route('/course/<course_code>/poll/<int:poll_id>/submit', methods=['POST'])
 def submit_poll(course_code, poll_id):

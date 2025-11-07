@@ -1,4 +1,4 @@
-{% extends 'teacher_course_base.html' %}
+{% extends 'teacher_course_specific_base.html' %}
 
 {% block course_title %}Import Students - {{ course.name }}{% endblock %}
 
@@ -187,9 +187,9 @@
 <h1>{{ course.name }} - Import Students</h1>
 
 <div class="nav-buttons">
-    <a href="/teacher_course/{{ course.id }}" class="nav-btn">Back to Course Details</a>
-    <a href="/teacher_course/{{ course.id }}/enrolled_list" class="nav-btn">Enrolled Students</a>
-    <a href="/teacher_course/{{ course.id }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
+    <a href="/teacher_course/{{ course.code }}" class="nav-btn">Back to Course Details</a>
+    <a href="/teacher_course/{{ course.code }}/enrolled_list" class="nav-btn">Enrolled Students</a>
+    <a href="/teacher_course/{{ course.code }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
 </div>
 
 <div class="import-container">

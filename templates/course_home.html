@@ -1,9 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Student Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% extends 'course_base.html' %}
+
+{% block title %}{{ course.name if course else 'Course Home' }}{% endblock %}
+
+{% block styles %}
+<style>
+    .course-info {
+        margin-bottom: 20px;
+    }
+    .course-info h1 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .course-info p {
+        margin: 8px 0;
+        color: #666;
+    }
+    .course-actions {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+    {% if course %}
+    <div class="course-info">
+        <h1>{{ course.name }}</h1>
+        <p><strong>Description:</strong> {{ course.description }}</p>
+        <p><strong>Code:</strong> {{ course.code }}</p>
+        <p><strong>Teacher:</strong> {{ course.teacher.username }}</p>
+        <p><strong>Department:</strong> {{ course.department.name if course.department else 'N/A' }}</p>
+    </div>
+    {% endif %}
+
+    <div class="course-actions">
+        <h2>Course Navigation</h2>
+        <p>Use the sidebar to navigate through different course sections:</p>
+        <ul>
+            <li><strong>Announcement:</strong> View course announcements</li>
+            <li><strong>Content:</strong> Access course materials</li>
+            <li><strong>Quiz:</strong> Take quizzes and view results</li>
+            <li><strong>Poll:</strong> Participate in course polls</li>
+            <li><strong>Word Cloud:</strong> Interactive word cloud activities</li>
+            <li><strong>Mini Games:</strong> Educational games and activities</li>
+            <li><strong>Grades:</strong> View your grades and progress</li>
+        </ul>
+    </div>
 
     <script>
         function loadAnnouncement() {
@@ -28,38 +69,4 @@
             document.querySelector('.main-content').innerHTML = '<h1>Grade</h1><p>This is the grade section.</p>';
         }
     </script>
-</head>
-<body>
-<div class="container">
-    <aside class="sidebar">
-        <div class="logo" onclick="window.location.href='/student_home'">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
-        </div>
-
-        <nav>
-            <a href="#" onclick="loadAnnouncement()">Announcement</a>
-            <a href="#" onclick="">Content</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/quiz';">Quiz</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/poll';">Poll</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/word_cloud';">Word Cloud</a>
-            <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname + '/mini_games';">Mini Games</a>
-            <a href="#" onclick="">Grades</a>
-
-            <a href="/logout">Sign Out</a>
-        </nav>
-    </aside>
-
-    <main class="main-content">
-        <h1>{{ course.name }}</h1>
-        <p>Description: {{ course.description }}</p>
-        <p>Code: {{ course.code }}</p>
-        <p>Teacher: {{ course.teacher.username }}</p>
-        <p>Department: {{ course.department.name if course.department else 'N/A' }}</p>
-
-    </main>
-
-</div>
-
-</body>
-</html>
+{% endblock %}

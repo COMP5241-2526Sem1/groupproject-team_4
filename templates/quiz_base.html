@@ -1,8 +1,10 @@
 {% extends 'course_base.html' %}
 
+{% block title %}{{ course.name if course else 'Course Home' }}{% endblock %}
+
 {% block sidebar_links %}
-<a href="/course/{{ course.code if course and course.code else course_code }}">Course Home</a>
-    <a href="/course/{{ course.code if course and course.code else course_code }}/quiz">Quiz List</a>
+<a href="/course/{{ course.code if course and course.code else course_code or '' }}">Course Home</a>
+    <a href="/course/{{ course.code if course and course.code else course_code or '' }}/quiz">Quiz List</a>
 <a href="/logout">Sign Out</a>
 {% endblock %}
 

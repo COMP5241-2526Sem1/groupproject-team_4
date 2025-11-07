@@ -7,7 +7,7 @@
         {% if error_message %}
             <h1>Error</h1>
             <p>{{ error_message }}</p>
-            <button onclick="window.location.href='/course/{{ course_code }}/poll'">Back to Poll List</button>
+            <button onclick="window.location.href='/course/{{ course.code }}/poll'">Back to Poll List</button>
         {% else %}
             <h1>{{ poll.name }} - Results</h1>
             
@@ -75,7 +75,7 @@
             {% endif %}
             
             <div class="action-buttons">
-                <button onclick="window.location.href='/course/{{ course_code }}/poll'">Back to Poll List</button>
+                <button onclick="window.location.href='/course/{{ course.code }}/poll'">Back to Poll List</button>
             </div>
         {% endif %}
     </div>

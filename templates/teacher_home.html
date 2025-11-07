@@ -55,7 +55,7 @@
                             <td>{{ course.capacity }}</td>
                             <td>{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</td>
                             <td>
-                                <a href="/teacher_course/{{ course.id }}" class="btn-view">View Details</a>
+                                <a href="/teacher_course/{{ course.code }}" class="btn-view">View Details</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -117,7 +117,7 @@
                 dropdown.innerHTML = '';
                 courses.forEach(course => {
                     const link = document.createElement('a');
-                    link.href = `/teacher_course/${course.id}`;
+                    link.href = `/teacher_course/${course.code}`;
                     link.textContent = course.name;
                     dropdown.appendChild(link);
                 });

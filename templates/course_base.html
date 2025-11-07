@@ -5,7 +5,13 @@
     <aside class="sidebar">
         <div class="logo" onclick="window.location.href='/student_home'">
             <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+            {% if course %}
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">{{ course.code }}</div>
+                <div style="font-size:14px;margin-top:4px;">{{ course.name }}</div>
+            {% else %}
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">Quiz System</div>
+                <div style="font-size:14px;margin-top:4px;">Error: Course not found</div>
+            {% endif %}
         </div>
 
         <nav>

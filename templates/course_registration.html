@@ -2,6 +2,63 @@
 
 {% block title %}Course Registration{% endblock %}
 
+{% block extra_css %}
+<style>
+    .course-tab-btn {
+        padding: 12px 24px;
+        border: 2px solid #8a1c32;
+        background: white;
+        color: #8a1c32;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    .course-tab-btn:hover {
+        background: #8a1c32;
+        color: white;
+    }
+    .course-tab-btn.active {
+        background: #8a1c32;
+        color: white;
+    }
+    .course-item {
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: box-shadow 0.2s ease;
+    }
+    .course-item:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .course-add-btn {
+        background: #8a1c32;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s ease;
+    }
+    .course-add-btn:hover:not(:disabled) {
+        background: #6a1528;
+    }
+    .course-add-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    #course-msg {
+        margin-top: 24px;
+        font-size: 1.1rem;
+    }
+    #available-courses, #my-courses {
+        min-height: 200px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 {% set active_nav = 'course_registration' %}
 <div class="container">
@@ -60,66 +117,207 @@
     }
     // Default to show add courses tab and load data
     showCourseTab('add');
+    
+    // Add loading states
+    function showLoading(elementId) {
+        document.getElementById(elementId).innerHTML = '<div style="text-align:center;padding:40px;"><div style="display:inline-block;width:40px;height:40px;border:4px solid #f3f3f3;border-top:4px solid #8a1c32;border-radius:50%;animation:spin 1s linear infinite;"></div><p style="margin-top:16px;color:#666;">Loading courses...</p></div>';
+    }
+    
+    // Add CSS for spinner animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Override the original functions to include loading states
+    const originalLoadAvailableCourses = loadAvailableCourses;
+    const originalLoadMyCourses = loadMyCourses;
+    
+    loadAvailableCourses = function() {
+        showLoading('available-courses');
+        originalLoadAvailableCourses();
+    };
+    
+    loadMyCourses = function() {
+        showLoading('my-courses');
+        originalLoadMyCourses();
+    };
 
     // Load available courses
     function loadAvailableCourses() {
-        fetch('/course/available').then(r=>r.json()).then(data=>{
-            let html = '';
-            if(data.length===0) html = '<p>No available courses</p>';
-            else data.forEach(c=>{
-                html += `<div class='course-item' style='display:flex;align-items:center;'>
-                    <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
-                    <div style='flex:3;color:#888;'>${c.description||''}</div>
-                    <div style='flex:1;'>${c.credit} credits</div>
-                    <div style='flex:2;'>${c.enrolled}/${c.capacity}</div>
-                    <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
-                    <div style='flex:1;text-align:right;'><button onclick='addCourse(${c.id})' class='course-add-btn'>Add</button></div>
-                </div>`;
+        fetch('/course/available')
+            .then(r => {
+                if (!r.ok) {
+                    if (r.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                return r.json();
+            })
+            .then(data => {
+                let html = '';
+                if(data.length === 0) {
+                    html = '<div style="text-align:center;padding:40px;color:#666;"><p>No available courses for registration</p></div>';
+                } else {
+                    data.forEach(c => {
+                        const isFull = c.enrolled >= c.capacity;
+                        const capacityColor = isFull ? '#d81e06' : '#666';
+                        html += `<div class='course-item' style='display:flex;align-items:center;padding:15px;border-bottom:1px solid #eee;'>
+                            <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
+                            <div style='flex:3;color:#888;font-size:0.9em;'>${c.description||''}</div>
+                            <div style='flex:1;text-align:center;'><span style='background:#f0f0f0;padding:4px 8px;border-radius:4px;'>${c.credit} credits</span></div>
+                            <div style='flex:2;text-align:center;color:${capacityColor};'>${c.enrolled}/${c.capacity}</div>
+                            <div style='flex:2;text-align:center;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
+                            <div style='flex:1;text-align:right;'>
+                                <button onclick='addCourse("${c.code}", event)' class='course-add-btn' ${isFull ? 'disabled style="background:#ccc;cursor:not-allowed;"' : ''}>
+                                    ${isFull ? 'Full' : 'Add'}
+                                </button>
+                            </div>
+                        </div>`;
+                    });
+                }
+                document.getElementById('available-courses').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading available courses:', error);
+                document.getElementById('available-courses').innerHTML = '<div style="text-align:center;padding:40px;color:#d81e06;"><p>Error loading available courses. Please try again.</p></div>';
             });
-            document.getElementById('available-courses').innerHTML = html;
-        });
     }
     // Load selected courses
     function loadMyCourses() {
-        fetch('/course/my').then(r=>r.json()).then(data=>{
-            let html = '';
-            if(data.length===0) html = '<p>No courses selected</p>';
-            else data.forEach(c=>{
-                html += `<div class='course-item' style='display:flex;align-items:center;'>
-                    <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
-                    <div style='flex:3;color:#888;'>${c.description||''}</div>
-                    <div style='flex:1;'>${c.credit} credits</div>
-                    <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
-                    <div style='flex:1;text-align:right;'><button onclick='dropCourse(${c.id})' class='course-add-btn' style='background:#eee;color:#a62c43;'>Drop</button></div>
-                </div>`;
+        fetch('/course/my')
+            .then(r => {
+                if (!r.ok) {
+                    if (r.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                return r.json();
+            })
+            .then(data => {
+                let html = '';
+                if(data.length === 0) {
+                    html = '<div style="text-align:center;padding:40px;color:#666;"><p>You have not registered for any courses yet</p></div>';
+                } else {
+                    let totalCredits = 0;
+                    data.forEach(c => {
+                        totalCredits += c.credit;
+                        html += `<div class='course-item' style='display:flex;align-items:center;padding:15px;border-bottom:1px solid #eee;'>
+                            <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
+                            <div style='flex:3;color:#888;font-size:0.9em;'>${c.description||''}</div>
+                            <div style='flex:1;text-align:center;'><span style='background:#f0f0f0;padding:4px 8px;border-radius:4px;'>${c.credit} credits</span></div>
+                            <div style='flex:2;text-align:center;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
+                            <div style='flex:1;text-align:right;'>
+                                <button onclick='dropCourse("${c.code}", event)' class='course-add-btn' style='background:#eee;color:#a62c43;border:1px solid #ddd;'>
+                                    Drop
+                                </button>
+                            </div>
+                        </div>`;
+                    });
+                    html += `<div style='margin-top:20px;padding:15px;background:#f8f8f8;border-radius:8px;text-align:right;font-weight:bold;color:#8a1c32;'>
+                        Total Credits: ${totalCredits}
+                    </div>`;
+                }
+                document.getElementById('my-courses').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading my courses:', error);
+                document.getElementById('my-courses').innerHTML = '<div style="text-align:center;padding:40px;color:#d81e06;"><p>Error loading your courses. Please try again.</p></div>';
             });
-            document.getElementById('my-courses').innerHTML = html;
-        });
     }
     // Add course
-    function addCourse(cid) {
+    function addCourse(cid, event) {
+        const button = event.target;
+        button.disabled = true;
+        button.textContent = 'Adding...';
+        
         fetch('/course/add', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({course_code:cid})
-        }).then(r=>r.json()).then(data=>{
-            document.getElementById('course-msg').innerText = data.msg;
+        })
+        .then(r => {
+            if (!r.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return r.json();
+        })
+        .then(data => {
+            const messageDiv = document.getElementById('course-msg');
+            if (data.msg && data.msg.includes('successful')) {
+                messageDiv.innerHTML = `<div style="color:#28a745;background:#d4edda;padding:10px;border-radius:4px;">✓ ${data.msg}</div>`;
+            } else {
+                messageDiv.innerHTML = `<div style="color:#d81e06;background:#f8d7da;padding:10px;border-radius:4px;">✗ ${data.msg}</div>`;
+            }
             loadAvailableCourses();
             loadMyCourses();
             populateCourseDropdown();
+        })
+        .catch(error => {
+            console.error('Error adding course:', error);
+            document.getElementById('course-msg').innerHTML = `<div style="color:#d81e06;background:#f8d7da;padding:10px;border-radius:4px;">✗ Error adding course. Please try again.</div>`;
+        })
+        .finally(() => {
+            setTimeout(() => {
+                button.disabled = false;
+                button.textContent = 'Add';
+            }, 2000);
         });
     }
     // Drop course
-    function dropCourse(cid) {
+    function dropCourse(cid, event) {
+        const button = event.target;
+        button.disabled = true;
+        button.innerHTML = 'Dropping...';
+        button.classList.add('loading');
+        
+        if (!confirm('Are you sure you want to drop this course?')) {
+            button.disabled = false;
+            button.innerHTML = 'Drop';
+            button.classList.remove('loading');
+            return;
+        }
+        
         fetch('/course/drop', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({course_code:cid})
-        }).then(r=>r.json()).then(data=>{
-            document.getElementById('course-msg').innerText = data.msg;
+        })
+        .then(r => {
+            if (!r.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return r.json();
+        })
+        .then(data => {
+            const messageDiv = document.getElementById('course-msg');
+            if (data.msg && data.msg.includes('successful')) {
+                messageDiv.innerHTML = `<div style="color:#28a745;background:#d4edda;padding:10px;border-radius:4px;">✓ ${data.msg}</div>`;
+            } else {
+                messageDiv.innerHTML = `<div style="color:#d81e06;background:#f8d7da;padding:10px;border-radius:4px;">✗ ${data.msg}</div>`;
+            }
             loadAvailableCourses();
             loadMyCourses();
             populateCourseDropdown();
+        })
+        .catch(error => {
+            console.error('Error dropping course:', error);
+            document.getElementById('course-msg').innerHTML = `<div style="color:#d81e06;background:#f8d7da;padding:10px;border-radius:4px;">✗ Error dropping course. Please try again.</div>`;
+        })
+        .finally(() => {
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = 'Drop';
+                button.classList.remove('loading');
+            }, 2000);
         });
     }
     // Auto load courses when switching tabs
@@ -132,18 +330,44 @@
     // Dynamically generate course dropdown menu
     function populateCourseDropdown() {
         fetch('/course/my')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(courses => {
                 const dropdown = document.getElementById('course-dropdown');
                 dropdown.innerHTML = '';
-                courses.forEach(course => {
-                    const link = document.createElement('a');
-                    link.href = `/course/${course.id}`; // or `/course/${course.code}`
-                    link.textContent = course.name;
-                    dropdown.appendChild(link);
-                });
+                
+                if (courses.length === 0) {
+                    const noCourses = document.createElement('div');
+                    noCourses.style.padding = '10px';
+                    noCourses.style.color = '#666';
+                    noCourses.style.fontSize = '0.9em';
+                    noCourses.textContent = 'No courses registered';
+                    dropdown.appendChild(noCourses);
+                } else {
+                    courses.forEach(course => {
+                        const link = document.createElement('a');
+                        link.href = `/course/${course.code}`;
+                        link.textContent = course.name;
+                        link.style.padding = '8px 12px';
+                        link.style.textDecoration = 'none';
+                        link.style.color = '#333';
+                        link.style.display = 'block';
+                        link.style.transition = 'background-color 0.2s';
+                        link.onmouseover = () => link.style.backgroundColor = '#f0f0f0';
+                        link.onmouseout = () => link.style.backgroundColor = 'transparent';
+                        dropdown.appendChild(link);
+                    });
+                }
             })
-            .catch(error => console.error('Error loading courses:', error));
+            .catch(error => {
+                console.error('Error loading courses for dropdown:', error);
+                const dropdown = document.getElementById('course-dropdown');
+                dropdown.innerHTML = '<div style="padding:10px;color:#d81e06;font-size:0.9em;">Error loading courses</div>';
+            });
     }
 
     // Call after page loads

@@ -33,8 +33,8 @@
                             <td>{{ course.capacity }}</td>
                             <td>{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</td>
                             <td>
-                                <a href="/teacher_course/{{ course.id }}" class="btn-view">View Details</a>
-                                <a href="/teacher_course/{{ course.id }}/enrolled_list" class="btn-view">Manage Students</a>
+                                <a href="/teacher_course/{{ course.code }}" class="btn-view">View Details</a>
+                                <a href="/teacher_course/{{ course.code }}/enrolled_list" class="btn-view">Manage Students</a>
                             </td>
                         </tr>
                         {% endfor %}
