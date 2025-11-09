@@ -104,6 +104,24 @@
     .attempt-info.available {
         color: #28a745;
     }
+    
+    .grade-info {
+        font-weight: bold;
+    }
+    
+    .grade-score {
+        color: #8a1c32;
+    }
+    
+    .grade-percentage {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .no-grade {
+        color: #999;
+        font-style: italic;
+    }
 </style>
 {% endblock %}
 
@@ -141,6 +159,7 @@
                     <th>Start Date</th>
                     <th>End Date</th>
                     <th>Attempts</th>
+                    <th>Grade</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -157,6 +176,14 @@
                     </td>
                     <td class="attempt-info {% if quiz.used_attempts >= quiz.max_attempts %}full{% else %}available{% endif %}">
                         {{ quiz.used_attempts }}/{{ quiz.max_attempts }}
+                    </td>
+                    <td class="grade-info">
+                        {% if quiz.grade %}
+                            <span class="grade-score">{{ quiz.grade.points_earned }}/{{ quiz.grade.points_possible }}</span>
+                            <span class="grade-percentage">({{ "%.1f"|format(quiz.grade.percentage) }}%)</span>
+                        {% else %}
+                            <span class="no-grade">Not graded</span>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="quiz-actions">

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Foreign Key Fix Verification Quiz (Updated) - Start Quiz</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+    
+<script>
+    // Common quiz-related scripts
+    
+    // Simple validation before submitting
+    function validateQuizForm() {
+        // Implementation will be handled by server-side validation
+        return true;
+    }
+
+</script>
+
+</head>
+<body>
+    
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo" onclick="window.location.href='/student_home'">
+            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">COMP101</div>
+                <div style="font-size:14px;margin-top:4px;">Introduction to Programming</div>
+            
+        </div>
+
+        <nav>
+            
+<a href="/course/COMP101">Course Home</a>
+    <a href="/course/COMP101/quiz">Quiz List</a>
+<a href="/logout">Sign Out</a>
+
+        </nav>
+
+
+    </aside>
+
+    <main class="main-content">
+        
+    
+    
+    <div class="quiz-header">
+        <h1>Foreign Key Fix Verification Quiz (Updated)</h1>
+        
+        <div class="quiz-description">Testing the complete foreign key constraint fix - updated version</div>
+        
+        <div class="quiz-info">
+            <p>Question Count: 0</p>
+            <p>Duration: 45 minutes</p>
+        </div>
+    </div>
+    
+    <form id="quiz-form" action="/course/COMP101/quiz/18/submit" method="POST" onsubmit="return validateQuizForm();">
+        
+        
+        <div class="quiz-submit">
+            <button type="submit" class="submit-btn">Submit Quiz</button>
+        </div>
+    </form>
+
+    </main>
+</div>
+
+</body>
+</html>

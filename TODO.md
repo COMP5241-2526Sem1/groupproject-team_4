@@ -1,35 +1,7 @@
 # TO-DO LIST
-## 20251107 refactor
-1.refactor course model and its usage, remove course id and use course code eg COMP1010, keep the department but it should not be int but code, eg COMP, and add a new field for the second part of the code, eg 1010
-2.refactor the department model, remove department id and use department code eg COMP, keep other field unchanged
-3.refactor the usage of deparment in other places, eg user model
-4.refactor all usage of course id to course code, this might take some time, do it carefully
-after this, make a git commit called refactor: refactor course and department model and usage
-then do
-1.implement the quiz visibility feature
-    after_submitted_question_visible = Column(Boolean, default=False)
-    after_submitted_student_response_visible = Column(Boolean, default=False)
-    after_submitted_sample_response_visible = Column(Boolean, default=False)
-    after_submitted_class_response_visible = Column(Boolean, default=False)
-    update the route and template to use the new visibility settings
-2.poll should be exactly the same as quiz except that it is not graded and is always visible to user for the user response history, question and class response, user can see how other students responded to the poll
-this will take some time, update the route and template
-3.after this, make a git commit called feat: implement poll visibility feature
-
-then do
-add feature, teacher can see all quiz and poll in a course, teacher can do quiz and poll without limit
-teacher can create, modify, delete quiz and poll
-this will take time, add or modify routes and templates for this feature
-after this, make a git commit called feat: teacher edit quiz and poll
-then 
-refactor the course management for teacher
-teacher can manage who join the course 
-teacher can see all students in the database
-teacher can add, remove, update student in the course
-this will take time, add or modify routes and templates for this feature
-study the existing code carefully
-beautify the existing layout and css, show student in rows, check box should be on the right hand side
-
+## 20251108
+teacher quiz and poll route need fix
+move on to  word cloud
 
 
 

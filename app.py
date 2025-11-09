@@ -92,6 +92,12 @@ app.register_blueprint(course_registration_bp)
 # Register teacher course blueprint
 from routes.teacher_course import teacher_course_bp
 app.register_blueprint(teacher_course_bp)
+# Register teacher quiz blueprint
+from routes.teacher_quiz_routes import teacher_quiz_bp
+app.register_blueprint(teacher_quiz_bp)
+# Register word cloud blueprint
+from routes.word_cloud_routes import word_cloud_bp
+app.register_blueprint(word_cloud_bp)
 
 # Routes: Login and registration pages
 @app.route('/login')

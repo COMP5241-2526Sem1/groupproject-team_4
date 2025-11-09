@@ -8,10 +8,73 @@ from models.question import Question
 from models.choice import Choice
 from models.question_response import QuestionResponse
 from models.attempt import Attempt
+from models.quiz_grade import QuizGrade
 from database import db
 from datetime import datetime
 
 quiz_bp = Blueprint('quiz', __name__)
+
+def calculate_and_save_quiz_grade(quiz_id, student_id, submission_id):
+    """Calculate quiz grade based on submission and save to QuizGrade table"""
+    try:
+        # Get the submission
+        submission = Submission.query.get(submission_id)
+        if not submission:
+            return False, "Submission not found"
+        
+        # Get the quiz
+        quiz = Quiz.query.get(quiz_id)
+        if not quiz:
+            return False, "Quiz not found"
+        
+        # Get all questions for this quiz
+        questions = Question.query.filter_by(quiz_id=quiz_id).all()
+        
+        # Calculate total points possible
+        total_points_possible = sum(q.points for q in questions)
+        
+        # Get all responses for this submission
+        responses = QuestionResponse.query.filter_by(submission_id=submission_id).all()
+        
+        # Calculate points earned
+        points_earned = 0
+        for response in responses:
+            if response.is_correct:
+                question = Question.query.get(response.question_id)
+                if question:
+                    points_earned += question.points
+        
+        # Calculate percentage
+        percentage = (points_earned / total_points_possible * 100) if total_points_possible > 0 else 0
+        
+        # Check if quiz grade already exists
+        existing_grade = QuizGrade.query.filter_by(quiz_id=quiz_id, student_id=student_id).first()
+        
+        if existing_grade:
+            # Update existing grade
+            existing_grade.points_earned = points_earned
+            existing_grade.points_possible = total_points_possible
+            existing_grade.percentage = percentage
+            existing_grade.submission_id = submission_id
+            existing_grade.updated_at = datetime.utcnow()
+        else:
+            # Create new quiz grade
+            quiz_grade = QuizGrade(
+                quiz_id=quiz_id,
+                student_id=student_id,
+                points_earned=points_earned,
+                points_possible=total_points_possible,
+                percentage=percentage,
+                submission_id=submission_id
+            )
+            db.session.add(quiz_grade)
+        
+        db.session.commit()
+        return True, "Quiz grade calculated and saved successfully"
+        
+    except Exception as e:
+        db.session.rollback()
+        return False, f"Error calculating quiz grade: {str(e)}"
 
 @quiz_bp.route('/course/<course_code>/quiz', methods=['GET'])
 def get_quiz_list(course_code):
@@ -42,6 +105,9 @@ def get_quiz_list(course_code):
         # Get attempt count
         attempt_count = Attempt.query.filter_by(quiz_id=quiz.id, user_id=user_id).count()
         
+        # Get quiz grade if available
+        quiz_grade = QuizGrade.query.filter_by(quiz_id=quiz.id, student_id=user_id).first()
+        
         # Check if quiz is currently available (within start and end datetime)
         current_time = datetime.now()
         is_available = True
@@ -59,7 +125,8 @@ def get_quiz_list(course_code):
             'max_attempts': quiz.attempt_limit,
             'start_datetime': quiz.start_datetime,
             'end_datetime': quiz.end_datetime,
-            'is_available': is_available
+            'is_available': is_available,
+            'grade': quiz_grade
         })
     
     # Check for any messages (like successful submission)
@@ -86,10 +153,18 @@ def get_quiz_info(course_code, quiz_id):
     if not user_id:
         return redirect(url_for('auth.login'))
     
-    # Check enrollment
+    # Check enrollment or teacher ownership
     enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
-    if not enrollment:
-        return render_template('course_home.html', course=course, error_message="You are not enrolled in this course"), 403
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    is_course_teacher = is_teacher and course.teacher_id == user_id
+    
+    # Redirect teachers to teacher-specific route
+    if is_course_teacher:
+        return redirect(url_for('teacher_quiz.teacher_view_quiz', course_code=course_code, quiz_id=quiz_id))
+    
+    if not enrollment and not is_course_teacher:
+        return render_template('course_home.html', course=course, error_message="You are not enrolled in this course and you are not the course teacher"), 403
     
     # Get quiz details
     quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
@@ -267,10 +342,18 @@ def start_quiz(course_code, quiz_id):
     if not user_id:
         return redirect(url_for('auth.login'))
     
-    # Check enrollment
+    # Check enrollment or teacher ownership
     enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
-    if not enrollment:
-        return render_template('course_home.html', course=course, error_message="You are not enrolled in this course"), 403
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    is_course_teacher = is_teacher and course.teacher_id == user_id
+    
+    # Redirect teachers to teacher-specific route
+    if is_course_teacher:
+        return redirect(url_for('teacher_quiz.teacher_start_quiz', course_code=course_code, quiz_id=quiz_id))
+    
+    if not enrollment and not is_course_teacher:
+        return render_template('course_home.html', course=course, error_message="You are not enrolled in this course and you are not the course teacher"), 403
     
     # Get quiz
     quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
@@ -304,7 +387,6 @@ def start_quiz(course_code, quiz_id):
     has_responded = Submission.query.filter_by(quiz_id=quiz_id, user_id=user_id).first() is not None
     
     # Check if user can attempt again (teachers always can)
-    user = User.query.get(user_id)
     is_teacher = user and user.role == 'teacher'
     
     if not is_teacher and quiz.attempt_limit and attempt_count >= quiz.attempt_limit:
@@ -783,13 +865,20 @@ def teacher_edit_quiz(course_code, quiz_id):
                             )
                             db.session.add(choice)
         
-        # Soft delete questions that are no longer in the form (mark as inactive)
+        # Handle questions that are no longer in the form
         for question in quiz.questions:
             if question.id not in existing_question_ids:
-                # Instead of deleting, we could add an 'is_active' field to the Question model
-                # For now, we'll keep the deletion behavior but add a comment about the alternative
-                # TODO: Consider adding 'is_active' field to Question model for soft deletion
-                db.session.delete(question)
+                # Check if this question has any responses
+                has_responses = QuestionResponse.query.filter_by(question_id=question.id).count() > 0
+                
+                if has_responses:
+                    # Skip deletion for questions with existing responses to avoid foreign key violations
+                    # Instead, we could add an 'is_active' field to the Question model in the future
+                    # For now, we'll leave the question as-is if it has responses
+                    continue
+                else:
+                    # Safe to delete questions without responses
+                    db.session.delete(question)
         
         db.session.commit()
         
@@ -902,7 +991,16 @@ def submit_quiz(course_code, quiz_id):
     if not user_id:
         return redirect(url_for('auth.login'))
     
-    # Check enrollment
+    # Check if user is teacher and course teacher
+    user = User.query.get(user_id)
+    is_teacher = user and user.role == 'teacher'
+    is_course_teacher = is_teacher and course.teacher_id == user_id
+    
+    # Redirect teachers to teacher-specific route
+    if is_course_teacher:
+        return redirect(url_for('teacher_quiz.teacher_submit_quiz', course_code=course_code, quiz_id=quiz_id))
+    
+    # Check enrollment for students
     enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
     if not enrollment:
         return render_template('course_home.html', course=course, error_message="You are not enrolled in this course"), 403
@@ -1001,9 +1099,217 @@ def submit_quiz(course_code, quiz_id):
     # Save all changes
     db.session.commit()
     
+    # Calculate and save quiz grade
+    success, message = calculate_and_save_quiz_grade(quiz_id, user_id, submission.id)
+    if not success:
+        print(f"Warning: {message}")
+    
     # Clear the current attempt from session
     if 'current_attempt_id' in session:
         del session['current_attempt_id']
     
     # Redirect to quiz results page with visibility controls
     return redirect(url_for('quiz.get_quiz_results', course_code=course_code, quiz_id=quiz_id))
+
+@quiz_bp.route('/course/<course_code>/quiz/<int:quiz_id>/grade', methods=['GET'])
+def get_quiz_grade(course_code, quiz_id):
+    """Get the quiz grade for the current student"""
+    # Check user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    # Check enrollment
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
+    if not enrollment:
+        return jsonify({'error': 'Not enrolled in this course'}), 403
+    
+    # Get quiz grade
+    quiz_grade = QuizGrade.query.filter_by(quiz_id=quiz_id, student_id=user_id).first()
+    
+    if not quiz_grade:
+        return jsonify({'error': 'No grade found for this quiz'}), 404
+    
+    return jsonify({
+        'quiz_id': quiz_grade.quiz_id,
+        'student_id': quiz_grade.student_id,
+        'points_earned': quiz_grade.points_earned,
+        'points_possible': quiz_grade.points_possible,
+        'percentage': quiz_grade.percentage,
+        'submission_id': quiz_grade.submission_id,
+        'created_at': quiz_grade.created_at.isoformat(),
+        'updated_at': quiz_grade.updated_at.isoformat()
+    })
+
+@quiz_bp.route('/course/<course_code>/quiz/grades', methods=['GET'])
+def get_all_quiz_grades(course_code):
+    """Get all quiz grades for the current student in this course"""
+    # Check user is logged in
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    # Check enrollment
+    enrollment = CourseEnrollment.query.filter_by(student_id=user_id, course_code=course_code).first()
+    if not enrollment:
+        return jsonify({'error': 'Not enrolled in this course'}), 403
+    
+    # Get all quizzes for this course
+    quizzes = Quiz.query.filter_by(course_code=course_code).all()
+    
+    # Get grades for all quizzes
+    grades = []
+    for quiz in quizzes:
+        quiz_grade = QuizGrade.query.filter_by(quiz_id=quiz.id, student_id=user_id).first()
+        if quiz_grade:
+            grades.append({
+                'quiz_id': quiz_grade.quiz_id,
+                'quiz_name': quiz.name,
+                'points_earned': quiz_grade.points_earned,
+                'points_possible': quiz_grade.points_possible,
+                'percentage': quiz_grade.percentage,
+                'submission_id': quiz_grade.submission_id,
+                'created_at': quiz_grade.created_at.isoformat(),
+                'updated_at': quiz_grade.updated_at.isoformat()
+            })
+    
+    return jsonify({'grades': grades})
+
+@quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/grading', methods=['GET'])
+def teacher_grade_quiz(course_code, quiz_id):
+    """Teacher grading page for short answer questions"""
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return render_template('course_home.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.get(course_code)
+    if not course:
+        return render_template('course_home.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user_id:
+        return render_template('course_home.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get quiz
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return render_template('course_home.html', course=course, error_message="Quiz not found"), 404
+    
+    # Get all short answer questions for this quiz
+    saq_questions = Question.query.filter_by(quiz_id=quiz_id, type='saq').all()
+    
+    # Get all students enrolled in the course
+    enrollments = CourseEnrollment.query.filter_by(course_code=course_code).all()
+    student_ids = [enrollment.student_id for enrollment in enrollments]
+    students = User.query.filter(User.id.in_(student_ids)).all()
+    
+    # Get all submissions for this quiz
+    submissions = Submission.query.filter_by(quiz_id=quiz_id).all()
+    submission_dict = {sub.user_id: sub for sub in submissions}
+    
+    # Get all question responses for SAQ questions
+    saq_data = []
+    for question in saq_questions:
+        question_responses = []
+        for student in students:
+            # Get submission for this student (may be None if no submission)
+            submission = submission_dict.get(student.id)
+            
+            # Get response for this question (may be None if student didn't answer)
+            response = None
+            if submission:
+                response = QuestionResponse.query.filter_by(
+                    submission_id=submission.id,
+                    question_id=question.id
+                ).first()
+            
+            # Always include the student, even if they have no submission or didn't answer
+            question_responses.append({
+                'student': student,
+                'response': response,  # May be None
+                'submission_id': submission.id if submission else None
+            })
+        
+        if question_responses:
+            saq_data.append({
+                'question': question,
+                'responses': question_responses
+            })
+    
+    return render_template('teacher_grade_quiz.html', 
+                         course=course, 
+                         quiz=quiz, 
+                         saq_data=saq_data)
+
+@quiz_bp.route('/teacher/question/<int:question_id>/grade', methods=['POST'])
+def teacher_grade_question(question_id):
+    """Grade a specific question response"""
+    # Check if user is logged in and is a teacher
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    user = User.query.get(user_id)
+    if not user or user.role != 'teacher':
+        return jsonify({'error': 'Not authorized'}), 403
+    
+    # Get question and verify teacher owns the course
+    question = Question.query.get(question_id)
+    if not question:
+        return jsonify({'error': 'Question not found'}), 404
+    
+    quiz = Quiz.query.get(question.quiz_id)
+    if not quiz:
+        return jsonify({'error': 'Quiz not found'}), 404
+    
+    course = Course.query.get(quiz.course_code)
+    if not course or course.teacher_id != user_id:
+        return jsonify({'error': 'Not authorized for this course'}), 403
+    
+    # Get data from request
+    data = request.get_json()
+    if not data or 'submission_id' not in data or 'points' not in data:
+        return jsonify({'error': 'Missing required data'}), 400
+    
+    submission_id = data['submission_id']
+    points = float(data['points'])
+    
+    # Validate points
+    if points < 0 or points > question.points:
+        return jsonify({'error': f'Points must be between 0 and {question.points}'}), 400
+    
+    # Find the question response
+    response = QuestionResponse.query.filter_by(
+        submission_id=submission_id,
+        question_id=question_id
+    ).first()
+    
+    if not response:
+        return jsonify({'error': 'Response not found'}), 404
+    
+    try:
+        # Update the grade
+        response.points = points
+        response.is_correct = points == question.points
+        db.session.commit()
+        
+        # Recalculate quiz grade for this submission
+        submission = Submission.query.get(submission_id)
+        if submission:
+            calculate_and_save_quiz_grade(quiz.id, submission.user_id, submission.id)
+        
+        return jsonify({
+            'success': True,
+            'points': points,
+            'max_points': question.points,
+            'percentage': round((points / question.points) * 100, 1) if question.points > 0 else 0
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to save grade'}), 500

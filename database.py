@@ -42,11 +42,12 @@ def init_db():
             from models.question import Question
 
             from models.grade import Grade
+            from models.quiz_grade import QuizGrade
             from models.course_enrollment import CourseEnrollment
             from models.course import Course
             from models.choice import Choice
 
-            models = [Department, User, Submission, Quiz, Poll, WordCloud, Minigame, ShortAnswer, Question, Grade, CourseEnrollment, Course, Choice]
+            models = [Department, User, Submission, Quiz, Poll, WordCloud, Minigame, ShortAnswer, Question, Grade, QuizGrade, CourseEnrollment, Course, Choice]
             for model in models:
                 try:
                     model.__table__.create(db.engine)

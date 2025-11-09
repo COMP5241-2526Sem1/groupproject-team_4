@@ -1,0 +1,131 @@
+{% extends 'quiz_base.html' %}
+
+{% block title %}Quiz Results - Teacher View{% endblock %}
+
+{% block main_content %}
+    <div class="quiz-container">
+        <div class="teacher-mode-banner" style="background: linear-gradient(45deg, #ffeb3b, #ffc107); color: #333; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            👨‍🏫 TEACHER VIEW - Quiz Results
+        </div>
+        
+        {% if submission %}
+            <div class="quiz-header">
+                <h1>{{ quiz.name }} - Results</h1>
+                <div class="quiz-info">
+                    <p>📊 Total Score: <strong>{{ submission.score }}%</strong></p>
+                    <p>📅 Submitted: {{ submission.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p>👤 Student: {{ submission.student_name }}</p>
+                    <p>📝 Attempt #{{ submission.attempt_count }}</p>
+                </div>
+            </div>
+            
+            <div class="teacher-submission-info" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h3 style="color: #1976d2; margin-bottom: 15px;">📋 Submission Details</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                        <strong>Submission ID:</strong><br>{{ submission.id }}
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                        <strong>Attempt ID:</strong><br>{{ submission.attempt_id }}
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                        <strong>Status:</strong><br>
+                        {% if submission.is_completed %}
+                            <span style="color: #28a745;">✓ Completed</span>
+                        {% else %}
+                            <span style="color: #ffc107;">⏳ In Progress</span>
+                        {% endif %}
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                        <strong>Total Points:</strong><br>{{ submission.total_points }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="questions-review" style="margin: 20px 0;">
+                <h3 style="color: #495057; margin-bottom: 15px;">📝 Question Review</h3>
+                {% for answer in submission.answers %}
+                    <div class="question-review" style="border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; margin: 15px 0; background: white;">
+                        <div class="question-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <div>
+                                <strong>Question {{ loop.index }} ({{ answer.points }} points)</strong>
+                                {% if answer.is_correct %}
+                                    <span style="color: #28a745; margin-left: 10px;">✓ Correct</span>
+                                {% else %}
+                                    <span style="color: #dc3545; margin-left: 10px;">✗ Incorrect</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 14px; color: #6c757d;">
+                                Score: {{ answer.score }}/{{ answer.points }}
+                            </div>
+                        </div>
+                        
+                        <div class="question-content" style="font-size: 16px; margin: 10px 0; line-height: 1.5;">
+                            {{ answer.question_content }}
+                        </div>
+                        
+                        <div class="answer-review" style="background: #f8f9fa; border-radius: 5px; padding: 15px; margin: 10px 0;">
+                            <strong>Student's Answer:</strong>
+                            <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 3px; border-left: 4px solid {% if answer.is_correct %}#28a745{% else %}#dc3545{% endif %}">
+                                {% if answer.answer_text %}
+                                    {{ answer.answer_text }}
+                                {% else %}
+                                    <em style="color: #6c757d;">No answer provided</em>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if answer.correct_answer %}
+                        <div class="correct-answer" style="background: #d4edda; border-radius: 5px; padding: 15px; margin: 10px 0;">
+                            <strong>✓ Correct Answer:</strong>
+                            <div style="margin: 10px 0; color: #155724;">
+                                {{ answer.correct_answer }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if answer.feedback %}
+                        <div class="feedback" style="background: #fff3cd; border-radius: 5px; padding: 15px; margin: 10px 0;">
+                            <strong>💡 Feedback:</strong>
+                            <div style="margin: 10px 0; color: #856404;">
+                                {{ answer.feedback }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="question-meta" style="font-size: 12px; color: #6c757d; margin-top: 10px;">
+                            <strong>Question ID:</strong> {{ answer.question_id }} | 
+                            <strong>Type:</strong> {{ answer.question_type.upper() }} | 
+                            <strong>Answer ID:</strong> {{ answer.id }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}/start'" style="background: #28a745;">
+                    🎯 Try Quiz Again (Teacher Mode)
+                </button>
+                
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}'" style="background: #17a2b8;">
+                    📋 Back to Quiz Info
+                </button>
+                
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}'" style="background: #6c757d;">
+                    🏠 Return to Course
+                </button>
+            </div>
+            
+        {% else %}
+            <div class="alert alert-danger" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 16px; text-align: center;">
+                <strong>⚠️ Error:</strong> Submission not found or unavailable.
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}'" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                    ← Back to Quiz Info
+                </button>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
