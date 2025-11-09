@@ -257,30 +257,31 @@ function renderWordCloud(words) {
     
     let html = '';
     words.forEach((word, index) => {
-        const fontSize = Math.max(Math.min(word.size, 48), 14); // Ensure size is between 14px and 48px
+        const fontSize = Math.max(Math.min(word.size, 120), 14); // Ensure size is between 14px and 120px
         const colors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6c757d', '#343a40', '#e83e8c', '#fd7e14'];
         const color = colors[index % colors.length];
         const rotation = (index * 15) % 45 - 22; // Random rotation between -22 and 22 degrees
         
         // Add more visual emphasis for high-frequency words
-        const weight = word.frequency > 5 ? '900' : word.frequency > 3 ? '700' : 'bold';
-        const opacity = Math.min(0.9, 0.6 + (word.frequency * 0.1));
+        const weight = word.frequency > 8 ? '900' : word.frequency > 5 ? '800' : word.frequency > 3 ? '700' : 'bold';
+        const opacity = Math.min(0.95, 0.5 + (word.frequency * 0.08));
+        const textShadow = word.frequency > 8 ? '2px 2px 4px rgba(0,0,0,0.3)' : '1px 1px 2px rgba(0,0,0,0.1)';
         
         html += `<span style="
             font-size: ${fontSize}px;
             color: ${color};
             font-weight: ${weight};
-            margin: ${Math.max(3, fontSize / 8)}px;
-            padding: ${Math.max(2, fontSize / 12)}px ${Math.max(4, fontSize / 6)}px;
-            border-radius: 6px;
+            margin: ${Math.max(5, fontSize / 6)}px;
+            padding: ${Math.max(3, fontSize / 10)}px ${Math.max(6, fontSize / 5)}px;
+            border-radius: 8px;
             background: rgba(255, 255, 255, ${opacity});
             display: inline-block;
             transform: rotate(${rotation}deg);
             transition: all 0.3s ease;
             cursor: pointer;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            text-shadow: ${textShadow};
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        " onclick="addWordToInput('${word.text}')" onmouseover="this.style.transform='scale(1.15) rotate(0deg)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1) rotate(${rotation}deg)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'" title="Click to add '${word.text}' to your submission (Frequency: ${word.frequency} occurrences)">${word.text}</span>`;
+        " onclick="addWordToInput('${word.text}')" onmouseover="this.style.transform='scale(1.2) rotate(0deg)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.3)'; this.style.zIndex='10';" onmouseout="this.style.transform='scale(1) rotate(${rotation}deg)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.zIndex='auto';" title="Click to add '${word.text}' to your submission (Frequency: ${word.frequency} occurrences)">${word.text}</span>`;
     });
     
     container.innerHTML = html;

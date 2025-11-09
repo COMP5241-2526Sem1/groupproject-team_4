@@ -190,4 +190,113 @@
             background: #5a6268;
         }
     </style>
+    
+    <script>
+        let currentETag = null;
+        let pollId = {{ poll.id }};
+        let courseCode = '{{ course.code }}';
+        
+        function loadPollResultsData() {
+            const headers = {};
+            if (currentETag) {
+                headers['If-None-Match'] = currentETag;
+            }
+            
+            fetch(`/api/poll/${pollId}/results?course_code=${courseCode}`, {
+                method: 'GET',
+                headers: headers,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.status === 304) {
+                    console.log('Poll results data not modified, using cached version');
+                    return null;
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Store ETag for future requests
+                currentETag = response.headers.get('ETag');
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    updatePollResultsDisplay(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading poll results:', error);
+                // If we get a 401 or 403, redirect to login
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    window.location.href = '/login';
+                }
+            });
+        }
+        
+        function updatePollResultsDisplay(data) {
+            // Update class statistics
+            if (data.class_statistics) {
+                const classStatsElement = document.querySelector('.class-statistics p');
+                if (classStatsElement) {
+                    classStatsElement.textContent = `Total students who responded: ${data.class_statistics.total_students}`;
+                }
+            }
+            
+            // Update questions and responses
+            if (data.questions && data.questions.length > 0) {
+                const questionResultsElement = document.querySelector('.question-results');
+                if (questionResultsElement) {
+                    // Clear existing content
+                    questionResultsElement.innerHTML = '<h3>Question Details</h3>';
+                    
+                    // Rebuild question display
+                    data.questions.forEach((question, index) => {
+                        const questionHtml = `
+                            <div class="question-result-item">
+                                <div class="question-header">
+                                    <strong>Question ${index + 1}</strong>
+                                    <span class="question-type">(${question.type === 'mcq' ? 'Multiple Choice' : 'Short Answer'})</span>
+                                </div>
+                                
+                                <div class="question-content">
+                                    ${question.content}
+                                </div>
+                                
+                                <div class="student-response">
+                                    <strong>Your Response:</strong>
+                                    ${question.user_answer || '<em>No response provided</em>'}
+                                </div>
+                                
+                                ${question.class_responses && question.class_responses.length > 0 ? `
+                                    <div class="class-responses">
+                                        <h4>Class Responses</h4>
+                                        ${question.class_responses.map(response => `
+                                            <div class="response-item">
+                                                <span class="response-choice">${response.choice}</span>
+                                                <span class="response-count">${response.count} responses</span>
+                                                <span class="response-percentage">(${response.percentage}%)</span>
+                                                <div class="response-bar">
+                                                    <div class="response-bar-fill" style="width: ${response.percentage}%"></div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                        questionResultsElement.innerHTML += questionHtml;
+                    });
+                }
+            }
+        }
+        
+        // Load poll results data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPollResultsData();
+            
+            // Auto-refresh every 1 second to show updates from other users
+            setInterval(loadPollResultsData, 1000);
+        });
+    </script>
 {% endblock %}

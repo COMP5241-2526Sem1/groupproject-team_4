@@ -33,7 +33,9 @@ def test_frequency_scaling():
         
         if max_freq > min_freq:
             relative_size = (frequency - min_freq) / (max_freq - min_freq)
-            font_size = 14 + (relative_size * 34)  # 14px to 48px range
+            # Use exponential scaling for more dramatic difference
+            exponential_scale = relative_size ** 0.7 if relative_size > 0 else 0
+            font_size = 14 + (exponential_scale * 106)  # 14px to 120px range
         else:
             font_size = 20
         
@@ -44,7 +46,8 @@ def test_frequency_scaling():
         print()
     
     print("Key Features Implemented:")
-    print("✓ Words with higher frequency appear larger (14px to 48px range)")
+    print("✓ Words with higher frequency appear larger (14px to 120px range)")
+    print("✓ Exponential scaling for dramatic visual distinction")
     print("✓ Relative scaling based on min/max frequencies in the dataset")
     print("✓ Enhanced visual effects (colors, shadows, animations)")
     print("✓ Real-time validation and feedback")
