@@ -248,48 +248,143 @@ function renderWordCloud(words) {
     const container = document.getElementById('word-cloud-display');
     
     if (!words || words.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted" style="padding: 100px 0;"><i class="fas fa-cloud" style="font-size: 48px; margin-bottom: 20px;"></i><h5>No words yet</h5><p>Be the first to contribute to this word cloud!</p></div>';
+        container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #6c757d; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif;"><div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">☁</div><div style="font-size: 18px; font-weight: 500; margin-bottom: 8px; color: #495057;">No words yet</div><div style="font-size: 14px; color: #868e96;">Be the first to contribute to this word cloud</div></div>';
         return;
     }
     
     // Sort words by frequency (highest first) for better visual hierarchy
     words.sort((a, b) => b.frequency - a.frequency);
     
+    // Sort words by frequency to place largest in center
+    const sortedWords = [...words].sort((a, b) => b.frequency - a.frequency);
+    
+    // Create a vibrant color palette with more variety
+    const vibrantColors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', 
+        '#FF8E53', '#6C5CE7', '#A29BFE', '#FD79A8', '#FDCB6E', '#6C5CE7',
+        '#00B894', '#00CEC9', '#0984E3', '#6C5CE7', '#A29BFE', '#FD79A8',
+        '#E17055', '#00B894', '#00CEC9', '#74B9FF', '#A29BFE', '#FD79A8',
+        '#FF7675', '#74B9FF', '#00B894', '#00CEC9', '#0984E3', '#6C5CE7'
+    ];
+    
+    // Calculate container dimensions for positioning
+    const containerWidth = 800;
+    const containerHeight = 600;
+    const centerX = containerWidth / 2;
+    const centerY = containerHeight / 2;
+    
+    // Final solution: Dynamic spacing based on word dimensions
+    const placedWords = [];
+    const maxWords = 15; // Limit to ensure perfect spacing
+    
+    function calculateWordDimensions(word, fontSize) {
+        // Final conservative dimension estimation
+        const avgCharWidth = fontSize * 0.35; // Minimal character width
+        const wordWidth = Math.max(word.text.length * avgCharWidth, fontSize * 0.8);
+        const wordHeight = fontSize * 0.6; // Minimal height multiplier
+        return { width: wordWidth, height: wordHeight };
+    }
+    
+    function findValidPosition(word, fontSize, rotation) {
+        const wordIndex = placedWords.length;
+        const dimensions = calculateWordDimensions(word, fontSize);
+        
+        // Dynamic layout: adjust spacing based on word size
+        const baseSpacing = Math.max(dimensions.width, dimensions.height) + 80; // Dynamic spacing
+        
+        // Use a 3x5 layout for perfect spacing
+        const cols = 3;
+        const rows = 5;
+        const col = wordIndex % cols;
+        const row = Math.floor(wordIndex / cols);
+        
+        // Calculate available space
+        const availableWidth = containerWidth - 100;
+        const availableHeight = containerHeight - 100;
+        
+        // Dynamic spacing based on largest word so far
+        let maxWidth = dimensions.width;
+        let maxHeight = dimensions.height;
+        for (const placed of placedWords) {
+            maxWidth = Math.max(maxWidth, placed.width);
+            maxHeight = Math.max(maxHeight, placed.height);
+        }
+        
+        const dynamicColSpacing = Math.max(baseSpacing, maxWidth + 60);
+        const dynamicRowSpacing = Math.max(baseSpacing * 0.8, maxHeight + 40);
+        
+        // Calculate position with dynamic spacing
+        const totalWidth = (cols - 1) * dynamicColSpacing;
+        const totalHeight = (rows - 1) * dynamicRowSpacing;
+        
+        const startX = (containerWidth - totalWidth) / 2;
+        const startY = (containerHeight - totalHeight) / 2;
+        
+        let x = startX + col * dynamicColSpacing;
+        let y = startY + row * dynamicRowSpacing;
+        
+        // Minimal randomness
+        const randomOffset = 5;
+        x += (Math.random() - 0.5) * randomOffset;
+        y += (Math.random() - 0.5) * randomOffset;
+        
+        // Ensure within very conservative bounds
+        const margin = Math.max(dimensions.width, dimensions.height) / 2 + 50;
+        x = Math.max(margin, Math.min(containerWidth - margin, x));
+        y = Math.max(margin, Math.min(containerHeight - margin, y));
+        
+        return { x, y, width: dimensions.width, height: dimensions.height };
+    }
+    
+    // Limit words to prevent overcrowding
+    const limitedWords = sortedWords.slice(0, maxWords);
+    
     let html = '';
-    words.forEach((word, index) => {
-        const fontSize = Math.max(Math.min(word.size, 120), 14); // Ensure size is between 14px and 120px
-        const colors = ['#007bff', '#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6c757d', '#343a40', '#e83e8c', '#fd7e14'];
-        const color = colors[index % colors.length];
-        const rotation = (index * 15) % 45 - 22; // Random rotation between -22 and 22 degrees
+    limitedWords.forEach((word, index) => {
+        const fontSize = word.size; // Backend provides size from 14px to 120px based on frequency
         
-        // Add more visual emphasis for high-frequency words
-        const weight = word.frequency > 8 ? '900' : word.frequency > 5 ? '800' : word.frequency > 3 ? '700' : 'bold';
-        const opacity = Math.min(0.95, 0.5 + (word.frequency * 0.08));
-        const textShadow = word.frequency > 8 ? '2px 2px 4px rgba(0,0,0,0.3)' : '1px 1px 2px rgba(0,0,0,0.1)';
+        // Assign unique color to each word
+        const color = vibrantColors[index % vibrantColors.length];
         
+        // Minimal rotation for better readability
+        const rotation = (index * 10) % 20 - 10; // Rotation between -10 and +10 degrees
+        
+        // Find valid position with collision detection
+        const position = findValidPosition(word, fontSize, rotation);
+        placedWords.push(position);
+        
+        // Font weights based on frequency
+        const weight = word.frequency > 20 ? '800' : word.frequency > 15 ? '700' : word.frequency > 8 ? '600' : word.frequency > 3 ? '500' : '400';
+        
+        // Dynamic word cloud with positioning
         html += `<span style="
             font-size: ${fontSize}px;
             color: ${color};
             font-weight: ${weight};
-            margin: ${Math.max(5, fontSize / 6)}px;
-            padding: ${Math.max(3, fontSize / 10)}px ${Math.max(6, fontSize / 5)}px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, ${opacity});
-            display: inline-block;
-            transform: rotate(${rotation}deg);
-            transition: all 0.3s ease;
+            position: absolute;
+            left: ${position.x}px;
+            top: ${position.y}px;
+            transform: translate(-50%, -50%) rotate(${rotation}deg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            text-shadow: ${textShadow};
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        " onclick="addWordToInput('${word.text}')" onmouseover="this.style.transform='scale(1.2) rotate(0deg)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.3)'; this.style.zIndex='10';" onmouseout="this.style.transform='scale(1) rotate(${rotation}deg)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'; this.style.zIndex='auto';" title="Click to add '${word.text}' to your submission (Frequency: ${word.frequency} occurrences)">${word.text}</span>`;
+            line-height: 1;
+            letter-spacing: -0.01em;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            z-index: ${word.frequency};
+            white-space: nowrap;
+        " onclick="addWordToInput('${word.text}')" onmouseover="this.style.transform='translate(-50%, -50%) scale(1.1) rotate(0deg)'; this.style.zIndex='100'; this.style.textShadow='0 2px 4px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translate(-50%, -50%) scale(1) rotate(${rotation}deg)'; this.style.zIndex='${word.frequency}'; this.style.textShadow='0 1px 2px rgba(0,0,0,0.1)';" title="${word.text} (${word.frequency} occurrences)">${word.text}</span>`;
     });
     
     container.innerHTML = html;
-    container.style.textAlign = 'center';
-    container.style.lineHeight = '1.6';
-    container.style.padding = '30px';
-    container.style.background = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+    container.style.position = 'relative';
+    container.style.width = containerWidth + 'px';
+    container.style.height = containerHeight + 'px';
+    container.style.margin = '0 auto';
+    container.style.background = '#f8f9fa';
     container.style.borderRadius = '12px';
+    container.style.overflow = 'hidden';
+    container.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
 }
 
 // Update attempts display (placeholder - no attempts tracking needed)

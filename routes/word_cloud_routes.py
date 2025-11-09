@@ -90,13 +90,13 @@ def get_word_cloud_data(word_cloud_id):
     words_list = []
     for word, frequency in word_data.items():
         # Calculate size with better scaling - words with higher frequency appear much bigger
-        # Scale from 14px (minimum) to 120px (maximum) based on relative frequency
+        # Scale from 18px (minimum) to 120px (maximum) based on relative frequency
         # This provides much more dramatic visual distinction for high-frequency words
         if max_freq > min_freq:
             relative_size = (frequency - min_freq) / (max_freq - min_freq)
             # Use exponential scaling for more dramatic difference
             exponential_scale = relative_size ** 0.7 if relative_size > 0 else 0
-            font_size = 14 + (exponential_scale * 106)  # 14px to 120px range
+            font_size = 18 + (exponential_scale * 102)  # 18px to 120px range
         else:
             font_size = 20  # Default size when all frequencies are equal
         
