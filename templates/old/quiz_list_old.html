@@ -1,0 +1,32 @@
+{% extends 'base_course_full.html' %}
+
+{% block title %}Quiz List - {{ course.name if course else 'Student Home' }}{% endblock %}
+
+{% block main_content %}
+    <h1>Quiz List</h1>
+    <p>Course: {{ course.name if course else 'Unknown Course' }}</p>
+    
+    {% if submitted %}
+    <div class="success-message">
+        <p>Quiz submitted successfully!</p>
+    </div>
+    {% endif %}
+    
+    {% if quizzes %}
+    <div class="quiz-list">
+        {% for quiz in quizzes %}
+        <div class="quiz-item">
+            <h3>{{ quiz.name }}</h3>
+            <p>Used Attempts: {{ quiz.used_attempts }}/{{ quiz.max_attempts }}</p>
+            {% if quiz.used_attempts < quiz.max_attempts %}
+            <a href="/course/{{ course.code if course and course.code else course_code }}/quiz/{{ quiz.id }}" class="btn">View Quiz</a>
+            {% else %}
+            <span class="quiz-completed">Quiz Completed</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No quizzes available for this course.</p>
+    {% endif %}
+{% endblock %}

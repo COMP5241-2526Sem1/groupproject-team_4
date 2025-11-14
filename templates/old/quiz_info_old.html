@@ -1,0 +1,30 @@
+{% extends 'base_quiz.html' %}
+
+{% block title %}Quiz Info - {{ quiz.name if quiz else 'Student Home' }}{% endblock %}
+
+{% block main_content %}
+    {% if message %}
+        <div class="quiz-container">
+            <h1>Error</h1>
+            <p>{{ message }}</p>
+            <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/quiz'">Back to Quiz List</button>
+        </div>
+    {% else %}
+        <div class="quiz-container">
+            <h1>{{ quiz.name }}</h1>
+            {% if quiz.description %}
+                <p><strong>Description:</strong> {{ quiz.description }}</p>
+            {% endif %}
+            <p><strong>Used Attempts:</strong> {{ quiz.used_attempts }}</p>
+            <p><strong>Max Attempts:</strong> {{ quiz.max_attempts }}</p>
+            <div style="margin-top: 20px;">
+                {% if quiz.used_attempts < quiz.max_attempts %}
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/quiz/{{ quiz.id }}/start'">Start Quiz</button>
+            <button style="margin-left: 10px; background: #6c757d;" onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/quiz'">Back to List</button>
+                {% else %}
+                    <button onclick="window.location.href='/course/{{ course.code if course and course.code else course_code }}/quiz'">Return to Quiz List</button>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

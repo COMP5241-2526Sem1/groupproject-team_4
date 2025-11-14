@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Add Question Button</title>
+    <style>
+        .question-item {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        #add-question-btn { background: #28a745; color: white; }
+        .choices-container { margin-top: 10px; padding: 10px; background: #e9ecef; border-radius: 3px; }
+        .choice-item { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+        input[type="text"], textarea, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+        input[type="number"] { width: 80px; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 20px auto; padding: 20px;">
+        <h1>Test Add Question Button</h1>
+        
+        <div class="questions-section">
+            <h3>Questions</h3>
+            <div id="questions-container">
+                <!-- Questions will be added here -->
+            </div>
+            <button type="button" id="add-question-btn" class="btn btn-secondary">Add Question</button>
+            <div style="margin-top: 15px; font-weight: bold;">
+                Total Question Points: <span id="total-question-points">0</span>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button type="button" onclick="testAddQuestion()" class="btn btn-primary">Test Add Question Function</button>
+            <button type="button" onclick="clearQuestions()" class="btn btn-danger">Clear All Questions</button>
+        </div>
+        
+        <div id="debug-log" style="margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 3px; font-family: monospace;">
+            <strong>Debug Log:</strong><br>
+        </div>
+    </div>
+
+    <script>
+        let questionCount = 0;
+        
+        function log(message) {
+            const debugLog = document.getElementById('debug-log');
+            debugLog.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            console.log(message);
+        }
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded, initializing test page...');
+            
+            // Add event listener for Add Question button
+            const addQuestionBtn = document.getElementById('add-question-btn');
+            if (addQuestionBtn) {
+                addQuestionBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    log('Add Question button clicked');
+                    addQuestion();
+                });
+                log('Add Question button event listener attached successfully');
+            } else {
+                log('ERROR: Add Question button not found!');
+            }
+        });
+        
+        function addQuestion() {
+            log('addQuestion function called');
+            
+            try {
+                questionCount++;
+                log('Creating question ' + questionCount);
+                
+                const container = document.getElementById('questions-container');
+                if (!container) {
+                    log('ERROR: Questions container not found!');
+                    alert('Error: Questions container not found');
+                    return;
+                }
+                
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-item';
+                log('Question div created');
+                
+                questionDiv.innerHTML = `
+                    <div class="question-header">
+                        <span class="question-number">Question ${questionCount}</span>
+                        <button type="button" class="btn btn-danger" onclick="removeQuestion(this)">Remove</button>
+                    </div>
+                    
+                    <div class="question-type-selector">
+                        <label>Question Type:</label>
+                        <select name="questions[${questionCount}][type]" onchange="toggleQuestionType(this)">
+                            <option value="mcq">Multiple Choice</option>
+                            <option value="saq">Short Answer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="question-content">
+                        <label>Question Content:</label>
+                        <textarea name="questions[${questionCount}][content]" placeholder="Enter your question here" required></textarea>
+                    </div>
+                    
+                    <div class="question-points">
+                        <label>Points:</label>
+                        <input type="number" name="questions[${questionCount}][points]" value="10" min="1" max="100" onchange="calculateTotalPoints()" required>
+                    </div>
+                    
+                    <div class="choices-container">
+                        <label>Choices:</label>
+                        <div class="choices-list">
+                            <div class="choice-item">
+                                <input type="text" name="questions[${questionCount}][choices][1]" placeholder="Choice 1" required>
+                                <input type="radio" name="questions[${questionCount}][correct_choice]" value="1">
+                                <label>Correct</label>
+                                <button type="button" class="btn btn-danger" onclick="removeChoice(this)">Remove</button>
+                            </div>
+                            <div class="choice-item">
+                                <input type="text" name="questions[${questionCount}][choices][2]" placeholder="Choice 2" required>
+                                <input type="radio" name="questions[${questionCount}][correct_choice]" value="2">
+                                <label>Correct</label>
+                                <button type="button" class="btn btn-danger" onclick="removeChoice(this)">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="addChoice(this)">Add Choice</button>
+                    </div>
+                `;
+                
+                container.appendChild(questionDiv);
+                calculateTotalPoints();
+                log('Question added successfully');
+                
+            } catch (error) {
+                log('ERROR adding question: ' + error.message);
+                alert('Error adding question: ' + error.message);
+            }
+        }
+        
+        function testAddQuestion() {
+            log('Testing addQuestion function directly...');
+            addQuestion();
+        }
+        
+        function clearQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            questionCount = 0;
+            calculateTotalPoints();
+            log('All questions cleared');
+        }
+        
+        function removeQuestion(button) {
+            if (confirm('Are you sure you want to remove this question?')) {
+                button.closest('.question-item').remove();
+                updateQuestionNumbers();
+                calculateTotalPoints();
+                log('Question removed');
+            }
+        }
+        
+        function toggleQuestionType(select) {
+            const questionItem = select.closest('.question-item');
+            const choicesContainer = questionItem.querySelector('.choices-container');
+            
+            if (select.value === 'mcq') {
+                choicesContainer.style.display = 'block';
+            } else {
+                choicesContainer.style.display = 'none';
+            }
+            log('Question type changed to: ' + select.value);
+        }
+        
+        function addChoice(button) {
+            const choicesList = button.previousElementSibling;
+            const questionItem = button.closest('.question-item');
+            const questionNumber = questionItem.querySelector('.question-number').textContent.match(/\d+/)[0];
+            const choiceCount = choicesList.children.length + 1;
+            
+            const choiceDiv = document.createElement('div');
+            choiceDiv.className = 'choice-item';
+            choiceDiv.innerHTML = `
+                <input type="text" name="questions[${questionNumber}][choices][${choiceCount}]" placeholder="Choice ${choiceCount}" required>
+                <input type="radio" name="questions[${questionNumber}][correct_choice]" value="${choiceCount}">
+                <label>Correct</label>
+                <button type="button" class="btn btn-danger" onclick="removeChoice(this)">Remove</button>
+            `;
+            
+            choicesList.appendChild(choiceDiv);
+            log('Choice added to question ' + questionNumber);
+        }
+        
+        function removeChoice(button) {
+            const choiceItem = button.closest('.choice-item');
+            const choicesList = choiceItem.parentElement;
+            
+            if (choicesList.children.length > 2) {
+                choiceItem.remove();
+                updateChoiceNumbers(choicesList);
+                log('Choice removed');
+            } else {
+                alert('A multiple choice question must have at least 2 choices.');
+            }
+        }
+        
+        function updateChoiceNumbers(choicesList) {
+            const choices = choicesList.querySelectorAll('.choice-item');
+            const questionItem = choicesList.closest('.question-item');
+            const questionNumber = questionItem.querySelector('.question-number').textContent.match(/\d+/)[0];
+            
+            choices.forEach((choice, index) => {
+                const inputs = choice.querySelectorAll('input');
+                inputs[0].name = `questions[${questionNumber}][choices][${index + 1}]`;
+                inputs[0].placeholder = `Choice ${index + 1}`;
+                inputs[1].name = `questions[${questionNumber}][correct_choice]`;
+                inputs[1].value = index + 1;
+            });
+        }
+        
+        function updateQuestionNumbers() {
+            const questions = document.querySelectorAll('.question-item');
+            questions.forEach((question, index) => {
+                const questionNumber = index + 1;
+                question.querySelector('.question-number').textContent = `Question ${questionNumber}`;
+                // Update input names would go here in a full implementation
+            });
+            log('Question numbers updated');
+        }
+        
+        function calculateTotalPoints() {
+            const pointInputs = document.querySelectorAll('input[name$="[points]"]');
+            let total = 0;
+            
+            pointInputs.forEach(input => {
+                total += parseInt(input.value) || 0;
+            });
+            
+            document.getElementById('total-question-points').textContent = total;
+            log('Total points calculated: ' + total);
+        }
+        
+        log('Test page initialized successfully');
+    </script>
+</body>
+</html>

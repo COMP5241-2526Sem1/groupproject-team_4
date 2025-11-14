@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">Dashboard</div>
+        </div>
+        <nav>
+            <a href="/teacher_home" class="active">Dashboard</a>
+            <div class="dropdown">
+                <a href="/teacher_course_list">My Courses</a>
+                <div class="dropdown-content" id="course-dropdown">
+                    <!-- Dynamically generate course options -->
+                </div>
+            </div>
+            <a href="/profile">Profile</a>
+            <a href="/activity">Activity</a>
+            <a href="/logout">Logout</a>
+        </nav>
+
+    </aside>
+    <main class="main-content">
+        <div id="courses-section" class="section">
+            <h2 style="color:#8a1c32;">My Courses</h2>
+            <div style="margin-bottom:24px;">
+                <button id="create-course-btn" style="background-color:#8a1c32;color:white;padding:10px 20px;border:none;border-radius:4px;cursor:pointer;">
+                    Create New Course
+                </button>
+            </div>
+            {% if my_courses %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Course Name</th>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Credits</th>
+                            <th>Capacity</th>
+                            <th>Schedule</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in my_courses %}
+                        <tr>
+                            <td>{{ course.name }}</td>
+                            <td>{{ course.code }}</td>
+                            <td>{{ course.description }}</td>
+                            <td>{{ course.credit }}</td>
+                            <td>{{ course.capacity }}</td>
+                            <td>{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</td>
+                            <td>
+                                <a href="/teacher_course/{{ course.code }}" class="btn-view">View Details</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div id="course-msg" style="margin-top:24px;color:#333;font-size:1.1rem;">You don't have any courses yet. Click the button above to create your first course.</div>
+            {% endif %}
+            
+            {% if other_courses %}
+            <h3 style="color:#8a1c32;margin-top:20px;">Other Courses</h3>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Course Name</th>
+                            <th>Code</th>
+                            <th>Description</th>
+                            <th>Credits</th>
+                            <th>Capacity</th>
+                            <th>Schedule</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in other_courses %}
+                        <tr>
+                            <td>{{ course.name }}</td>
+                            <td>{{ course.code }}</td>
+                            <td>{{ course.description }}</td>
+                            <td>{{ course.credit }}</td>
+                            <td>{{ course.capacity }}</td>
+                            <td>{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        <div id="profile-section" class="section" style="display:none;"> </div>
+        <div id="activity-section" class="section" style="display:none;"> </div>
+        <div id="messages-section" class="section" style="display:none;"> </div>
+    </main>
+</div>
+<script>
+    // Navigation handled by URL routing
+    document.getElementById('create-course-btn').addEventListener('click', function() {
+        window.location.href = '/teacher_course/create';
+    });
+    
+    // Dynamically generate course dropdown menu
+    document.addEventListener('DOMContentLoaded', function() {
+        // If course data exists, render directly in template, maintaining dropdown functionality
+        fetch('/teacher_course_list/list')
+            .then(response => response.json())
+            .then(courses => {
+                const dropdown = document.getElementById('course-dropdown');
+                dropdown.innerHTML = '';
+                courses.forEach(course => {
+                    const link = document.createElement('a');
+                    link.href = `/teacher_course/${course.code}`;
+                    link.textContent = course.name;
+                    dropdown.appendChild(link);
+                });
+            })
+            .catch(error => console.error('Error loading courses for dropdown:', error));
+    });
+</script>
+{% endblock %}

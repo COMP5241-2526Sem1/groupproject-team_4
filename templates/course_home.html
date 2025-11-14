@@ -1,0 +1,72 @@
+{% extends 'course_base.html' %}
+
+{% block title %}{{ course.name if course else 'Course Home' }}{% endblock %}
+
+{% block styles %}
+<style>
+    .course-info {
+        margin-bottom: 20px;
+    }
+    .course-info h1 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .course-info p {
+        margin: 8px 0;
+        color: #666;
+    }
+    .course-actions {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+    {% if course %}
+    <div class="course-info">
+        <h1>{{ course.name }}</h1>
+        <p><strong>Description:</strong> {{ course.description }}</p>
+        <p><strong>Code:</strong> {{ course.code }}</p>
+        <p><strong>Teacher:</strong> {{ course.teacher.username }}</p>
+        <p><strong>Department:</strong> {{ course.department.name if course.department else 'N/A' }}</p>
+    </div>
+    {% endif %}
+
+    <div class="course-actions">
+        <h2>Course Navigation</h2>
+        <p>Use the sidebar to navigate through different course sections:</p>
+        <ul>
+            <li><strong>Announcement:</strong> View course announcements</li>
+            <li><strong>Content:</strong> Access course materials</li>
+            <li><strong>Quiz:</strong> Take quizzes and view results</li>
+            <li><strong>Poll:</strong> Participate in course polls</li>
+            <li><strong>Word Cloud:</strong> Interactive word cloud activities</li>
+            <li><strong>Mini Games:</strong> Educational games and activities</li>
+            <li><strong>Grades:</strong> View your grades and progress</li>
+        </ul>
+    </div>
+
+    <script>
+        function loadAnnouncement() {
+            document.querySelector('.main-content').innerHTML = '<h1>Announcement</h1><p>This is the announcement section.</p>';
+        }
+        function loadContent() {
+            document.querySelector('.main-content').innerHTML = '<h1>Content</h1><p>This is the content section.</p>';
+        }
+        function loadQuiz() {
+            document.querySelector('.main-content').innerHTML = '<h1>Quiz</h1><p>This is the quiz section.</p>';
+        }
+        function loadPoll() {
+            document.querySelector('.main-content').innerHTML = '<h1>Poll</h1><p>This is the poll section.</p>';
+        }
+        function loadWordCloud() {
+            document.querySelector('.main-content').innerHTML = '<h1>Word Cloud</h1><p>This is the word cloud section.</p>';
+        }
+        function loadMiniGames() {
+            document.querySelector('.main-content').innerHTML = '<h1>Mini Games</h1><p>This is the mini games section.</p>';
+        }
+        function loadGrade() {
+            document.querySelector('.main-content').innerHTML = '<h1>Grade</h1><p>This is the grade section.</p>';
+        }
+    </script>
+{% endblock %}

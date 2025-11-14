@@ -1,0 +1,207 @@
+{% extends 'course_base.html' %}
+
+{% block title %}Quiz List - {{ course.name if course else 'Student Home' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quiz-list-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .page-header h1 {
+        color: #8a1c32;
+        margin: 0;
+    }
+    
+    .quiz-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .quiz-table th {
+        background: #8a1c32;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: bold;
+    }
+    
+    .quiz-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .quiz-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .quiz-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        transition: background 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .view-btn {
+        background: #8a1c32;
+        color: white;
+    }
+    
+    .view-btn:hover {
+        background: #6e1728;
+    }
+    
+    .completed-btn {
+        background: #8a1c32;
+        color: white;
+        cursor: pointer;
+    }
+    
+    .completed-btn:hover {
+        background: #6e1728;
+    }
+    
+    .no-quizzes {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
+        font-size: 18px;
+    }
+    
+    .datetime-info {
+        font-size: 0.9em;
+        color: #666;
+    }
+    
+    .attempt-info {
+        font-weight: bold;
+    }
+    
+    .attempt-info.full {
+        color: #dc3545;
+    }
+    
+    .attempt-info.available {
+        color: #28a745;
+    }
+    
+    .grade-info {
+        font-weight: bold;
+    }
+    
+    .grade-score {
+        color: #8a1c32;
+    }
+    
+    .grade-percentage {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .no-grade {
+        color: #999;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block sidebar_links %}
+<a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2];">Course Home</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/announcement';">Announcement</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/content';">Content</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/quiz';" style="background-color: #8a1c32; color: white;">Quiz</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/mini_games';">Mini Games</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/grades';">Grades</a>
+    <a href="/logout">Sign Out</a>
+{% endblock %}
+
+{% block main_content %}
+<div class="quiz-list-container">
+    <div class="page-header">
+        <h1>Quiz List - {{ course.name }}</h1>
+        <p>Course: {{ course.name if course else 'Unknown Course' }}</p>
+    </div>
+    
+    {% if message %}
+    <div class="success-message">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
+
+    {% if quizzes %}
+        <table class="quiz-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Attempts</th>
+                    <th>Grade</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quiz in quizzes %}
+                <tr>
+                    <td>{{ quiz.name }}</td>
+                    <td>{{ quiz.description or 'No description' }}</td>
+                    <td class="datetime-info">
+                        {{ quiz.start_datetime.strftime('%Y-%m-%d %H:%M') if quiz.start_datetime else 'N/A' }}
+                    </td>
+                    <td class="datetime-info">
+                        {{ quiz.end_datetime.strftime('%Y-%m-%d %H:%M') if quiz.end_datetime else 'N/A' }}
+                    </td>
+                    <td class="attempt-info {% if quiz.used_attempts >= quiz.max_attempts %}full{% else %}available{% endif %}">
+                        {{ quiz.used_attempts }}/{{ quiz.max_attempts }}
+                    </td>
+                    <td class="grade-info">
+                        {% if quiz.grade %}
+                            <span class="grade-score">{{ quiz.grade.points_earned }}/{{ quiz.grade.points_possible }}</span>
+                            <span class="grade-percentage">({{ "%.1f"|format(quiz.grade.percentage) }}%)</span>
+                        {% else %}
+                            <span class="no-grade">Not graded</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="quiz-actions">
+                            {% if quiz.used_attempts < quiz.max_attempts %}
+                                <a href="{{ url_for('quiz.get_quiz_info', course_code=course.code, quiz_id=quiz.id) }}" class="action-btn view-btn">View</a>
+                            {% else %}
+                                <a href="{{ url_for('quiz.get_quiz_info', course_code=course.code, quiz_id=quiz.id) }}" class="action-btn completed-btn">View Results</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-quizzes">
+            <p>No quizzes available for this course yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'quiz_base.html' %}
+
+{% block title %}{{ quiz.name }} - Start Quiz{% endblock %}
+
+{% block quiz_scripts %}
+    // Simple validation before submitting
+    function validateQuizForm() {
+        // Implementation will be handled by server-side validation
+        return true;
+    }
+{% endblock %}
+
+{% block main_content %}
+    {% if error_message %}
+    <div class="error-message">
+        {{ error_message }}
+    </div>
+    {% endif %}
+    
+    <div class="quiz-header">
+        <h1>{{ quiz.name }}</h1>
+        {% if quiz.description %}
+        <div class="quiz-description">{{ quiz.description }}</div>
+        {% endif %}
+        <div class="quiz-info">
+            <p>Question Count: {{ quiz.questions|length }}</p>
+            <p>Duration: {{ quiz.duration }} minutes</p>
+        </div>
+    </div>
+    
+    <form id="quiz-form" action="/course/{{ course.code if course and course.code else course_code }}/quiz/{{ quiz.id }}/submit" method="POST" onsubmit="return validateQuizForm();">
+        {% for question in quiz.questions %}
+        <div class="question" data-type="{{ question.type }}">
+            <div class="question-number">Question {{ loop.index }} ({{ question.points }} point{% if question.points > 1 %}s{% endif %})</div>
+            <div class="question-content">{{ question.content }}</div>
+            
+            {% if question.type == 'mcq' %}
+            {% for choice in question.choices %}
+            <div class="choice">
+                <label>
+                    <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}">
+                    {{ choice.content }}
+                </label>
+            </div>
+            {% endfor %}
+            {% elif question.type == 'saq' %}
+            <div class="short-answer">
+                <textarea name="question-{{ question.id }}" placeholder="Type your answer here..."></textarea>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="quiz-submit">
+            <button type="submit" class="submit-btn">Submit Quiz</button>
+        </div>
+    </form>
+{% endblock %}

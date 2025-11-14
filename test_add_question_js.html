@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Add Question Functionality</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .question-item { border: 1px solid #ccc; padding: 15px; margin: 10px 0; background: #f9f9f9; }
+        .question-header { background: #e9e9e9; padding: 10px; margin-bottom: 10px; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; border: none; }
+        .btn-secondary { background: #6c757d; color: white; border: none; }
+        .remove-question { background: #dc3545; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <h1>Test Add Question Functionality</h1>
+    
+    <button type="button" id="add-question-btn" class="btn btn-secondary">Add Question</button>
+    
+    <div id="questions-container"></div>
+    
+    <div id="diagnostic-output" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border: 1px solid #ccc;">
+        <h3>Diagnostic Output:</h3>
+        <div id="console-output"></div>
+    </div>
+
+    <script>
+        let questionCount = 0;
+        
+        // Override console.log to show output on page
+        const originalConsoleLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            const message = args.join(' ');
+            consoleOutput.innerHTML += '<div style="margin: 2px 0; font-family: monospace;">' + message + '</div>';
+        };
+        
+        console.log('=== Testing Add Question Functionality ===');
+        
+        // Test if addQuestion function exists
+        function addQuestion() {
+            console.log('addQuestion function called');
+            
+            try {
+                questionCount++;
+                console.log('Creating question', questionCount);
+                
+                const container = document.getElementById('questions-container');
+                if (!container) {
+                    console.error('Questions container not found!');
+                    alert('Error: Questions container not found');
+                    return;
+                }
+                
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-item';
+                console.log('Question div created');
+                
+                questionDiv.innerHTML = `
+                    <div class="question-header">
+                        <span class="question-number">Question ${questionCount}</span>
+                        <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
+                    </div>
+                    
+                    <div class="question-content">
+                        <label>Question Content:</label>
+                        <textarea name="questions[${questionCount}][content]" placeholder="Enter your question here" required></textarea>
+                    </div>
+                    
+                    <div class="question-points">
+                        <label>Points:</label>
+                        <input type="number" name="questions[${questionCount}][points]" value="10" min="1" max="100" required>
+                    </div>
+                `;
+                
+                container.appendChild(questionDiv);
+                console.log('Question added successfully');
+                
+            } catch (error) {
+                console.error('Error adding question:', error);
+                alert('Error adding question: ' + error.message);
+            }
+        }
+        
+        function removeQuestion(button) {
+            if (confirm('Are you sure you want to remove this question?')) {
+                button.closest('.question-item').remove();
+                console.log('Question removed');
+            }
+        }
+        
+        // Add event listener
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
+            const addQuestionBtn = document.getElementById('add-question-btn');
+            if (addQuestionBtn) {
+                console.log('Add Question button found, attaching event listener...');
+                addQuestionBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Add Question button clicked');
+                    addQuestion();
+                });
+                console.log('Event listener attached successfully');
+            } else {
+                console.error('Add Question button not found!');
+            }
+        });
+        
+        console.log('Setup complete. Click the "Add Question" button to test functionality.');
+    </script>
+</body>
+</html>

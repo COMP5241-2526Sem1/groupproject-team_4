@@ -1,24 +1,26 @@
 from flask import Blueprint, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from models.user import User, db
+from models.user import User
+from database import db
 import re
 
-# 创建蓝图
+# Create blueprint
 auth_bp = Blueprint('auth', __name__)
+# THIS IS RESTFUL API, NOT A VISABLE WEB PAGE!!!
 
-# 邮箱格式校验（支持所有标准邮箱格式）
+# Email format validation (supports all standard email formats)
 def is_valid_email(email):
     pattern = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
     return re.match(pattern, email)
 
-# 密码强度校验（必须包含字母和数字，可有特殊符号，不能全数字）
+# Password strength validation (must contain letters and numbers, can include special characters, cannot be all digits)
 def is_valid_password(password):
     if password.isdigit():
         return False
     pattern = r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=-]{6,}$'
     return re.match(pattern, password)
 
-# 注册接口
+# Registration endpoint
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -28,24 +30,24 @@ def register():
     email = data.get('email')
 
     if not username or not password or not role or not email:
-        return jsonify({'msg': '用户名、密码、角色和邮箱不能为空'}), 400
+        return jsonify({'msg': 'Username, password, role, and email cannot be empty'}), 400
 
     if not is_valid_email(email):
-        return jsonify({'msg': '邮箱格式不正确'}), 400
+        return jsonify({'msg': 'Invalid email format'}), 400
 
     if not is_valid_password(password):
-        return jsonify({'msg': '密码必须包含字母和数字，且不能全为数字'}), 400
+        return jsonify({'msg': 'Password must contain letters and numbers, and cannot be all digits'}), 400
 
     if User.query.filter_by(username=username).first():
-        return jsonify({'msg': '用户名已存在'}), 400
+        return jsonify({'msg': 'Username already exists'}), 400
 
     password_hash = generate_password_hash(password)
     user = User(username=username, password_hash=password_hash, role=role, email=email)
     db.session.add(user)
     db.session.commit()
-    return jsonify({'msg': '注册成功'}), 201
+    return jsonify({'msg': 'Registration successful'}), 201
 
-# 登录接口
+# Login
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -55,11 +57,11 @@ def login():
 
     user = User.query.filter_by(username=username, role=role).first()
     if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({'msg': '用户名、密码或角色错误'}), 401
+        return jsonify({'msg': 'Incorrect username, password or role'}), 401
     session['user_id'] = user.id
-    return jsonify({'msg': '登录成功', 'role': user.role}), 200
+    return jsonify({'msg': 'login success!', 'role': user.role}), 200
 
-# 登出接口
+# logout
 @auth_bp.route('/logout')
 def logout():
     session.clear()

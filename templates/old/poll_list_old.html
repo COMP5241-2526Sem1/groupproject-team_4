@@ -1,0 +1,27 @@
+{% extends 'base_course_full.html' %}
+
+{% block title %}Available Polls{% endblock %}
+
+{% block main_content %}
+    <h1>Available Polls</h1>
+    {% if message %}
+    <div style="color: #2e7d32; margin: 20px 0; padding: 15px; background-color: #e8f5e9; border-radius: 5px; border-left: 4px solid #2e7d32;">
+        {{ message }}
+    </div>
+    {% endif %}
+    {% if polls %}
+        {% for poll in polls %}
+            <div class="quiz-container">
+                <a href="{{ url_for('course.get_poll_info', course_code=course.code if course and course.code else course_code, poll_id=poll.id) }}" class="quiz-link">
+                    <h2>{{ poll.name }}</h2>
+                    <p>Created: {{ poll.created_at.strftime('%Y-%m-%d') }}</p>
+                    <p>Status: Active</p>
+                </a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="quiz-container">
+            <p>{{ message or 'No polls available for this course yet.' }}</p>
+        </div>
+    {% endif %}
+{% endblock %}

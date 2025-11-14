@@ -1,0 +1,60 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}Start Poll - {{ poll.name }}{% endblock %}
+
+{% block poll_scripts %}
+    // Enhanced experience for poll submission
+    function enhancePollForm() {
+        // Allow empty answers for poll submission
+        return true;
+    }
+{% endblock %}
+
+{% block main_content %}
+    {% if error_message %}
+    <div class="error-message">
+        {{ error_message }}
+    </div>
+    {% endif %}
+    
+    <div class="poll-header">
+          <h1>{{ poll.name }}</h1>
+        {% if poll.description %}
+        <div class="poll-description">{{ poll.description }}</div>
+        {% endif %}
+        <div class="poll-info">
+            <p>Question Count: {{ questions|length }}</p>
+            {% if has_submitted is defined %}
+            <p>Poll Status: You have already submitted this poll</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <form id="poll-form" action="/course/{{ course.code }}/poll/{{ poll.id }}/submit" method="POST" onsubmit="return enhancePollForm();">
+        {% for question in questions %}
+        <div class="question" data-type="{{ question.type }}">
+            <div class="question-number">Question {{ loop.index }}</div>
+            <div class="question-content">{{ question.content }}</div>
+            
+            {% if question.type == 'mcq' %}
+            {% for choice in question.choices %}
+            <div class="choice">
+                <label>
+                    <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}">
+                    {{ choice.content }}
+                </label>
+            </div>
+            {% endfor %}
+            {% elif question.type == 'saq' %}
+            <div class="short-answer">
+                <textarea name="question-{{ question.id }}" placeholder="Type your answer here..."></textarea>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="poll-submit">
+             <button type="submit" class="submit-btn">Submit Poll</button>
+        </div>
+    </form>
+{% endblock %}

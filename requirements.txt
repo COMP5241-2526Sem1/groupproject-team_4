@@ -1,0 +1,7 @@
+psycopg2==2.8.6
+flask
+flask_sqlalchemy
+werkzeug
+sqlalchemy
+pymysql
+dotenv

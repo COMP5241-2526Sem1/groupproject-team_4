@@ -1,0 +1,214 @@
+{% extends 'quiz_base.html' %}
+
+{% block title %}Quiz Results - {{ quiz.name if quiz else 'Quiz Results' }}{% endblock %}
+
+{% block main_content %}
+    <div class="quiz-container">
+        {% if error_message %}
+            <h1>Error</h1>
+            <p>{{ error_message }}</p>
+            <button onclick="window.location.href='/course/{{ course_code }}/quiz'">Back to Quiz List</button>
+        {% else %}
+            <h1>{{ quiz.name }} - Results</h1>
+            
+            {% if quiz.description %}
+                <p><strong>Description:</strong> {{ quiz.description }}</p>
+            {% endif %}
+            
+            <div class="results-summary">
+                <h3>Your Results</h3>
+                <p><strong>Score:</strong> {{ quiz.score }}%</p>
+                <p><strong>Submitted at:</strong> {{ quiz.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                
+                {% if quiz.class_statistics %}
+                    <div class="class-statistics">
+                        <h4>Class Statistics</h4>
+                        <p><strong>Total students who took this quiz:</strong> {{ quiz.class_statistics.total_students }}</p>
+                        <p><strong>Class average score:</strong> {{ "%.1f"|format(quiz.class_statistics.average_score) }}%</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if quiz.questions %}
+                <div class="question-results">
+                    <h3>Question Details</h3>
+                    {% for question in quiz.questions %}
+                        <div class="question-result-item">
+                            <div class="question-header">
+                                <strong>Question {{ loop.index }}</strong>
+                                {% if question.type == 'mcq' %}
+                                    <span class="question-type">(Multiple Choice)</span>
+                                {% else %}
+                                    <span class="question-type">(Short Answer)</span>
+                                {% endif %}
+                                <span class="question-points">[{{ question.points }} points]</span>
+                            </div>
+                            
+                            <div class="question-content">
+                                {{ question.content }}
+                            </div>
+                            
+                            {% if quiz.visibility.student_response_visible %}
+                                <div class="student-response">
+                                    <strong>Your Answer:</strong>
+                                    {% if question.user_answer %}
+                                        {{ question.user_answer }}
+                                    {% else %}
+                                        <em>No answer provided</em>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if question.is_correct is not none %}
+                                    <div class="answer-status">
+                                        <strong>Result:</strong>
+                                        {% if question.is_correct %}
+                                            <span class="correct">✓ Correct</span>
+                                        {% else %}
+                                            <span class="incorrect">✗ Incorrect</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if quiz.visibility.sample_response_visible and question.correct_answer %}
+                                <div class="correct-answer">
+                                    <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <button onclick="window.location.href='/course/{{ course_code }}/quiz'">Back to Quiz List</button>
+                {% if quiz.visibility.question_visible or quiz.visibility.student_response_visible %}
+                    <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}'">View Quiz Details</button>
+                {% endif %}
+                
+                <!-- View Response button with visibility logic -->
+                {% if quiz.visibility.question_visible or quiz.visibility.student_response_visible or quiz.visibility.sample_response_visible or quiz.visibility.class_response_visible %}
+                    <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}'">View Response</button>
+                {% else %}
+                    <button disabled style="background-color: #6c757d; cursor: not-allowed;" title="Response visibility is disabled for this quiz">Response Invisible</button>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    
+    <style>
+        .results-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .class-statistics {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+        
+        .question-results {
+            margin: 20px 0;
+        }
+        
+        .question-result-item {
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+        }
+        
+        .question-header {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .question-content {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 3px;
+        }
+        
+        .student-response {
+            margin: 10px 0;
+            padding: 8px;
+            background: #e3f2fd;
+            border-radius: 3px;
+        }
+        
+        .correct-answer {
+            margin: 10px 0;
+            padding: 8px;
+            background: #e8f5e8;
+            border-radius: 3px;
+        }
+        
+        .answer-status {
+            margin: 10px 0;
+        }
+        
+        .correct {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .incorrect {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .action-buttons button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .action-buttons button:first-child {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .action-buttons button:last-child {
+            background: #007bff;
+            color: white;
+        }
+        
+        /* Disable hover effects for buttons on results page */
+        .action-buttons button:hover {
+            background-color: inherit;
+            color: inherit;
+            border-color: inherit;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Disable hover effects for quiz container */
+        .quiz-container {
+            transition: none !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .quiz-container:hover {
+            background-color: inherit !important;
+            border-color: inherit !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+    </style>
+{% endblock %}

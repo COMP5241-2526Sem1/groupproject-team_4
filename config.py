@@ -1,14 +1,10 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = (
-        'mysql+pymysql://root:root@localhost/learning_platform'
-    )
+    # Database configuration
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{os.getenv('PG_DB_USER')}:{os.getenv('PG_DB_PASSWORD')}@{os.getenv('PG_DB_HOST')}:{os.getenv('PG_DB_PORT')}/{os.getenv('PG_DB_NAME')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-# 如果需要，可以用环境变量管理用户名和密码
-# class Config:
-#     SQLALCHEMY_DATABASE_URI = (
-#         f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@localhost/learning_platform"
-#     )
-#     SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grade Quiz - Q4 - Physics I</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+<style>
+    .grading-container {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .page-header {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .page-header h1 {
+        color: #8a1c32;
+        margin: 0;
+        font-size: 24px;
+    }
+    
+    .page-header p {
+        color: #666;
+        margin: 5px 0 0 0;
+        font-size: 14px;
+    }
+    
+    .question-section {
+        margin-bottom: 30px;
+        border: 1px solid #ddd;
+    }
+    
+    .question-header {
+        background: #8a1c32;
+        color: white;
+        padding: 10px 15px;
+        font-weight: normal;
+        font-size: 16px;
+    }
+    
+    .question-content {
+        background: #f5f5f5;
+        padding: 10px 15px;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+    }
+    
+    .grading-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .grading-table th {
+        background: #f5f5f5;
+        color: #333;
+        padding: 8px;
+        text-align: left;
+        font-weight: normal;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+    }
+    
+    .grading-table td {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+    
+    .grading-table tr:hover {
+        background: #fafafa;
+    }
+    
+    .student-name {
+        color: #333;
+        font-size: 14px;
+    }
+    
+    .student-response {
+        background: #fff;
+        border: 1px solid #ddd;
+        padding: 8px;
+        min-height: 40px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 14px;
+    }
+    
+    .grade-input {
+        width: 60px;
+        padding: 4px 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        text-align: center;
+        font-size: 14px;
+    }
+    
+    .grade-input:focus {
+        outline: none;
+        border-color: #8a1c32;
+    }
+    
+    .confirm-btn {
+        background: #8a1c32;
+        color: white;
+        border: none;
+        padding: 4px 12px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 8px;
+    }
+    
+    .confirm-btn:hover {
+        background: #6e1728;
+    }
+    
+    .confirm-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .result-message {
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+    
+    .result-success {
+        color: #28a745;
+        background: #d4edda;
+    }
+    
+    .result-error {
+        color: #dc3545;
+        background: #f8d7da;
+    }
+    
+    .no-responses {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
+        font-size: 16px;
+    }
+    
+    .points-info {
+        color: #666;
+        font-size: 14px;
+    }
+</style>
+
+    
+</head>
+<body>
+    
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo" onclick="window.location.href='/student_home'">
+            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">PHYS101</div>
+                <div style="font-size:14px;margin-top:4px;">Physics I</div>
+            
+        </div>
+
+        <nav>
+            
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2];">Course Home</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/announcement';">Announcement</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/content';">Content</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/quiz';" style="background-color: #8a1c32; color: white;">Quiz</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/mini_games';">Mini Games</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/grades';">Grades</a>
+    <a href="/logout">Sign Out</a>
+
+        </nav>
+
+
+    </aside>
+
+    <main class="main-content">
+        
+<div class="grading-container">
+    <div class="page-header">
+        <h1>Grade Quiz: Q4</h1>
+        <p>Course: Physics I | Quiz ID: 13</p>
+    </div>
+    
+    
+        
+        <div class="question-section">
+            <div class="question-header">
+                Question 1
+            </div>
+            <div class="question-content">
+                Q4Q1
+                <span class="points-info">(1 points)</span>
+            </div>
+            
+            <table class="grading-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Student Name</th>
+                        <th style="width: 45%;">Student Response</th>
+                        <th style="width: 30%;">Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr data-student-id="34" data-submission-id="none">
+                        <td class="student-name">daniel_miller</td>
+                        <td class="student-response">No response</td>
+                        <td>
+                            
+                            <span style="color: #999; font-style: italic;">No submission</span>
+                            
+                        </td>
+                    </tr>
+                    
+                    <tr data-student-id="36" data-submission-id="58">
+                        <td class="student-name">a</td>
+                        <td class="student-response">Q4Q1AAA</td>
+                        <td>
+                            
+                            <input type="number" 
+                                   class="grade-input" 
+                                   value="0.0" 
+                                   min="0" 
+                                   max="1"
+                                   step="0.1"
+                                   data-question-id="79"
+                                   data-submission-id="58">
+                            <span class="points-info">/ 1</span>
+                            <button class="confirm-btn" 
+                                    onclick="gradeQuestion(this, 79, 58)">
+                                Confirm
+                            </button>
+                            <span class="result-message" style="display: none;"></span>
+                            
+                        </td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+        
+    
+</div>
+
+<script>
+function gradeQuestion(button, questionId, submissionId) {
+    const row = button.closest('tr');
+    const input = row.querySelector('.grade-input');
+    const resultMessage = row.querySelector('.result-message');
+    const points = parseFloat(input.value);
+    const maxPoints = parseFloat(input.max);
+    
+    // Validate input
+    if (isNaN(points) || points < 0 || points > maxPoints) {
+        showResult(resultMessage, `Please enter a valid grade between 0 and ${maxPoints}`, 'error');
+        return;
+    }
+    
+    // Disable button during request
+    button.disabled = true;
+    
+    // Make API call
+    fetch(`/teacher/question/${questionId}/grade`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            submission_id: submissionId,
+            points: points
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showResult(resultMessage, `Saved: ${data.points}/${data.max_points} (${data.percentage}%)`, 'success');
+            // Update input value to reflect saved value
+            input.value = data.points;
+        } else {
+            showResult(resultMessage, data.error || 'Failed to save grade', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showResult(resultMessage, 'Network error occurred', 'error');
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+
+function showResult(element, message, type) {
+    element.textContent = message;
+    element.className = `result-message result-${type}`;
+    element.style.display = 'inline';
+    
+    // Hide message after 3 seconds
+    setTimeout(() => {
+        element.style.display = 'none';
+    }, 3000);
+}
+
+// Add enter key support for grade inputs
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.grade-input').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const button = this.parentElement.querySelector('.confirm-btn');
+                if (button) {
+                    button.click();
+                }
+            }
+        });
+    });
+});
+</script>
+
+    </main>
+</div>
+
+</body>
+</html>

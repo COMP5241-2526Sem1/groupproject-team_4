@@ -1,0 +1,543 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block course_title %}{{ course.name }} - Create Quiz{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-quiz-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .page-header h1 {
+        color: #8a1c32;
+        margin: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #8a1c32;
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .visibility-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+    }
+    
+    .visibility-section h3 {
+        color: #8a1c32;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+        transform: scale(1.2);
+    }
+    
+    .checkbox-group label {
+        margin-bottom: 0;
+        font-weight: normal;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-primary {
+        background: #8a1c32;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #6a1528;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+    
+    .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .questions-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #f0f0f0;
+    }
+    
+    .questions-section h3 {
+        color: #8a1c32;
+        margin-bottom: 15px;
+    }
+    
+    #questions-container {
+        margin-bottom: 15px;
+    }
+    
+    .question-item {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .question-number {
+        font-weight: bold;
+        color: #8a1c32;
+        font-size: 16px;
+    }
+    
+    .remove-question {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    
+    .remove-question:hover {
+        background: #c82333;
+    }
+    
+    .question-type-selector {
+        margin-bottom: 15px;
+    }
+    
+    .question-type-selector select {
+        width: auto;
+        min-width: 150px;
+    }
+    
+    .question-content {
+        margin-bottom: 15px;
+    }
+    
+    .question-content textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 12px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+    }
+    
+    .choices-container {
+        margin-top: 15px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .choices-list {
+        margin-top: 10px;
+    }
+    
+    .choice-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+    
+    .choice-item input[type="text"] {
+        flex: 1;
+        margin: 0;
+        min-width: 300px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .choice-item input[type="radio"] {
+        width: auto;
+        margin: 0;
+    }
+    
+    .choice-item button {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 2px 6px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 10px;
+        min-width: 45px;
+        height: 22px;
+        line-height: 1;
+    }
+    
+    .add-choice {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    
+    .add-choice:hover {
+        background: #218838;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="create-quiz-container">
+    <div class="page-header">
+        <h1>Create New Quiz</h1>
+        <p style="color: #7f8c8d; margin-top: 10px;">Create a new quiz for {{ course.name }}</p>
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Quiz Name *</label>
+            <input type="text" id="name" name="name" required placeholder="Enter quiz name">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Enter quiz description (optional)"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="duration">Duration (minutes)</label>
+                <input type="number" id="duration" name="duration" value="30" min="1" max="180">
+                <div class="help-text">Time allowed for the quiz</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="attempt_limit">Attempt Limit</label>
+                <input type="number" id="attempt_limit" name="attempt_limit" value="5" min="1" max="10">
+                <div class="help-text">Maximum number of attempts allowed</div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="point_in_course">Points in Course</label>
+                <input type="number" id="point_in_course" name="point_in_course" value="0" min="0" max="100">
+                <div class="help-text">Weight in overall course grade</div>
+            </div>
+            
+            <div class="form-group">
+                <label>Total Points (Auto-calculated)</label>
+                <div class="total-points-display" id="totalPointsDisplay" style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-top: 8px;">0</div>
+                <div class="help-text">Sum of all question points</div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start_datetime">Start Date & Time</label>
+                <input type="datetime-local" id="start_datetime" name="start_datetime">
+                <div class="help-text">When the quiz becomes available (optional)</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="end_datetime">End Date & Time</label>
+                <input type="datetime-local" id="end_datetime" name="end_datetime">
+                <div class="help-text">When the quiz becomes unavailable (optional)</div>
+            </div>
+        </div>
+        
+        <div class="questions-section">
+            <h3>Questions</h3>
+            <p style="color: #7f8c8d; margin-bottom: 15px;">Add questions to your quiz</p>
+            
+            <div id="questions-container">
+                <!-- Questions will be added here dynamically -->
+            </div>
+            
+            <button type="button" id="add-question-btn" class="btn btn-secondary">Add Question</button>
+            
+            <div style="margin-top: 15px;">
+                <strong>Total Question Points: <span id="total-question-points">0</span></strong>
+            </div>
+        </div>
+        
+        <div class="visibility-section">
+            <h3>Post-Submission Visibility Settings</h3>
+            <p style="color: #7f8c8d; margin-bottom: 15px;">Control what students can see after submitting the quiz</p>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="question_visible" name="question_visible" checked>
+                <label for="question_visible">Show questions after submission</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="student_response_visible" name="student_response_visible">
+                <label for="student_response_visible">Show student's own responses</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="sample_response_visible" name="sample_response_visible">
+                <label for="sample_response_visible">Show correct answers</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="class_response_visible" name="class_response_visible">
+                <label for="class_response_visible">Show class statistics</label>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Quiz</button>
+            <a href="{{ url_for('quiz.teacher_quiz_list', course_code=course.code) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+let questionCount = 0;
+let choiceCounters = {};
+
+function addQuestion() {
+    questionCount++;
+    const container = document.getElementById('questions-container');
+    
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question-item';
+    questionDiv.id = `question-${questionCount}`;
+    
+    questionDiv.innerHTML = `
+        <div class="question-header">
+            <span class="question-number">Question ${questionCount}</span>
+            <button type="button" class="remove-question" onclick="removeQuestion(${questionCount})">Remove</button>
+        </div>
+        
+        <div class="form-group question-type-selector">
+            <label>Question Type *</label>
+            <select name="questions[${questionCount}][type]" onchange="toggleQuestionType(${questionCount})" required>
+                <option value="">Select Type</option>
+                <option value="mcq">Multiple Choice</option>
+                <option value="saq">Short Answer</option>
+            </select>
+        </div>
+        
+        <div class="form-group question-content">
+            <label>Question Content *</label>
+            <textarea name="questions[${questionCount}][content]" placeholder="Enter your question" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Points *</label>
+            <input type="number" name="questions[${questionCount}][points]" value="1" min="1" max="100" onchange="updateTotalPoints()" required>
+        </div>
+        
+        <div id="mcq-options-${questionCount}" style="display: none;">
+            <div class="choices-container">
+                <label>Choices (select the correct answer)</label>
+                <div class="choices-list" id="choices-container-${questionCount}">
+                    <!-- Choices will be added here -->
+                </div>
+                <button type="button" class="add-choice" onclick="addChoice(${questionCount})">+ Add Choice</button>
+            </div>
+        </div>
+        
+        <div id="saq-options-${questionCount}" style="display: none;">
+            <div class="form-group">
+                <label>Expected Answer (Optional)</label>
+                <input type="text" name="questions[${questionCount}][expected_answer]" placeholder="Enter expected answer">
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(questionDiv);
+    updateTotalPoints();
+}
+
+function removeQuestion(questionId) {
+    const questionDiv = document.getElementById(`question-${questionId}`);
+    if (questionDiv) {
+        questionDiv.remove();
+        updateQuestionNumbers();
+        updateTotalPoints();
+    }
+}
+
+function updateQuestionNumbers() {
+    const questions = document.querySelectorAll('.question-item');
+    questions.forEach((question, index) => {
+        const questionNumber = question.querySelector('.question-number');
+        if (questionNumber) {
+            questionNumber.textContent = `Question ${index + 1}`;
+        }
+    });
+}
+
+function toggleQuestionType(questionId) {
+    const select = document.querySelector(`select[name="questions[${questionId}][type]"]`);
+    const mcqOptions = document.getElementById(`mcq-options-${questionId}`);
+    const saqOptions = document.getElementById(`saq-options-${questionId}`);
+    const choiceInputs = mcqOptions.querySelectorAll('input[name*="[choices]"]');
+    const correctChoiceInputs = mcqOptions.querySelectorAll('input[name*="[correct_choice]"]');
+    
+    if (select.value === 'mcq') {
+        mcqOptions.style.display = 'block';
+        saqOptions.style.display = 'none';
+        // Make choice inputs required for MCQ
+        choiceInputs.forEach(input => input.required = true);
+        correctChoiceInputs.forEach(input => input.required = true);
+        // Add default choices if none exist
+        const choicesContainer = document.getElementById(`choices-container-${questionId}`);
+        if (choicesContainer.children.length === 0) {
+            addChoice(questionId);
+            addChoice(questionId);
+        }
+    } else if (select.value === 'saq') {
+        mcqOptions.style.display = 'none';
+        saqOptions.style.display = 'block';
+        // Remove required attribute for short answer
+        choiceInputs.forEach(input => input.required = false);
+        correctChoiceInputs.forEach(input => input.required = false);
+    } else {
+        mcqOptions.style.display = 'none';
+        saqOptions.style.display = 'none';
+        // Remove required attribute when no type selected
+        choiceInputs.forEach(input => input.required = false);
+        correctChoiceInputs.forEach(input => input.required = false);
+    }
+}
+
+function addChoice(questionId) {
+    if (!choiceCounters[questionId]) {
+        choiceCounters[questionId] = 0;
+    }
+    choiceCounters[questionId]++;
+    
+    const choiceId = choiceCounters[questionId];
+    const container = document.getElementById(`choices-container-${questionId}`);
+    
+    const choiceDiv = document.createElement('div');
+    choiceDiv.className = 'choice-item';
+    choiceDiv.innerHTML = `
+        <input type="radio" name="questions[${questionId}][correct_choice]" value="${choiceId}" required>
+        <input type="text" name="questions[${questionId}][choices][${choiceId}]" placeholder="Choice ${choiceId}" required>
+        <button type="button" onclick="removeChoice(this)">Remove</button>
+    `;
+    
+    container.appendChild(choiceDiv);
+}
+
+function removeChoice(button) {
+    const choiceItem = button.parentElement;
+    choiceItem.remove();
+}
+
+function updateTotalPoints() {
+    const pointInputs = document.querySelectorAll('input[name$="[points]"]');
+    let total = 0;
+    
+    pointInputs.forEach(input => {
+        total += parseInt(input.value) || 0;
+    });
+    
+    document.getElementById('total-question-points').textContent = total;
+    document.getElementById('totalPointsDisplay').textContent = total;
+}
+
+// Initialize
+document.getElementById('add-question-btn').addEventListener('click', addQuestion);
+
+// Add first question by default
+addQuestion();
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- JavaScript is already included in course_content block -->
+{% endblock %}
