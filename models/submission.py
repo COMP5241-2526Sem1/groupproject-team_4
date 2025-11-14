@@ -1,12 +1,24 @@
-from models import db
 from datetime import datetime
-from sqlalchemy import JSON
+from sqlalchemy import Column, Integer, Float, ForeignKey, DateTime
+from sqlalchemy.sql import func
+from database import db
+
 
 class Submission(db.Model):
-    __tablename__ = 'submissions'
-    id = db.Column(db.Integer, primary_key=True)
-    activity_id = db.Column(db.Integer, db.ForeignKey('activities.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    answer = db.Column(JSON)
-    score = db.Column(db.Float)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    __tablename__ = 'submission'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
+    
+    # Task type foreign keys (only one should be set)
+    quiz_id = Column(Integer, ForeignKey('quiz.id'), nullable=True)
+    poll_id = Column(Integer, ForeignKey('poll.id'), nullable=True)
+    short_answer_id = Column(Integer, ForeignKey('short_answer.id'), nullable=True)
+    word_cloud_id = Column(Integer, ForeignKey('word_cloud.id'), nullable=True)
+    minigame_id = Column(Integer, ForeignKey('minigame.id'), nullable=True)
+    
+    submitted_at = Column(DateTime, default=func.now())
+    grade = Column(Float)
+
+    # Relationships
+    QuestionResponse = db.relationship('QuestionResponse', backref='submission', cascade='all, delete-orphan')

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Function Existence</title>
+</head>
+<body>
+    <h1>Testing addQuestion Function</h1>
+    <div id="result"></div>
+    
+    <script>
+        function checkFunction() {
+            const result = document.getElementById('result');
+            
+            // Check if addQuestion function exists
+            if (typeof addQuestion === 'function') {
+                result.innerHTML = '<p style="color: green;">✅ addQuestion function exists!</p>';
+                console.log('addQuestion function found');
+            } else {
+                result.innerHTML = '<p style="color: red;">❌ addQuestion function NOT found</p>';
+                console.log('addQuestion function NOT found');
+            }
+            
+            // Also check for other functions
+            const functions = ['loadExistingQuestions', 'addExistingQuestion', 'removeQuestion', 'toggleQuestionType', 'addChoice', 'removeChoice', 'updateQuestionNumbers', 'calculateTotalPoints'];
+            
+            functions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    console.log(`${funcName} function found`);
+                } else {
+                    console.log(`${funcName} function NOT found`);
+                }
+            });
+        }
+        
+        // Check immediately and after a delay
+        checkFunction();
+        setTimeout(checkFunction, 1000);
+    </script>
+</body>
+</html>

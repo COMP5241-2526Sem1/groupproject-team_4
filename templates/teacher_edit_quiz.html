@@ -1,0 +1,760 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block course_title %}{{ course.name }} - Edit Quiz{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables and functions for quiz editing
+let questionCount = 0;
+let existingQuestions = [];
+
+// Define functions in global scope
+// Load existing questions when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing quiz edit page...');
+    
+    // Add event listener for Add Question button with error handling
+    const addQuestionBtn = document.getElementById('add-question-btn');
+    if (addQuestionBtn) {
+        console.log('Add Question button found, attaching event listener...');
+        addQuestionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Add Question button clicked');
+            addQuestion();
+        });
+        console.log('Add Question button event listener attached');
+        
+        // Add hover effect to verify button is interactive
+        addQuestionBtn.addEventListener('mouseenter', function() {
+            console.log('Mouse entered Add Question button');
+        });
+        addQuestionBtn.addEventListener('mouseleave', function() {
+            console.log('Mouse left Add Question button');
+        });
+    } else {
+        console.error('Add Question button not found!');
+        console.log('Available buttons:', document.querySelectorAll('button'));
+    }
+    
+    // Load existing questions
+    loadExistingQuestions();
+    
+    // Add diagnostic script
+    const diagnosticScript = document.createElement('script');
+    diagnosticScript.src = '/diagnose_add_question.js';
+    document.head.appendChild(diagnosticScript);
+});
+
+function loadExistingQuestions() {
+    // Load existing questions from the server
+    fetch(`{{ url_for('quiz.get_quiz_questions', course_code=course.code, quiz_id=quiz.id) }}`)
+        .then(response => response.json())
+        .then(data => {
+            existingQuestions = data.questions;
+            existingQuestions.forEach(question => {
+                addExistingQuestion(question);
+            });
+            calculateTotalPoints();
+        })
+        .catch(error => {
+            console.error('Error loading questions:', error);
+        });
+}
+
+function addExistingQuestion(question) {
+    questionCount++;
+    
+    const container = document.getElementById('questions-container');
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question-item';
+    questionDiv.dataset.questionId = question.id;
+    
+    questionDiv.innerHTML = `
+        <div class="question-header">
+            <span class="question-number">Question ${questionCount}</span>
+            <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
+        </div>
+        
+        <div class="question-type-selector">
+            <label>Question Type:</label>
+            <select name="questions[${questionCount}][type]" onchange="toggleQuestionType(this)">
+                <option value="mcq" ${question.type === 'mcq' ? 'selected' : ''}>Multiple Choice</option>
+                <option value="saq" ${question.type === 'saq' ? 'selected' : ''}>Short Answer</option>
+            </select>
+        </div>
+        
+        <div class="question-content">
+            <label>Question Content:</label>
+            <textarea name="questions[${questionCount}][content]" placeholder="Enter your question here" required>${question.content}</textarea>
+        </div>
+        
+        <div class="question-points">
+            <label>Points:</label>
+            <input type="number" name="questions[${questionCount}][points]" value="${question.points}" min="1" max="100" onchange="calculateTotalPoints()" required>
+        </div>
+        
+        <div class="choices-container" style="${question.type === 'mcq' ? 'display: block;' : 'display: none;'}">
+            <label>Choices:</label>
+            <div class="choices-list">
+                ${question.choices ? question.choices.map((choice, index) => `
+                    <div class="choice-item">
+                        <input type="text" name="questions[${questionCount}][choices][${index + 1}]" value="${choice.content}" placeholder="Choice ${index + 1}" required>
+                        <input type="radio" name="questions[${questionCount}][correct_choice]" value="${index + 1}" ${choice.is_correct ? 'checked' : ''}>
+                        <label>Correct</label>
+                        <button type="button" class="remove-choice" onclick="removeChoice(this)">Remove</button>
+                    </div>
+                `).join('') : ''}
+            </div>
+            <button type="button" class="add-choice" onclick="addChoice(this)">Add Choice</button>
+        </div>
+        
+        <input type="hidden" name="questions[${questionCount}][id]" value="${question.id}">
+    `;
+    
+    container.appendChild(questionDiv);
+}
+
+function addQuestion() {
+    console.log('addQuestion function called');
+    
+    try {
+        questionCount++;
+        console.log('Creating question', questionCount);
+        
+        const container = document.getElementById('questions-container');
+        if (!container) {
+            console.error('Questions container not found!');
+            alert('Error: Questions container not found');
+            return;
+        }
+        
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-item';
+        console.log('Question div created');
+    
+    questionDiv.innerHTML = `
+        <div class="question-header">
+            <span class="question-number">Question ${questionCount}</span>
+            <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
+        </div>
+        
+        <div class="question-type-selector">
+            <label>Question Type:</label>
+            <select name="questions[${questionCount}][type]" onchange="toggleQuestionType(this)">
+                <option value="mcq">Multiple Choice</option>
+                <option value="saq">Short Answer</option>
+            </select>
+        </div>
+        
+        <div class="question-content">
+            <label>Question Content:</label>
+            <textarea name="questions[${questionCount}][content]" placeholder="Enter your question here" required></textarea>
+        </div>
+        
+        <div class="question-points">
+            <label>Points:</label>
+            <input type="number" name="questions[${questionCount}][points]" value="10" min="1" max="100" onchange="calculateTotalPoints()" required>
+        </div>
+        
+        <div class="choices-container" style="display: block;">
+            <label>Choices:</label>
+            <div class="choices-list">
+                <div class="choice-item">
+                    <input type="text" name="questions[${questionCount}][choices][1]" placeholder="Choice 1" required>
+                    <input type="radio" name="questions[${questionCount}][correct_choice]" value="1" required>
+                    <label>Correct</label>
+                    <button type="button" class="remove-choice" onclick="removeChoice(this)">Remove</button>
+                </div>
+                <div class="choice-item">
+                    <input type="text" name="questions[${questionCount}][choices][2]" placeholder="Choice 2" required>
+                    <input type="radio" name="questions[${questionCount}][correct_choice]" value="2" required>
+                    <label>Correct</label>
+                    <button type="button" class="remove-choice" onclick="removeChoice(this)">Remove</button>
+                </div>
+            </div>
+            <button type="button" class="add-choice" onclick="addChoice(this)">Add Choice</button>
+        </div>
+    `;
+    
+    container.appendChild(questionDiv);
+    calculateTotalPoints();
+    
+    console.log('Question added successfully');
+        
+    } catch (error) {
+        console.error('Error adding question:', error);
+        alert('Error adding question: ' + error.message);
+    }
+}
+
+function removeQuestion(button) {
+    if (confirm('Are you sure you want to remove this question?')) {
+        button.closest('.question-item').remove();
+        updateQuestionNumbers();
+        calculateTotalPoints();
+    }
+}
+
+function toggleQuestionType(select) {
+    const questionItem = select.closest('.question-item');
+    const choicesContainer = questionItem.querySelector('.choices-container');
+    const choiceInputs = questionItem.querySelectorAll('input[name*="[choices]"]');
+    const correctChoiceInputs = questionItem.querySelectorAll('input[name*="[correct_choice]"]');
+    
+    if (select.value === 'mcq') {
+        choicesContainer.style.display = 'block';
+        // Make choice inputs required for MCQ
+        choiceInputs.forEach(input => input.required = true);
+        correctChoiceInputs.forEach(input => input.required = true);
+    } else {
+        choicesContainer.style.display = 'none';
+        // Remove required attribute for short answer
+        choiceInputs.forEach(input => input.required = false);
+        correctChoiceInputs.forEach(input => input.required = false);
+    }
+}
+
+function addChoice(button) {
+    const choicesList = button.previousElementSibling;
+    const questionItem = button.closest('.question-item');
+    const questionNumber = questionItem.querySelector('.question-number').textContent.match(/\d+/)[0];
+    const choiceCount = choicesList.children.length + 1;
+    
+    const choiceDiv = document.createElement('div');
+    choiceDiv.className = 'choice-item';
+    choiceDiv.innerHTML = `
+        <input type="text" name="questions[${questionNumber}][choices][${choiceCount}]" placeholder="Choice ${choiceCount}">
+        <input type="radio" name="questions[${questionNumber}][correct_choice]" value="${choiceCount}">
+        <label>Correct</label>
+        <button type="button" class="remove-choice" onclick="removeChoice(this)">Remove</button>
+    `;
+    
+    choicesList.appendChild(choiceDiv);
+}
+
+function removeChoice(button) {
+    const choiceItem = button.closest('.choice-item');
+    const choicesList = choiceItem.parentElement;
+    
+    if (choicesList.children.length > 2) {
+        choiceItem.remove();
+        updateChoiceNumbers(choicesList);
+    } else {
+        alert('A multiple choice question must have at least 2 choices.');
+    }
+}
+
+function updateChoiceNumbers(choicesList) {
+    const choices = choicesList.querySelectorAll('.choice-item');
+    const questionItem = choicesList.closest('.question-item');
+    const questionNumber = questionItem.querySelector('.question-number').textContent.match(/\d+/)[0];
+    
+    choices.forEach((choice, index) => {
+        const inputs = choice.querySelectorAll('input');
+        inputs[0].name = `questions[${questionNumber}][choices][${index + 1}]`;
+        inputs[0].placeholder = `Choice ${index + 1}`;
+        inputs[1].name = `questions[${questionNumber}][correct_choice]`;
+        inputs[1].value = index + 1;
+    });
+}
+
+function updateQuestionNumbers() {
+    const questions = document.querySelectorAll('.question-item');
+    questions.forEach((question, index) => {
+        const questionNumber = index + 1;
+        question.querySelector('.question-number').textContent = `Question ${questionNumber}`;
+        
+        // Update all input names
+        const typeSelect = question.querySelector('select[name$="[type]"]');
+        const contentTextarea = question.querySelector('textarea[name$="[content]"]');
+        const pointsInput = question.querySelector('input[name$="[points]"]');
+        
+        if (typeSelect) typeSelect.name = `questions[${questionNumber}][type]`;
+        if (contentTextarea) contentTextarea.name = `questions[${questionNumber}][content]`;
+        if (pointsInput) pointsInput.name = `questions[${questionNumber}][points]`;
+        
+        // Update choices
+        const choicesList = question.querySelector('.choices-list');
+        if (choicesList) {
+            updateChoiceNumbers(choicesList);
+        }
+    });
+}
+
+function calculateTotalPoints() {
+    const pointInputs = document.querySelectorAll('input[name$="[points]"]');
+    let total = 0;
+    
+    pointInputs.forEach(input => {
+        total += parseInt(input.value) || 0;
+    });
+    
+    document.getElementById('total-question-points').textContent = total;
+    document.getElementById('totalPointsDisplay').textContent = total;
+    
+    // Update the main quiz points field (hidden, for form submission)
+    const pointField = document.getElementById('point');
+    if (pointField) {
+        pointField.value = total;
+    }
+}
+
+// Form validation
+function validateForm() {
+    const questions = document.querySelectorAll('.question-item');
+    let hasMCQWithoutCorrectAnswer = false;
+    
+    questions.forEach(question => {
+        const type = question.querySelector('select[name$="[type]"]').value;
+        if (type === 'mcq') {
+            const correctChoice = question.querySelector('input[type="radio"]:checked');
+            if (!correctChoice) {
+                hasMCQWithoutCorrectAnswer = true;
+            }
+        }
+    });
+    
+    if (hasMCQWithoutCorrectAnswer) {
+        alert('Please select a correct answer for all multiple choice questions.');
+        return false;
+    }
+    
+    return true;
+}
+
+// Add form validation
+const form = document.querySelector('form');
+form.addEventListener('submit', function(e) {
+    if (!validateForm()) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Additional JavaScript can go here if needed -->
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-quiz-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .page-header h1 {
+        color: #8a1c32;
+        margin: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 4px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #8a1c32;
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .visibility-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+    }
+    
+    .visibility-section h3 {
+        color: #8a1c32;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+        margin-right: 10px;
+        transform: scale(1.2);
+    }
+    
+    .checkbox-group label {
+        margin-bottom: 0;
+        font-weight: normal;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-primary {
+        background: #8a1c32;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #6e1728;
+    }
+    
+    .btn-secondary {
+        background: #7f8c8d;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #6c7b7d;
+    }
+    
+    .help-text {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+    
+    .quiz-info {
+        background: #e8f4f8;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3498db;
+    }
+    
+    .quiz-info p {
+        margin: 5px 0;
+        color: #2c3e50;
+    }
+    
+    /* Question management styles */
+    .questions-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 6px;
+        margin: 20px 0;
+        border: 2px solid #e9ecef;
+    }
+    
+    .questions-section h3 {
+        color: #8a1c32;
+        margin-bottom: 20px;
+        font-size: 18px;
+    }
+    
+    .question-item {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .question-number {
+        font-weight: bold;
+        color: #8a1c32;
+        font-size: 16px;
+    }
+    
+    .remove-question {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    
+    .remove-question:hover {
+        background: #c0392b;
+    }
+    
+    .question-type-selector {
+        margin-bottom: 15px;
+    }
+    
+    .question-type-selector select {
+        width: auto;
+        min-width: 150px;
+    }
+    
+    .question-content {
+        margin-bottom: 15px;
+    }
+    
+    .question-content textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 12px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+    }
+    
+    .question-points {
+        margin-bottom: 15px;
+        max-width: 120px;
+    }
+    
+    .choices-container {
+        margin-top: 15px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .choices-list {
+        margin-top: 10px;
+    }
+    
+    .choice-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+    
+    .choice-item input[type="text"] {
+        flex: 1;
+        margin: 0;
+        min-width: 300px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .choice-item input[type="radio"] {
+        width: auto;
+        margin: 0;
+    }
+    
+    .choice-item label {
+        margin: 0;
+        font-size: 14px;
+        white-space: nowrap;
+        min-width: 50px;
+    }
+    
+    .add-choice {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+    
+    .add-choice:hover {
+        background: #2980b9;
+    }
+    
+    .remove-choice {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 2px 6px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 10px;
+        min-width: 45px;
+        height: 22px;
+        line-height: 1;
+    }
+    
+    .remove-choice:hover {
+        background: #c0392b;
+    }
+    
+    #add-question-btn {
+        margin-top: 15px;
+        background: #27ae60;
+    }
+    
+    #add-question-btn:hover {
+        background: #229954;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="edit-quiz-container">
+    <div class="page-header">
+        <h1>Edit Quiz</h1>
+        <p style="color: #7f8c8d; margin-top: 10px;">Update quiz settings for {{ quiz.name }}</p>
+    </div>
+    
+    <div class="quiz-info">
+        <p><strong>Created:</strong> {{ quiz.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        <p><strong>Course:</strong> {{ course.name }}</p>
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Quiz Name *</label>
+            <input type="text" id="name" name="name" value="{{ quiz.name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Enter quiz description (optional)">{{ quiz.description or '' }}</textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="duration">Duration (minutes)</label>
+                <input type="number" id="duration" name="duration" value="{{ quiz.duration }}" min="1" max="180">
+                <div class="help-text">Time allowed for the quiz</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="attempt_limit">Attempt Limit</label>
+                <input type="number" id="attempt_limit" name="attempt_limit" value="{{ quiz.attempt_limit }}" min="1" max="10">
+                <div class="help-text">Maximum number of attempts allowed</div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="point_in_course">Points in Course</label>
+                <input type="number" id="point_in_course" name="point_in_course" value="{{ quiz.point_in_course }}" min="0" max="100">
+                <div class="help-text">Weight in overall course grade</div>
+            </div>
+            
+            <div class="form-group">
+                <label>Total Points (Auto-calculated)</label>
+                <div class="total-points-display" id="totalPointsDisplay" style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-top: 8px;">{{ quiz.point }}</div>
+                <div class="help-text">Sum of all question points</div>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start_datetime">Start Date & Time</label>
+                <input type="datetime-local" id="start_datetime" name="start_datetime" 
+                       {% if quiz.start_datetime %}value="{{ quiz.start_datetime.strftime('%Y-%m-%dT%H:%M') }}"{% endif %}>
+                <div class="help-text">When the quiz becomes available (optional)</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="end_datetime">End Date & Time</label>
+                <input type="datetime-local" id="end_datetime" name="end_datetime" 
+                       {% if quiz.end_datetime %}value="{{ quiz.end_datetime.strftime('%Y-%m-%dT%H:%M') }}"{% endif %}>
+                <div class="help-text">When the quiz becomes unavailable (optional)</div>
+            </div>
+        </div>
+        
+        <!-- Questions Section -->
+        <div class="questions-section">
+            <h3>Questions</h3>
+            <div id="questions-container">
+                <!-- Questions will be loaded here -->
+            </div>
+            <button type="button" id="add-question-btn" class="btn btn-secondary">Add Question</button>
+            <div style="margin-top: 15px; font-weight: bold;">
+                Total Question Points: <span id="total-question-points">0</span>
+            </div>
+        </div>
+        
+        <div class="visibility-section">
+            <h3>Post-Submission Visibility Settings</h3>
+            <p style="color: #7f8c8d; margin-bottom: 15px;">Control what students can see after submitting the quiz</p>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="question_visible" name="question_visible" {% if quiz.after_submitted_question_visible %}checked{% endif %}>
+                <label for="question_visible">Show questions after submission</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="student_response_visible" name="student_response_visible" {% if quiz.after_submitted_student_response_visible %}checked{% endif %}>
+                <label for="student_response_visible">Show student's own responses</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="sample_response_visible" name="sample_response_visible" {% if quiz.after_submitted_sample_response_visible %}checked{% endif %}>
+                <label for="sample_response_visible">Show correct answers</label>
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" id="class_response_visible" name="class_response_visible" {% if quiz.after_submitted_class_response_visible %}checked{% endif %}>
+                <label for="class_response_visible">Show class statistics</label>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Update Quiz</button>
+            <a href="{{ url_for('quiz.teacher_quiz_list', course_code=course.code) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

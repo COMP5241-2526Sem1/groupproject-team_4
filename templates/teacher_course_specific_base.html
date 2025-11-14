@@ -1,0 +1,78 @@
+{% extends 'teacher_home.html' %}
+
+{% block title %}{% block course_title %}{{ course.code }} - {{ course.name }}{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='polyu_logo.png') }}" alt="PolyU Logo">
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">{{ course.code }}</div>
+            <div style="font-size:14px;margin-top:4px;">{{ course.name }}</div>
+        </div>
+        <nav>
+            <a href="/teacher_home">Teacher Dashboard</a>
+            <div class="dropdown">
+                <a href="/teacher_course_list" class="{% if request.path.startswith('/teacher_course') %}active{% endif %}">My Courses</a>
+                <div class="dropdown-content" id="course-dropdown">
+                    <!-- Dynamically generate course options -->
+                </div>
+            </div>
+            <a href="/profile">Profile</a>
+            <a href="/activity">Activity</a>
+            <a href="/logout">Logout</a>
+        </nav>
+        <div class="bottom">
+            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
+        </div>
+    </aside>
+
+    <main class="main-content">
+        {% block course_content %}{% endblock %}
+        
+        <!-- Display messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </main>
+</div>
+<script>
+    // Dynamically generate course dropdown menu
+    function populateCourseDropdown() {
+        fetch('/teacher_course_list/list')
+            .then(response => response.json())
+            .then(data => {
+                const dropdown = document.getElementById('course-dropdown');
+                dropdown.innerHTML = '';
+                if (data.my_courses) {
+                    data.my_courses.forEach(course => {
+                        const link = document.createElement('a');
+                        link.href = `/teacher_course/${course.code}`;
+                        link.textContent = course.name;
+                        dropdown.appendChild(link);
+                    });
+                } else if (data.length > 0) {
+                    data.forEach(course => {
+                        const link = document.createElement('a');
+                        link.href = `/teacher_course/${course.code}`;
+                        link.textContent = course.name;
+                        dropdown.appendChild(link);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading courses:', error));
+    }
+
+    // Call after page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        populateCourseDropdown();
+        // Keep existing scripts from teacher_home.html if needed
+    });
+</script>
+{% endblock %}

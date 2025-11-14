@@ -1,0 +1,90 @@
+{% extends 'quiz_base.html' %}
+
+{% block title %}{{ quiz.name }} - Teacher Quiz Start{% endblock %}
+
+{% block quiz_scripts %}
+    // Teacher quiz validation
+    function validateQuizForm() {
+        // Teachers can submit without restrictions
+        return true;
+    }
+    
+    // Add teacher-specific functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Teacher quiz mode activated');
+        
+        // Highlight teacher mode
+        document.body.style.borderLeft = '4px solid #ffeb3b';
+        document.body.style.backgroundColor = '#fffef7';
+    });
+{% endblock %}
+
+{% block main_content %}
+    <div class="quiz-container">
+        <div class="teacher-mode-banner" style="background: linear-gradient(45deg, #ffeb3b, #ffc107); color: #333; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            👨‍🏫 TEACHER MODE - Unlimited Attempts Available
+        </div>
+        
+        {% if error_message %}
+        <div class="error-message" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            {{ error_message }}
+        </div>
+        {% endif %}
+        
+        <div class="quiz-header">
+            <h1>{{ quiz.name }}</h1>
+            {% if quiz.description %}
+            <div class="quiz-description">{{ quiz.description }}</div>
+            {% endif %}
+            <div class="quiz-info">
+                <p>📊 Question Count: {{ quiz.questions|length }}</p>
+                <p>⏱️ Duration: {{ quiz.duration }} minutes</p>
+                <p>🔓 <strong>Teacher Mode:</strong> No attempt limits</p>
+            </div>
+        </div>
+        
+        <form id="quiz-form" action="/teacher/course/{{ course.code if course and course.code else course_code }}/quiz/{{ quiz.id }}/submit" method="POST" onsubmit="return validateQuizForm();">
+            {% for question in quiz.questions %}
+            <div class="question" data-type="{{ question.type }}" style="border: 2px solid #e3f2fd; border-radius: 8px; padding: 20px; margin: 20px 0; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div class="question-number" style="background: #1976d2; color: white; padding: 8px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 10px;">
+                    Question {{ loop.index }} ({{ question.points }} point{% if question.points > 1 %}s{% endif %})
+                </div>
+                <div class="question-content" style="font-size: 16px; margin: 15px 0; line-height: 1.5;">{{ question.content }}</div>
+                
+                {% if question.type == 'mcq' %}
+                <div class="choices" style="margin: 15px 0;">
+                    {% for choice in question.choices %}
+                    <div class="choice" style="margin: 8px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; border: 1px solid #dee2e6;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}" style="margin-right: 10px; transform: scale(1.2);">
+                            <span style="font-size: 14px;">{{ choice.content }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif question.type == 'saq' %}
+                <div class="short-answer" style="margin: 15px 0;">
+                    <textarea name="question-{{ question.id }}" placeholder="Type your answer here..." style="width: 100%; min-height: 80px; padding: 12px; border: 2px solid #dee2e6; border-radius: 4px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
+                </div>
+                {% endif %}
+                
+                <div class="teacher-question-info" style="background: #f0f8ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 10px; margin-top: 15px; font-size: 12px; color: #0066cc;">
+                    <strong>Teacher Note:</strong> Question ID: {{ question.id }} | Type: {{ question.type.upper() }} | Points: {{ question.points }}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="quiz-submit" style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="submit-btn" style="background: linear-gradient(45deg, #28a745, #20c997); color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;">
+                    🎯 Submit Quiz (Teacher Mode)
+                </button>
+            </div>
+        </form>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}'" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                ← Back to Quiz Info
+            </button>
+        </div>
+    </div>
+{% endblock %}

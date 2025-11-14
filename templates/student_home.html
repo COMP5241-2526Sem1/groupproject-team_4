@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -181,6 +182,13 @@
         <button onclick="closeCustomModal()" style="padding:8px 32px;border-radius:8px;background:#a62c43;color:#fff;font-size:1rem;border:none;cursor:pointer;">OK</button>
     </div>
 </div>
+=======
+{% extends 'base.html' %}
+
+{% block title %}Student Home{% endblock %}
+
+{% block content %}
+>>>>>>> a25e67574fdb638f188c19724b9373cef1d801bf
 <div class="container">
     <aside class="sidebar">
         <div class="logo">
@@ -188,36 +196,47 @@
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
-            <a href="#" class="active" onclick="showSection('institution')">Institution Page</a>
-            <a href="#" onclick="showSection('profile')">Profile</a>
-            <a href="#" onclick="showSection('activity')">Activity</a>
-            <a href="#" onclick="showSection('courses')">Courses</a>
-            <a href="#" onclick="showSection('calendar')">Calendar</a>
-            <a href="#" onclick="showSection('messages')">Messages</a>
-            <a href="#" onclick="showSection('grades')">Grades</a>
-            <a href="#" onclick="showSection('assist')">Assist</a>
-            <a href="#" onclick="showSection('tools')">Tools</a>
+            <a href="/institution" class="active">Institution Page</a>
+            <div class="dropdown">
+                <a href="/course/my">My Course</a>
+                <div class="dropdown-content" id="course-dropdown">
+                    <!-- Dynamically generate course options -->
+                </div>
+            </div>
+            <a href="/activity">Activity</a>
+
+            <a href="/grades">Grades</a>
+            <a href="/assist">Assist</a>
+            <a href="/course_registration">Course Registration</a>
+            <a href="/profile">Profile</a>
             <a href="/logout">Sign Out</a>
         </nav>
-        <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
-        </div>
     </aside>
     <main class="main-content">
+        <h1>Welcome to Student Home</h1>
         <div id="institution-section" class="section"> </div>
         <div id="profile-section" class="section" style="display:none;"> </div>
         <div id="activity-section" class="section" style="display:none;"> </div>
         <div id="courses-section" class="section" style="display:none;">
             <div style="display:flex;gap:32px;margin-bottom:32px;">
+<<<<<<< HEAD
                 <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">Course Selection</button>
                 <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">My Courses</button>
+=======
+                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">Add Courses</button>
+        <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">View Schedule</button>
+>>>>>>> a25e67574fdb638f188c19724b9373cef1d801bf
             </div>
             <div id="add-course-area">
                 <h2 style="color:#8a1c32;">Available Courses</h2>
                 <div id="available-courses">Loading...</div>
             </div>
             <div id="table-course-area" style="display:none;">
+<<<<<<< HEAD
                 <h2 style="color:#8a1c32;">Selected Courses</h2>
+=======
+                <h2 style="color:#8a1c32;">My Courses</h2>
+>>>>>>> a25e67574fdb638f188c19724b9373cef1d801bf
                 <div id="my-courses">Loading...</div>
             </div>
             <div id="course-msg" style="margin-top:24px;color:#d81e06;font-size:1.1rem;"></div>
@@ -230,6 +249,7 @@
     </main>
 </div>
 <script>
+<<<<<<< HEAD
     function showCustomModal(msg) {
     // 英文化弹窗内容
     let engMsg = msg;
@@ -403,6 +423,29 @@
     // 初始加载
     loadAvailableCourses();
     loadMyCourses();
+=======
+    // Navigation is now handled through URL-based routing instead of JavaScript
+>>>>>>> a25e67574fdb638f188c19724b9373cef1d801bf
 </script>
-</body>
-</html>
+<script>
+        // Dynamically generate course dropdown menu
+        function populateCourseDropdown() {
+            fetch('/course/my')
+                .then(response => response.json())
+                .then(courses => {
+                    const dropdown = document.getElementById('course-dropdown');
+                    dropdown.innerHTML = '';
+                    courses.forEach(course => {
+                        const link = document.createElement('a');
+                        link.href = `/course/${course.code}`;
+                        link.textContent = course.name;
+                        dropdown.appendChild(link);
+                    });
+                })
+                .catch(error => console.error('Error loading courses:', error));
+        }
+
+        // Call after page loads
+        document.addEventListener('DOMContentLoaded', populateCourseDropdown);
+    </script>
+{% endblock %}
