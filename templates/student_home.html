@@ -28,6 +28,18 @@
             overflow-y: auto;
             display: block;
         }
+            .main-content {
+                margin-left: 240px;
+                flex: 1;
+                width: auto;
+                height: 100vh;
+                background: #fff;
+                border-radius: 0;
+                box-shadow: none;
+                padding: 48px 40px;
+                overflow-y: auto;
+                display: block;
+            }
         body {
             margin: 0;
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -37,7 +49,7 @@
         .sidebar {
             width: 240px;
             min-width: 240px;
-            height: 100vh;
+            min-height: 100vh;
             background: #8a1c32;
             color: #fff;
             display: flex;
@@ -116,11 +128,11 @@
         }
         .course-item {
             border-bottom:1px solid #eee;
-            padding:16px 0;
+            padding:8px 0 8px 0;
             display:flex;
             flex-direction:row;
             align-items:center;
-            gap:32px;
+            gap:18px;
         }
         .course-info {
             font-size:1.15rem;
@@ -162,6 +174,13 @@
     </style>
 </head>
 <body>
+<div id="custom-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:9999;justify-content:center;align-items:center;">
+    <div style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.12);padding:32px 36px;min-width:320px;max-width:90vw;text-align:center;">
+        <div style="font-size:1.2rem;font-weight:bold;color:#8a1c32;margin-bottom:12px;">Notification</div>
+        <div id="custom-modal-msg" style="font-size:1.15rem;color:#8a1c32;margin-bottom:24px;"></div>
+        <button onclick="closeCustomModal()" style="padding:8px 32px;border-radius:8px;background:#a62c43;color:#fff;font-size:1rem;border:none;cursor:pointer;">OK</button>
+    </div>
+</div>
 <div class="container">
     <aside class="sidebar">
         <div class="logo">
@@ -190,15 +209,15 @@
         <div id="activity-section" class="section" style="display:none;"> </div>
         <div id="courses-section" class="section" style="display:none;">
             <div style="display:flex;gap:32px;margin-bottom:32px;">
-                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">选课</button>
-                <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">查看课程表</button>
+                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">Course Selection</button>
+                <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">My Courses</button>
             </div>
             <div id="add-course-area">
-                <h2 style="color:#8a1c32;">可选课程</h2>
+                <h2 style="color:#8a1c32;">Available Courses</h2>
                 <div id="available-courses">Loading...</div>
             </div>
             <div id="table-course-area" style="display:none;">
-                <h2 style="color:#8a1c32;">已选课程表</h2>
+                <h2 style="color:#8a1c32;">Selected Courses</h2>
                 <div id="my-courses">Loading...</div>
             </div>
             <div id="course-msg" style="margin-top:24px;color:#d81e06;font-size:1.1rem;"></div>
@@ -211,6 +230,22 @@
     </main>
 </div>
 <script>
+    function showCustomModal(msg) {
+    // 英文化弹窗内容
+    let engMsg = msg;
+    if (msg.includes('选课成功')) engMsg = 'Course selected successfully';
+    if (msg.includes('已选')) engMsg = 'You have already selected this course';
+    if (msg.includes('人数已满')) engMsg = 'Course capacity is full';
+    if (msg.includes('学分超限')) engMsg = 'Credit limit exceeded';
+    if (msg.includes('时间冲突')) engMsg = 'Course time conflict';
+    if (msg.includes('退课成功')) engMsg = 'Course dropped successfully';
+    if (msg.includes('未选')) engMsg = 'You have not selected this course';
+    document.getElementById('custom-modal-msg').innerText = engMsg;
+    document.getElementById('custom-modal').style.display = 'flex';
+    }
+    function closeCustomModal() {
+        document.getElementById('custom-modal').style.display = 'none';
+    }
     function showSection(section) {
         // 移除所有active
         document.querySelectorAll('.sidebar nav a').forEach(a => a.classList.remove('active'));
@@ -231,6 +266,11 @@
         document.querySelectorAll('.main-content .section').forEach(div => div.style.display = 'none');
         // 显示当前section
         document.getElementById(section+'-section').style.display = 'block';
+        // 恢复：点击Courses时自动显示选课tab和课程列表
+        if(section === 'courses') {
+            showCourseTab('add');
+            loadAvailableCourses();
+        }
     }
     // 默认显示 institution-section
     showSection('institution');
@@ -266,34 +306,64 @@
     // 默认显示选课tab并加载数据
     showCourseTab('add');
 
-    // 加载可选课程
+    // 分页参数
+    let availableCoursesData = [];
+    let availableCoursesPage = 1;
+    const availableCoursesPageSize = 10;
+
+    function renderAvailableCoursesPage() {
+        let html = '';
+        const startIdx = (availableCoursesPage-1)*availableCoursesPageSize;
+        const endIdx = startIdx + availableCoursesPageSize;
+        const pageCourses = availableCoursesData.slice(startIdx, endIdx);
+            if(pageCourses.length===0) html = '<p>No available courses.</p>';
+        else pageCourses.forEach(c=>{
+            html += `<div class='course-item' style='display:flex;align-items:center;'>
+                <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
+                <div style='flex:3;color:#888;'>${c.description||''}</div>
+                <div style='flex:1;'>${c.credit} Credits</div>
+                <div style='flex:2;'>${c.enrolled}/${c.capacity}</div>
+                <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
+                <div style='flex:1;text-align:right;'><button onclick='addCourse(${c.id})' class='course-add-btn'>Add</button></div>
+            </div>`;
+        });
+        // 页码导航优化为圆点并加上一页/下一页
+        const totalPages = Math.ceil(availableCoursesData.length/availableCoursesPageSize);
+        if(totalPages>1) {
+            html += `<div style='text-align:center;margin-top:18px;display:flex;justify-content:center;align-items:center;gap:8px;'>`;
+            // Prev按钮
+            html += `<button onclick='setAvailableCoursesPage(${availableCoursesPage-1})' ${availableCoursesPage===1?'disabled':''} style='width:28px;height:28px;padding:0;border-radius:50%;border:2px solid #a62c43;background:#fff;color:#a62c43;cursor:pointer;font-size:13px;${availableCoursesPage===1?'opacity:0.5;cursor:not-allowed;':''}'>‹</button>`;
+            // 页码圆点
+            for(let i=1;i<=totalPages;i++) {
+                html += `<span onclick='setAvailableCoursesPage(${i})' style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${i===availableCoursesPage?'#a62c43':'#fff'};border:2px solid #a62c43;cursor:pointer;vertical-align:middle;line-height:18px;color:${i===availableCoursesPage?'#fff':'#a62c43'};font-weight:bold;text-align:center;font-size:14px;'>${i}</span>`;
+            }
+            // Next按钮
+            html += `<button onclick='setAvailableCoursesPage(${availableCoursesPage+1})' ${availableCoursesPage===totalPages?'disabled':''} style='width:28px;height:28px;padding:0;border-radius:50%;border:2px solid #a62c43;background:#fff;color:#a62c43;cursor:pointer;font-size:13px;${availableCoursesPage===totalPages?'opacity:0.5;cursor:not-allowed;':''}'>›</button>`;
+            html += `</div>`;
+        }
+        document.getElementById('available-courses').innerHTML = html;
+    }
+    function setAvailableCoursesPage(page) {
+        availableCoursesPage = page;
+        renderAvailableCoursesPage();
+    }
     function loadAvailableCourses() {
         fetch('/courses/available').then(r=>r.json()).then(data=>{
-            let html = '';
-            if(data.length===0) html = '<p>暂无可选课程</p>';
-            else data.forEach(c=>{
-                html += `<div class='course-item' style='display:flex;align-items:center;'>
-                    <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
-                    <div style='flex:3;color:#888;'>${c.description||''}</div>
-                    <div style='flex:1;'>${c.credit}学分</div>
-                    <div style='flex:2;'>${c.enrolled}/${c.capacity}</div>
-                    <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
-                    <div style='flex:1;text-align:right;'><button onclick='addCourse(${c.id})' class='course-add-btn'>Add</button></div>
-                </div>`;
-            });
-            document.getElementById('available-courses').innerHTML = html;
+            availableCoursesData = data;
+            availableCoursesPage = 1;
+            renderAvailableCoursesPage();
         });
     }
     // 加载已选课程
     function loadMyCourses() {
         fetch('/courses/my').then(r=>r.json()).then(data=>{
             let html = '';
-            if(data.length===0) html = '<p>暂无已选课程</p>';
+            if(data.length===0) html = '<p>No selected courses.</p>';
             else data.forEach(c=>{
                 html += `<div class='course-item' style='display:flex;align-items:center;'>
                     <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
                     <div style='flex:3;color:#888;'>${c.description||''}</div>
-                    <div style='flex:1;'>${c.credit}学分</div>
+                    <div style='flex:1;'>${c.credit} Credits</div>
                     <div style='flex:2;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
                     <div style='flex:1;text-align:right;'><button onclick='dropCourse(${c.id})' class='course-add-btn' style='background:#eee;color:#a62c43;'>Drop</button></div>
                 </div>`;
@@ -308,7 +378,8 @@
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({course_id:cid})
         }).then(r=>r.json()).then(data=>{
-            document.getElementById('course-msg').innerText = data.msg;
+            showCustomModal(data.msg);
+            document.getElementById('course-msg').innerText = '';
             loadAvailableCourses();
             loadMyCourses();
         });
@@ -320,7 +391,8 @@
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({course_id:cid})
         }).then(r=>r.json()).then(data=>{
-            document.getElementById('course-msg').innerText = data.msg;
+            showCustomModal(data.msg);
+            document.getElementById('course-msg').innerText = '';
             loadAvailableCourses();
             loadMyCourses();
         });
