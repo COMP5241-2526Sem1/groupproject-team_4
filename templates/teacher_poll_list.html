@@ -145,7 +145,14 @@
 <div class="poll-management-container">
     <div class="page-header">
         <h1>Poll Management - {{ course.name }}</h1>
-        <a href="{{ url_for('poll.teacher_create_poll', course_code=course.code) }}" class="create-btn">Create New Poll</a>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="create-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#aiGeneratorModal">
+                <i class="fas fa-robot"></i> AI Generator
+            </button>
+            <a href="{{ url_for('poll.teacher_create_poll', course_code=course.code) }}" class="create-btn">
+                <i class="fas fa-plus"></i> Create Manually
+            </a>
+        </div>
     </div>
     
     {% if polls %}
@@ -188,4 +195,168 @@
     
     <a href="{{ url_for('teacher_course.teacher_course_detail', course_code=course.code) }}" class="back-btn">Back to Course</a>
 </div>
+
+<!-- AI Generator Modal -->
+<div class="modal fade" id="aiGeneratorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Poll with AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="aiPollForm">
+                    <div class="mb-3">
+                        <label for="pollTopic" class="form-label">Topic *</label>
+                        <input type="text" class="form-control" id="pollTopic" required
+                               placeholder="e.g., Study Habits Survey">
+                    </div>
+                    <div class="mb-3">
+                        <label for="pollMaterials" class="form-label">Context/Purpose (Optional)</label>
+                        <textarea class="form-control" id="pollMaterials" rows="4"
+                                  placeholder="Describe the purpose of this poll and what information you'd like to gather..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pollNumQuestions" class="form-label">Number of Questions</label>
+                        <input type="number" class="form-control" id="pollNumQuestions" value="5" min="3" max="10">
+                    </div>
+                </form>
+                <div id="pollLoading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generating...</span>
+                    </div>
+                    <p class="mt-2">AI is generating your poll...</p>
+                </div>
+                <div id="pollPreview" style="display: none;">
+                    <h6>Preview:</h6>
+                    <div id="pollPreviewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="generatePollBtn">
+                    <i class="fas fa-magic"></i> Generate
+                </button>
+                <button type="button" class="btn btn-success" id="savePollBtn" style="display: none;">
+                    <i class="fas fa-save"></i> Save Poll
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let generatedPollData = null;
+
+// Generate Poll
+document.getElementById('generatePollBtn').addEventListener('click', async function() {
+    const topic = document.getElementById('pollTopic').value;
+    const materials = document.getElementById('pollMaterials').value;
+    const numQuestions = document.getElementById('pollNumQuestions').value;
+    
+    if (!topic) {
+        alert('Please enter a topic');
+        return;
+    }
+    
+    document.getElementById('pollLoading').style.display = 'block';
+    document.getElementById('pollPreview').style.display = 'none';
+    this.disabled = true;
+    
+    try {
+        const response = await fetch('/api/ai/poll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                input: topic,
+                context: materials,
+                num_questions: parseInt(numQuestions)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        generatedPollData = data;
+        displayPollPreview(data);
+        
+        document.getElementById('pollLoading').style.display = 'none';
+        document.getElementById('pollPreview').style.display = 'block';
+        document.getElementById('savePollBtn').style.display = 'inline-block';
+        
+    } catch (error) {
+        alert('Error generating poll: ' + error.message);
+    } finally {
+        this.disabled = false;
+        document.getElementById('pollLoading').style.display = 'none';
+    }
+});
+
+// Display Poll Preview
+function displayPollPreview(data) {
+    let html = `
+        <div class="card">
+            <div class="card-body">
+                <h5>${data.poll_name || 'Generated Poll'}</h5>
+                <p class="text-muted">${data.description || ''}</p>
+                <p><strong>Total Questions:</strong> ${data.questions.length}</p>
+                <hr>
+    `;
+    
+    data.questions.forEach((q, idx) => {
+        html += `
+            <div class="mb-3">
+                <strong>Q${idx + 1}. ${q.content}</strong>
+                <div class="ms-3 mt-2">
+        `;
+        
+        if (q.choices) {
+            q.choices.forEach((choice, cidx) => {
+                html += `<div>${String.fromCharCode(65 + cidx)}. ${choice.text}</div>`;
+            });
+        }
+        
+        html += `</div></div>`;
+    });
+    
+    html += `</div></div>`;
+    document.getElementById('pollPreviewContent').innerHTML = html;
+}
+
+// Save Poll
+document.getElementById('savePollBtn').addEventListener('click', async function() {
+    if (!generatedPollData) return;
+    
+    this.disabled = true;
+    
+    try {
+        const response = await fetch('/api/ai/save-poll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                course_code: '{{ course.code }}',
+                poll_data: generatedPollData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Poll saved successfully!');
+            window.location.reload();
+        } else {
+            alert('Error saving poll: ' + result.error);
+        }
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        this.disabled = false;
+    }
+});
+</script>
 {% endblock %}

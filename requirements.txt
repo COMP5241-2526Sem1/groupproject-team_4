@@ -5,3 +5,4 @@ werkzeug
 sqlalchemy
 pymysql
 dotenv
+openai

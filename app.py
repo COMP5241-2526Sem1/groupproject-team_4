@@ -101,6 +101,9 @@ app.register_blueprint(word_cloud_bp)
 # Register AI routes blueprint
 from routes.ai_routes import ai_bp
 app.register_blueprint(ai_bp)
+# Register short answer routes blueprint
+from routes.short_answer_routes import short_answer_bp
+app.register_blueprint(short_answer_bp)
 
 # Routes: Login and registration pages
 @app.route('/login')
