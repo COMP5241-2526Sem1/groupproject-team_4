@@ -1,30 +1,30 @@
-{% extends 'teacher_home.html' %}
+{% extends 'base.html' %}
 
 {% block title %}{% block course_title %}LEARN@POLYU - Teacher Courses{% endblock %}{% endblock %}
 
 {% block content %}
 <div class="container">
     <aside class="sidebar">
-        <div class="logo">
+        <div class="logo" onclick="window.location.href='/teacher_home'">
             <img src="{{ url_for('static', filename='polyu_logo.png') }}" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+            {% if course %}
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">{{ course.code }}</div>
+                <div style="font-size:14px;margin-top:4px;">{{ course.name }}</div>
+            {% else %}
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+            {% endif %}
         </div>
         <nav>
-            <a href="/teacher_home">Teacher Dashboard</a>
-            <div class="dropdown">
-                <a href="/teacher_course_list" class="{% if request.path.startswith('/teacher_course') %}active{% endif %}">My Courses</a>
-                <div class="dropdown-content" id="course-dropdown">
-                    <!-- Dynamically generate course options -->
-                </div>
-            </div>
-            <a href="/profile">Profile</a>
-            <a href="/activity">Activity</a>
-            <a href="/logout">Logout</a>
+            {% block sidebar_links %}
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher_course/' + window.location.pathname.split('/')[2] + '/';">Announcement</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher_course/' + window.location.pathname.split('/')[2] + '/';">Content</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/quiz';">Quiz</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/course/' + window.location.pathname.split('/')[2] + '/quiz/grades';">Grades</a>
+            <a href="/logout">Sign Out</a>
+            {% endblock %}
         </nav>
-        <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
-        </div>
-    </aside>
 
     <main class="main-content">
         {% block course_content %}{% endblock %}

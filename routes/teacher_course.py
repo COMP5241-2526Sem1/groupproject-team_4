@@ -96,7 +96,7 @@ def teacher_course_detail(course_code):
     # Get the number of students enrolled in the course
     enrolled_count = CourseEnrollment.query.filter_by(course_code=course_code).count()
     
-    return render_template('teacher_course_detail.html', course=course, enrolled_count=enrolled_count)
+    return render_template('teacher_course_home.html', course=course, enrolled_count=enrolled_count)
 
 # Create new course page
 @teacher_course_bp.route('/teacher_course/create', methods=['GET', 'POST'])

@@ -2,8 +2,7 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', 'Arial', sans-serif;
-    background: #f7f8fa url('/static/background.jpg') top center no-repeat fixed;
-    background-size: cover;
+    background: #f7f8fa;
     padding: 0;
 }
 

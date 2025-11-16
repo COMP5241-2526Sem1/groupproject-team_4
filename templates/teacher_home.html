@@ -7,7 +7,7 @@
     <aside class="sidebar">
         <div class="logo">
             <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">Dashboard</div>
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
             <a href="/teacher_home" class="active">Dashboard</a>
@@ -17,11 +17,13 @@
                     <!-- Dynamically generate course options -->
                 </div>
             </div>
-            <a href="/profile">Profile</a>
             <a href="/activity">Activity</a>
-            <a href="/logout">Logout</a>
+            <a href="/grades">Grades</a>
+            <a href="/assist">Assist</a>
+            <a href="/teacher_course/create">Create Course</a>
+            <a href="/profile">Profile</a>
+            <a href="/logout">Sign Out</a>
         </nav>
-
     </aside>
     <main class="main-content">
         <div id="courses-section" class="section">
@@ -108,8 +110,7 @@
     });
     
     // Dynamically generate course dropdown menu
-    document.addEventListener('DOMContentLoaded', function() {
-        // If course data exists, render directly in template, maintaining dropdown functionality
+    function populateCourseDropdown() {
         fetch('/teacher_course_list/list')
             .then(response => response.json())
             .then(courses => {
@@ -123,6 +124,9 @@
                 });
             })
             .catch(error => console.error('Error loading courses for dropdown:', error));
-    });
+    }
+
+    // Call after page loads
+    document.addEventListener('DOMContentLoaded', populateCourseDropdown);
 </script>
 {% endblock %}
