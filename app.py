@@ -98,6 +98,9 @@ app.register_blueprint(teacher_quiz_bp)
 # Register word cloud blueprint
 from routes.word_cloud_routes import word_cloud_bp
 app.register_blueprint(word_cloud_bp)
+# Register AI routes blueprint
+from routes.ai_routes import ai_bp
+app.register_blueprint(ai_bp)
 
 # Routes: Login and registration pages
 @app.route('/login')

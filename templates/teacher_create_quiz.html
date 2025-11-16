@@ -292,6 +292,33 @@
             <textarea id="description" name="description" placeholder="Enter quiz description (optional)"></textarea>
         </div>
         
+        <!-- AI Quiz Generation Section -->
+        <div class="ai-generation-section" style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px solid #4a90e2;">
+            <h3 style="color: #4a90e2; margin-bottom: 15px;">🤖 AI Quiz Generator</h3>
+            <p style="color: #666; margin-bottom: 15px;">Generate a complete quiz using AI by describing your topic</p>
+            
+            <div class="form-group">
+                <label for="ai-topic">Quiz Topic</label>
+                <textarea id="ai-topic" placeholder="Describe the topic for your quiz (e.g., 'Basic Python programming concepts including variables, loops, and functions')" 
+                         style="min-height: 60px; border-color: #4a90e2;"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button type="button" id="generate-quiz-btn" class="btn btn-primary" style="background: #4a90e2; border-color: #4a90e2;">
+                    Generate Quiz with AI
+                </button>
+                <button type="button" id="stop-generation-btn" class="btn btn-secondary" style="display: none;">
+                    Stop Generation
+                </button>
+            </div>
+            
+            <div id="ai-status" style="display: none; padding: 10px; border-radius: 4px; margin-top: 10px;"></div>
+            
+            <div class="help-text" style="color: #4a90e2; margin-top: 10px;">
+                💡 Tip: Be specific about the topic, difficulty level, and types of questions you want.
+            </div>
+        </div>
+        
         <div class="form-row">
             <div class="form-group">
                 <label for="duration">Duration (minutes)</label>
@@ -535,6 +562,203 @@ document.getElementById('add-question-btn').addEventListener('click', addQuestio
 
 // Add first question by default
 addQuestion();
+
+// AI Quiz Generation functionality
+let isGenerating = false;
+let abortController = null;
+
+document.getElementById('generate-quiz-btn').addEventListener('click', generateQuizWithAI);
+document.getElementById('stop-generation-btn').addEventListener('click', stopGeneration);
+
+async function generateQuizWithAI() {
+    const topicInput = document.getElementById('ai-topic').value.trim();
+    
+    if (!topicInput) {
+        showAIStatus('Please enter a topic for the quiz.', 'error');
+        return;
+    }
+    
+    if (isGenerating) return;
+    
+    isGenerating = true;
+    abortController = new AbortController();
+    
+    // Update UI
+    document.getElementById('generate-quiz-btn').style.display = 'none';
+    document.getElementById('stop-generation-btn').style.display = 'inline-block';
+    showAIStatus('Generating quiz with AI... This may take a few moments.', 'info');
+    
+    try {
+        const response = await fetch('/api/ai/quiz', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ input: topicInput }),
+            signal: abortController.signal
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate quiz');
+        }
+        
+        const quizData = await response.json();
+        
+        if (quizData.error) {
+            throw new Error(quizData.error);
+        }
+        
+        // Fill the form with generated data
+        populateFormWithQuizData(quizData);
+        
+        showAIStatus('Quiz generated successfully! Review and modify as needed.', 'success');
+        
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            showAIStatus('Generation cancelled.', 'warning');
+        } else {
+            showAIStatus(`Error generating quiz: ${error.message}`, 'error');
+            console.error('AI Generation Error:', error);
+        }
+    } finally {
+        isGenerating = false;
+        abortController = null;
+        document.getElementById('generate-quiz-btn').style.display = 'inline-block';
+        document.getElementById('stop-generation-btn').style.display = 'none';
+    }
+}
+
+function stopGeneration() {
+    if (abortController) {
+        abortController.abort();
+    }
+}
+
+function populateFormWithQuizData(quizData) {
+    // Fill basic quiz information
+    if (quizData.quiz_name) {
+        document.getElementById('name').value = quizData.quiz_name;
+    }
+    if (quizData.description) {
+        document.getElementById('description').value = quizData.description;
+    }
+    if (quizData.duration) {
+        document.getElementById('duration').value = quizData.duration;
+    }
+    if (quizData.attempt_limit) {
+        document.getElementById('attempt_limit').value = quizData.attempt_limit;
+    }
+    if (quizData.point_in_course) {
+        document.getElementById('point_in_course').value = quizData.point_in_course;
+    }
+    
+    // Clear existing questions
+    document.getElementById('questions-container').innerHTML = '';
+    questionCount = 0;
+    choiceCounters = {};
+    
+    // Add generated questions
+    if (quizData.questions && Array.isArray(quizData.questions)) {
+        quizData.questions.forEach((question, index) => {
+            addQuestion();
+            
+            // Set question type
+            const questionTypeSelect = document.querySelector(`select[name="questions[${index + 1}][type]"]`);
+            if (questionTypeSelect) {
+                questionTypeSelect.value = question.type;
+                toggleQuestionType(index + 1);
+            }
+            
+            // Set question content
+            const contentTextarea = document.querySelector(`textarea[name="questions[${index + 1}][content]"]`);
+            if (contentTextarea && question.content) {
+                contentTextarea.value = question.content;
+            }
+            
+            // Set points
+            const pointsInput = document.querySelector(`input[name="questions[${index + 1}][points]"]`);
+            if (pointsInput && question.points) {
+                pointsInput.value = question.points;
+            }
+            
+            // Handle MCQ choices
+            if (question.type === 'mcq' && question.choices && Array.isArray(question.choices)) {
+                const choicesContainer = document.getElementById(`choices-container-${index + 1}`);
+                if (choicesContainer) {
+                    // Clear default choices
+                    choicesContainer.innerHTML = '';
+                    
+                    question.choices.forEach((choice, choiceIndex) => {
+                        if (!choiceCounters[index + 1]) {
+                            choiceCounters[index + 1] = 0;
+                        }
+                        choiceCounters[index + 1]++;
+                        
+                        const choiceDiv = document.createElement('div');
+                        choiceDiv.className = 'choice-item';
+                        choiceDiv.innerHTML = `
+                            <input type="radio" name="questions[${index + 1}][correct_choice]" value="${choiceIndex + 1}" ${choice.correct ? 'checked' : ''} required>
+                            <input type="text" name="questions[${index + 1}][choices][${choiceIndex + 1}]" value="${choice.text}" required>
+                            <button type="button" onclick="removeChoice(this)">Remove</button>
+                        `;
+                        
+                        choicesContainer.appendChild(choiceDiv);
+                    });
+                }
+            }
+            
+            // Handle SAQ expected answer
+            if (question.type === 'saq' && question.expected_answer) {
+                const expectedAnswerInput = document.querySelector(`input[name="questions[${index + 1}][expected_answer]"]`);
+                if (expectedAnswerInput) {
+                    expectedAnswerInput.value = question.expected_answer;
+                }
+            }
+        });
+        
+        // Update total points
+        updateTotalPoints();
+    }
+}
+
+function showAIStatus(message, type) {
+    const statusDiv = document.getElementById('ai-status');
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = message;
+    
+    // Set styling based on type
+    switch (type) {
+        case 'success':
+            statusDiv.style.background = '#d4edda';
+            statusDiv.style.color = '#155724';
+            statusDiv.style.border = '1px solid #c3e6cb';
+            break;
+        case 'error':
+            statusDiv.style.background = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.style.border = '1px solid #f5c6cb';
+            break;
+        case 'warning':
+            statusDiv.style.background = '#fff3cd';
+            statusDiv.style.color = '#856404';
+            statusDiv.style.border = '1px solid #ffeaa7';
+            break;
+        case 'info':
+        default:
+            statusDiv.style.background = '#d1ecf1';
+            statusDiv.style.color = '#0c5460';
+            statusDiv.style.border = '1px solid #bee5eb';
+            break;
+    }
+    
+    // Auto-hide after 5 seconds for success messages
+    if (type === 'success') {
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 5000);
+    }
+}
 </script>
 {% endblock %}
 
