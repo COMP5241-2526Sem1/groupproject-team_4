@@ -509,19 +509,72 @@ def student_complete_mini_game(course_code, mini_game_id, session_id):
                               mini_game_id=mini_game_id,
                               session_id=session_id))
 
+@mini_game_bp.route('/teacher/course/<course_code>/mini_games/<int:mini_game_id>')
+@login_required
+@teacher_required
+def teacher_mini_game_detail(course_code, mini_game_id):
+    """Display details of a specific mini game for teachers (same view as students)"""
+    # Verify teacher owns the course
+    course = Course.query.filter_by(code=course_code, teacher_id=session['user_id']).first()
+    if not course:
+        flash('Course not found or you do not have permission to access it.', 'error')
+        return redirect(url_for('teacher_course.teacher_course_list'))
+    
+    # Get the mini game
+    mini_game = Minigame.query.filter_by(id=mini_game_id, course_code=course_code).first()
+    if not mini_game:
+        flash('Mini game not found.', 'error')
+        return redirect(url_for('mini_game.teacher_mini_games_list', course_code=course_code))
+    
+    # For teacher view, show the same content as students
+    # Get teacher's own sessions for this mini game (like a student would see)
+    sessions = MinigameSession.query.filter_by(
+        game_id=mini_game_id,
+        user_id=session['user_id']
+    ).order_by(MinigameSession.started_at.desc()).all()
+    
+    # Check attempt limits like a student would
+    attempt_count = len(sessions)
+    can_attempt = attempt_count < mini_game.attempt_limit
+    
+    # Check if mini game is available (time-based)
+    from datetime import datetime
+    now = datetime.now()
+    
+    if mini_game.start_datetime and mini_game.start_datetime > now:
+        can_attempt = False  # Not started yet
+    elif mini_game.end_datetime and mini_game.end_datetime < now:
+        can_attempt = False  # Already ended
+    
+    # For teacher view, show the same content as students
+    return render_template('student_mini_game_detail.html', 
+                         course=course, 
+                         mini_game=mini_game,
+                         sessions=sessions,
+                         attempt_count=attempt_count,
+                         can_attempt=can_attempt,  # Teachers can play like students
+                         is_teacher_view=True)  # Flag to indicate this is a teacher viewing
+
 @mini_game_bp.route('/course/<course_code>/mini_games/<int:mini_game_id>/pictures')
 @login_required
 def get_mini_game_pictures(course_code, mini_game_id):
     """Get pictures for a mini game with modify check support"""
-    # Verify student is enrolled in the course
+    # Check if user is enrolled as a student OR is the teacher who owns the course
     from models.course_enrollment import CourseEnrollment
-    enrollment = CourseEnrollment.query.filter_by(
-        student_id=session['user_id'], 
-        course_code=course_code
-    ).first()
+    from models.course import Course
     
-    if not enrollment:
-        return jsonify({'error': 'Not enrolled in this course'}), 403
+    # First check if user is the teacher who owns the course
+    course = Course.query.filter_by(code=course_code, teacher_id=session['user_id']).first()
+    
+    if not course:
+        # If not the teacher, check if enrolled as student
+        enrollment = CourseEnrollment.query.filter_by(
+            student_id=session['user_id'], 
+            course_code=course_code
+        ).first()
+        
+        if not enrollment:
+            return jsonify({'error': 'Not enrolled in this course'}), 403
     
     # Get last update timestamp from query parameter
     last_update = request.args.get('last_update', 0, type=int)
