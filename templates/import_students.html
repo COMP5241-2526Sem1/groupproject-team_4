@@ -1,0 +1,353 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block course_title %}Import Students - {{ course.name }}{% endblock %}
+
+{% block course_content %}
+<style>
+    .import-container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-top: 20px;
+    }
+    .file-upload {
+        padding: 20px;
+        border: 2px dashed #ddd;
+        border-radius: 4px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .file-upload input[type="file"] {
+        display: none;
+    }
+    .file-label {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #3498db;
+        color: white;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+    .file-label:hover {
+        background: #2980b9;
+    }
+    .upload-btn {
+        padding: 10px 30px;
+        background: #27ae60;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 15px;
+        transition: background 0.2s;
+    }
+    .upload-btn:hover {
+        background: #219a52;
+    }
+    .upload-btn:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+    }
+    .format-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 15px;
+        color: #666;
+    }
+    .info-button {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #95a5a6;
+        color: white;
+        text-align: center;
+        line-height: 20px;
+        margin-left: 8px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 90%;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .modal-header h3 {
+        margin: 0;
+    }
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+    .code-block {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        font-family: monospace;
+        overflow-x: auto;
+        white-space: pre;
+        margin: 15px 0;
+    }
+    .results-container {
+        margin-top: 30px;
+    }
+    .result-section {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .result-title {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    .student-list {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .student-header {
+        background: #e9ecef;
+        padding: 10px 15px;
+        font-weight: bold;
+        display: flex;
+        border-bottom: 1px solid #ddd;
+    }
+    .student-row {
+        display: flex;
+        padding: 10px 15px;
+        border-bottom: 1px solid #eee;
+    }
+    .student-row:last-child {
+        border-bottom: none;
+    }
+    .id-col { width: 80px; }
+    .name-col { width: 150px; }
+    .email-col { flex: 1; }
+    .status-col { width: 100px; }
+    .nav-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .nav-btn {
+        padding: 10px 20px;
+        background: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+    .nav-btn:hover {
+        background: #2980b9;
+    }
+    .success {
+        color: #27ae60;
+    }
+    .error {
+        color: #e74c3c;
+    }
+    .warning {
+        color: #f39c12;
+    }
+</style>
+
+<h1>{{ course.name }} - Import Students</h1>
+
+<div class="nav-buttons">
+    <a href="/teacher_course/{{ course.code }}" class="nav-btn">Back to Course Details</a>
+    <a href="/teacher_course/{{ course.code }}/enrolled_list" class="nav-btn">Enrolled Students</a>
+    <a href="/teacher_course/{{ course.code }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
+</div>
+
+<div class="import-container">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="file-upload">
+            <label for="csv-file" class="file-label">Select CSV File</label>
+            <input type="file" id="csv-file" name="csv_file" accept=".csv" onchange="handleFileSelect(event)">
+            <div id="file-name" style="margin-top: 10px; color: #666;">No file selected</div>
+            <div class="format-info">
+                CSV Format Requirements
+                <span class="info-button" onclick="showFormatInfo()">i</span>
+            </div>
+        </div>
+        <button type="submit" id="upload-btn" class="upload-btn" disabled>Upload and Import</button>
+    </form>
+</div>
+
+<!-- Import Results Display -->
+{% if imported_result %}
+<div class="results-container">
+    <h3>Import Results</h3>
+    
+    <div class="result-section">
+        <div class="result-header">
+            <span class="result-title">Summary</span>
+        </div>
+        <p>Successfully parsed: {{ imported_result.total_students }} students</p>
+        <p>Existing in database: {{ imported_result.existing_students }} students</p>
+        <p>Not in database: {{ imported_result.missing_students }} students</p>
+        <p>Already enrolled in this course: {{ imported_result.already_enrolled }} students</p>
+        <p>Newly enrolled in this course: {{ imported_result.newly_enrolled }} students</p>
+    </div>
+    
+    {% if imported_result.enrolled_students %}
+    <div class="result-section">
+        <div class="result-header">
+            <span class="result-title">Already Enrolled Students</span>
+        </div>
+        <div class="student-list">
+            <div class="student-header">
+                <div class="id-col">Student ID</div>
+                <div class="name-col">Student Name</div>
+                <div class="email-col">Email</div>
+                <div class="status-col">Status</div>
+            </div>
+            {% for student in imported_result.enrolled_students %}
+            <div class="student-row">
+                <div class="id-col">{{ student.id }}</div>
+                <div class="name-col">{{ student.username }}</div>
+                <div class="email-col">{{ student.email }}</div>
+                <div class="status-col"><span class="warning">Already Enrolled</span></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if imported_result.not_enrolled_students %}
+    <div class="result-section">
+        <div class="result-header">
+            <span class="result-title">Newly Enrolled Students</span>
+        </div>
+        <div class="student-list">
+            <div class="student-header">
+                <div class="id-col">Student ID</div>
+                <div class="name-col">Student Name</div>
+                <div class="email-col">Email</div>
+                <div class="status-col">Status</div>
+            </div>
+            {% for student in imported_result.not_enrolled_students %}
+            <div class="student-row">
+                <div class="id-col">{{ student.id }}</div>
+                <div class="name-col">{{ student.username }}</div>
+                <div class="email-col">{{ student.email }}</div>
+                <div class="status-col"><span class="success">Added</span></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if imported_result.missing_students_list %}
+    <div class="result-section">
+        <div class="result-header">
+            <span class="result-title">Students Not Found in Database</span>
+        </div>
+        <div class="student-list">
+            <div class="student-header">
+                <div class="id-col">Student ID</div>
+                <div class="name-col">Student Name</div>
+                <div class="email-col">Email</div>
+                <div class="status-col">Status</div>
+            </div>
+            {% for student in imported_result.missing_students_list %}
+            <div class="student-row">
+                <div class="id-col">{{ student.id }}</div>
+                <div class="name-col">{{ student.username }}</div>
+                <div class="email-col">{{ student.email }}</div>
+                <div class="status-col"><span class="error">Not Found</span></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- CSV Format Instructions Modal -->
+<div id="format-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>CSV File Format Instructions</h3>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <p>Please ensure your CSV file follows these format requirements:</p>
+        <ol>
+            <li>File must be in CSV (Comma Separated Values) format</li>
+            <li>File must contain the following columns (first row as headers):</li>
+        </ol>
+        <div class="code-block">student_id,username,email
+123456,John Doe,johndoe@polyu.edu.hk
+123457,Mary Smith,marysmith@polyu.edu.hk</div>
+        <p>Notes:</p>
+        <ul>
+            <li>student_id: Student ID (must be an integer) used to match students in the database</li>
+            <li>username: Student name</li>
+            <li>email: Student email (must use polyu.edu.hk domain)</li>
+            <li>The system will check if the student exists in the database using student_id</li>
+            <li>If the student exists but is not registered for this course, they will be automatically added</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // File selection functionality
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('upload-btn').disabled = false;
+        }
+    }
+    
+    // Show CSV format instructions modal
+    function showFormatInfo() {
+        document.getElementById('format-modal').style.display = 'flex';
+    }
+    
+    // Close modal
+    function closeModal() {
+        document.getElementById('format-modal').style.display = 'none';
+    }
+    
+    // Close when clicking outside the modal
+    window.onclick = function(event) {
+        if (event.target === document.getElementById('format-modal')) {
+            closeModal();
+        }
+    }
+</script>
+{% endblock %}

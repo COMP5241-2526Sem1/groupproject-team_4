@@ -1,0 +1,302 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}Poll Results - {{ poll.name if poll else 'Poll Results' }}{% endblock %}
+
+{% block main_content %}
+    <div class="poll-container">
+        {% if error_message %}
+            <h1>Error</h1>
+            <p>{{ error_message }}</p>
+            <button onclick="window.location.href='/course/{{ course.code }}/poll'">Back to Poll List</button>
+        {% else %}
+            <h1>{{ poll.name }} - Results</h1>
+            
+            {% if poll.description %}
+                <p><strong>Description:</strong> {{ poll.description }}</p>
+            {% endif %}
+            
+            <div class="results-summary">
+                <h3>Your Response</h3>
+                <p><strong>Submitted at:</strong> {{ poll.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                
+                {% if poll.class_statistics %}
+                    <div class="class-statistics">
+                        <h4>Class Participation</h4>
+                        <p><strong>Total students who responded:</strong> {{ poll.class_statistics.total_students }}</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if poll.questions %}
+                <div class="question-results">
+                    <h3>Question Details</h3>
+                    {% for question in poll.questions %}
+                        <div class="question-result-item">
+                            <div class="question-header">
+                                <strong>Question {{ loop.index }}</strong>
+                                {% if question.type == 'mcq' %}
+                                    <span class="question-type">(Multiple Choice)</span>
+                                {% else %}
+                                    <span class="question-type">(Short Answer)</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="question-content">
+                                {{ question.content }}
+                            </div>
+                            
+                            <div class="student-response">
+                                <strong>Your Response:</strong>
+                                {% if question.user_answer %}
+                                    {{ question.user_answer }}
+                                {% else %}
+                                    <em>No response provided</em>
+                                {% endif %}
+                            </div>
+                            
+                            {% if question.class_responses and question.class_responses|length > 0 %}
+                                <div class="class-responses">
+                                    <h4>Class Responses</h4>
+                                    {% for response in question.class_responses %}
+                                        <div class="response-item">
+                                            <span class="response-choice">{{ response.choice }}</span>
+                                            <span class="response-count">{{ response.count }} responses</span>
+                                            <span class="response-percentage">({{ response.percentage }}%)</span>
+                                            <div class="response-bar">
+                                                <div class="response-bar-fill" style="width: {{ response.percentage }}%"></div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <button onclick="window.location.href='/course/{{ course.code }}/poll'">Back to Poll List</button>
+            </div>
+        {% endif %}
+    </div>
+    
+    <style>
+        .results-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .class-statistics {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 3px;
+            margin-top: 10px;
+        }
+        
+        .question-results {
+            margin: 20px 0;
+        }
+        
+        .question-result-item {
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+        }
+        
+        .question-header {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .question-content {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 3px;
+        }
+        
+        .student-response {
+            margin: 10px 0;
+            padding: 8px;
+            background: #e3f2fd;
+            border-radius: 3px;
+        }
+        
+        .class-responses {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 3px;
+            border: 1px solid #b3d9ff;
+        }
+        
+        .response-item {
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .response-choice {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .response-count, .response-percentage {
+            color: #666;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .response-bar {
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .response-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .action-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .action-buttons button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            background: #6c757d;
+            color: white;
+        }
+        
+        .action-buttons button:hover {
+            background: #5a6268;
+        }
+    </style>
+    
+    <script>
+        let currentETag = null;
+        let pollId = {{ poll.id }};
+        let courseCode = '{{ course.code }}';
+        
+        function loadPollResultsData() {
+            const headers = {};
+            if (currentETag) {
+                headers['If-None-Match'] = currentETag;
+            }
+            
+            fetch(`/api/poll/${pollId}/results?course_code=${courseCode}`, {
+                method: 'GET',
+                headers: headers,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.status === 304) {
+                    console.log('Poll results data not modified, using cached version');
+                    return null;
+                }
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Store ETag for future requests
+                currentETag = response.headers.get('ETag');
+                return response.json();
+            })
+            .then(data => {
+                if (data) {
+                    updatePollResultsDisplay(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading poll results:', error);
+                // If we get a 401 or 403, redirect to login
+                if (error.message.includes('401') || error.message.includes('403')) {
+                    window.location.href = '/login';
+                }
+            });
+        }
+        
+        function updatePollResultsDisplay(data) {
+            // Update class statistics
+            if (data.class_statistics) {
+                const classStatsElement = document.querySelector('.class-statistics p');
+                if (classStatsElement) {
+                    classStatsElement.textContent = `Total students who responded: ${data.class_statistics.total_students}`;
+                }
+            }
+            
+            // Update questions and responses
+            if (data.questions && data.questions.length > 0) {
+                const questionResultsElement = document.querySelector('.question-results');
+                if (questionResultsElement) {
+                    // Clear existing content
+                    questionResultsElement.innerHTML = '<h3>Question Details</h3>';
+                    
+                    // Rebuild question display
+                    data.questions.forEach((question, index) => {
+                        const questionHtml = `
+                            <div class="question-result-item">
+                                <div class="question-header">
+                                    <strong>Question ${index + 1}</strong>
+                                    <span class="question-type">(${question.type === 'mcq' ? 'Multiple Choice' : 'Short Answer'})</span>
+                                </div>
+                                
+                                <div class="question-content">
+                                    ${question.content}
+                                </div>
+                                
+                                <div class="student-response">
+                                    <strong>Your Response:</strong>
+                                    ${question.user_answer || '<em>No response provided</em>'}
+                                </div>
+                                
+                                ${question.class_responses && question.class_responses.length > 0 ? `
+                                    <div class="class-responses">
+                                        <h4>Class Responses</h4>
+                                        ${question.class_responses.map(response => `
+                                            <div class="response-item">
+                                                <span class="response-choice">${response.choice}</span>
+                                                <span class="response-count">${response.count} responses</span>
+                                                <span class="response-percentage">(${response.percentage}%)</span>
+                                                <div class="response-bar">
+                                                    <div class="response-bar-fill" style="width: ${response.percentage}%"></div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                        questionResultsElement.innerHTML += questionHtml;
+                    });
+                }
+            }
+        }
+        
+        // Load poll results data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPollResultsData();
+            
+            // Auto-refresh every 1 second to show updates from other users
+            setInterval(loadPollResultsData, 1000);
+        });
+    </script>
+{% endblock %}

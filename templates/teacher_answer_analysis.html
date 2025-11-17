@@ -1,0 +1,219 @@
+{% extends 'teacher_course_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Student Answers Analysis</h2>
+    <p class="text-muted">{{ content_type | title }}: {{ content.name }}</p>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Questions and Responses</h5>
+        </div>
+        <div class="card-body">
+            {% for question in content.questions %}
+            <div class="mb-4 pb-4 border-bottom">
+                <h6>Question {{ loop.index }}: {{ question.content }}</h6>
+                <p class="text-muted">Type: {{ question.type | upper }} | Points: {{ question.points }}</p>
+
+                {% if question.type == 'mcq' %}
+                <!-- Multiple Choice Statistics -->
+                <div class="row mt-3">
+                    <div class="col-md-8">
+                        <h6>Response Distribution</h6>
+                        <canvas id="chart_{{ question.id }}"></canvas>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Statistics</h6>
+                        <div id="stats_{{ question.id }}"></div>
+                    </div>
+                </div>
+                
+                {% elif question.type == 'saq' %}
+                <!-- Short Answer with AI Grouping -->
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Student Responses ({{ question.responses | length }})</h6>
+                        <button class="btn btn-primary btn-sm" onclick="groupAnswers({{ question.id }})">
+                            <i class="fas fa-robot"></i> AI Group Similar Answers
+                        </button>
+                    </div>
+                    
+                    <div id="responses_{{ question.id }}">
+                        <!-- Initially show all responses -->
+                        <div class="list-group">
+                            {% for response in question.responses %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Student: {{ response.submission.user.username }}</strong>
+                                    <span class="badge bg-info">{{ response.points }}/{{ question.points }} points</span>
+                                </div>
+                                <p class="mb-0 mt-2">{{ response.text_answer }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div id="grouped_{{ question.id }}" style="display: none;">
+                        <!-- AI-grouped responses will appear here -->
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Initialize MCQ charts
+{% for question in content.questions %}
+{% if question.type == 'mcq' %}
+(function() {
+    const ctx = document.getElementById('chart_{{ question.id }}').getContext('2d');
+    
+    // Get response data from backend
+    const responses = {{ question.response_stats | tojson }};
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: responses.labels,
+            datasets: [{
+                label: 'Number of Students',
+                data: responses.counts,
+                backgroundColor: responses.colors
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    
+    // Display statistics
+    const statsDiv = document.getElementById('stats_{{ question.id }}');
+    statsDiv.innerHTML = `
+        <p><strong>Total Responses:</strong> ${responses.total}</p>
+        <p><strong>Correct Answers:</strong> ${responses.correct} (${responses.correct_percentage}%)</p>
+        <p><strong>Most Common Answer:</strong> ${responses.most_common}</p>
+    `;
+})();
+{% endif %}
+{% endfor %}
+
+// AI grouping function for short answers
+async function groupAnswers(questionId) {
+    const loadingHtml = `
+        <div class="text-center my-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Analyzing...</span>
+            </div>
+            <p class="mt-2">AI is analyzing and grouping similar answers...</p>
+        </div>
+    `;
+    
+    const groupedDiv = document.getElementById('grouped_' + questionId);
+    const responsesDiv = document.getElementById('responses_' + questionId);
+    
+    groupedDiv.innerHTML = loadingHtml;
+    groupedDiv.style.display = 'block';
+    responsesDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/ai/group-answers', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                question_id: questionId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert('Error: ' + data.error);
+            groupedDiv.style.display = 'none';
+            responsesDiv.style.display = 'block';
+            return;
+        }
+        
+        // Display grouped answers
+        let html = '<div class="alert alert-success">AI has grouped similar answers. Click "Show All" to see ungrouped responses.</div>';
+        html += '<button class="btn btn-secondary btn-sm mb-3" onclick="showAllAnswers(' + questionId + ')"><i class="fas fa-list"></i> Show All Responses</button>';
+        
+        data.groups.forEach((group, idx) => {
+            const colorClasses = ['primary', 'success', 'info', 'warning', 'danger'];
+            const color = colorClasses[idx % colorClasses.length];
+            
+            html += `
+                <div class="card mb-3 border-${color}">
+                    <div class="card-header bg-${color} text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-layer-group"></i> Group ${group.group_id}: ${group.theme}
+                            <span class="badge bg-light text-dark float-end">${group.answers.length} responses</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted"><strong>Summary:</strong> ${group.summary}</p>
+                        <hr>
+                        <div class="accordion" id="accordion_${questionId}_${idx}">
+            `;
+            
+            group.answers.forEach((answer, aidx) => {
+                html += `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse_${questionId}_${idx}_${aidx}">
+                                Student Response ${aidx + 1}
+                            </button>
+                        </h2>
+                        <div id="collapse_${questionId}_${idx}_${aidx}" 
+                             class="accordion-collapse collapse" 
+                             data-bs-parent="#accordion_${questionId}_${idx}">
+                            <div class="accordion-body">
+                                ${answer}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        groupedDiv.innerHTML = html;
+        
+    } catch (error) {
+        alert('Error grouping answers: ' + error.message);
+        groupedDiv.style.display = 'none';
+        responsesDiv.style.display = 'block';
+    }
+}
+
+function showAllAnswers(questionId) {
+    document.getElementById('grouped_' + questionId).style.display = 'none';
+    document.getElementById('responses_' + questionId).style.display = 'block';
+}
+</script>
+
+<style>
+.border-bottom:last-child {
+    border-bottom: none !important;
+}
+</style>
+{% endblock %}

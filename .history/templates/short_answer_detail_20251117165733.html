@@ -1,0 +1,277 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block title %}{{ short_answer.name }} - Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sa-detail-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 20px 0;
+    }
+    
+    .detail-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .detail-header h1 {
+        color: #8a1c32;
+        margin: 0 0 10px 0;
+    }
+    
+    .detail-header p {
+        color: #666;
+        margin: 5px 0;
+    }
+    
+    .activity-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .info-card {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 4px;
+        border-left: 4px solid #8a1c32;
+    }
+    
+    .info-label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .questions-section {
+        margin: 30px 0;
+    }
+    
+    .questions-section h2 {
+        color: #8a1c32;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+    
+    .question-item {
+        background: #f9f9f9;
+        border-left: 4px solid #8a1c32;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+    }
+    
+    .question-number {
+        color: #8a1c32;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .question-text {
+        color: #333;
+        line-height: 1.6;
+    }
+    
+    .question-points {
+        color: #666;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+    
+    .submissions-section {
+        margin: 30px 0;
+    }
+    
+    .submissions-section h2 {
+        color: #8a1c32;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+    
+    .submission-item {
+        background: #f9f9f9;
+        border-left: 4px solid #27ae60;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .submission-info h4 {
+        margin: 0 0 5px 0;
+        color: #333;
+    }
+    
+    .submission-date {
+        font-size: 12px;
+        color: #999;
+    }
+    
+    .submission-score {
+        font-weight: bold;
+        color: #27ae60;
+        font-size: 16px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin: 30px 0;
+    }
+    
+    .btn-action {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+    }
+    
+    .btn-submit {
+        background: #27ae60;
+        color: white;
+    }
+    
+    .btn-submit:hover {
+        background: #219a52;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-back {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-back:hover {
+        background: #5a6268;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #999;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="sa-detail-container">
+    <div class="detail-header">
+        <h1>{{ short_answer.name }}</h1>
+        {% if short_answer.description %}
+            <p>{{ short_answer.description }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="activity-info">
+        {% if short_answer.duration %}
+        <div class="info-card">
+            <div class="info-label">Duration</div>
+            <div class="info-value">{{ short_answer.duration }} minutes</div>
+        </div>
+        {% endif %}
+        
+        {% if short_answer.point %}
+        <div class="info-card">
+            <div class="info-label">Total Points</div>
+            <div class="info-value">{{ short_answer.point }} pts</div>
+        </div>
+        {% endif %}
+        
+        {% if short_answer.attempt_limit %}
+        <div class="info-card">
+            <div class="info-label">Attempt Limit</div>
+            <div class="info-value">{{ short_answer.attempt_limit }} attempts</div>
+        </div>
+        {% endif %}
+        
+        <div class="info-card">
+            <div class="info-label">Status</div>
+            <div class="info-value">
+                {% set now = now() %}
+                {% if short_answer.start_datetime and now < short_answer.start_datetime %}
+                    Not Started
+                {% elif short_answer.end_datetime and now > short_answer.end_datetime %}
+                    Closed
+                {% else %}
+                    Active
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="questions-section">
+        <h2>Questions ({{ short_answer.questions|length }})</h2>
+        {% if short_answer.questions %}
+            {% for question in short_answer.questions %}
+            <div class="question-item">
+                <div class="question-number">Question {{ loop.index }}</div>
+                <div class="question-text">{{ question.content }}</div>
+                <div class="question-points">Points: {{ question.points or 5 }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <p>No questions added yet.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="submissions-section">
+        <h2>Your Submissions ({{ submissions|length }})</h2>
+        {% if submissions %}
+            {% for submission in submissions %}
+            <div class="submission-item">
+                <div class="submission-info">
+                    <h4>Submission #{{ loop.index }}</h4>
+                    <div class="submission-date">
+                        {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M:%S') if submission.submitted_at else 'Unknown' }}
+                    </div>
+                </div>
+                <div class="submission-score">
+                    Score: {{ submission.total_score or 0 }} pts
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <p>You haven't submitted any answers yet.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="action-buttons">
+        <a href="{{ url_for('short_answer.short_answer_start', course_code=course.code, short_answer_id=short_answer.id) }}" class="btn-action btn-submit">
+            Submit Answer
+        </a>
+        <a href="{{ url_for('short_answer.teacher_short_answer_list', course_code=course.code) }}" class="btn-action btn-back">
+            Back to List
+        </a>
+    </div>
+</div>
+{% endblock %}

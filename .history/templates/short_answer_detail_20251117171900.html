@@ -1,0 +1,283 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block title %}{{ short_answer.name }} - Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sa-detail-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 28px;
+    }
+
+    .detail-header .description {
+        margin: 0;
+        font-size: 16px;
+        opacity: 0.95;
+    }
+
+    .questions-container {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        margin: 30px 0;
+    }
+
+    .question-section {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .question-header {
+        background: #f5f5f5;
+        padding: 20px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .question-header h2 {
+        margin: 0;
+        color: #333;
+        font-size: 18px;
+        line-height: 1.6;
+    }
+
+    .question-meta {
+        margin-top: 10px;
+        color: #999;
+        font-size: 13px;
+    }
+
+    .answers-container {
+        padding: 20px;
+    }
+
+    .answers-summary {
+        margin-bottom: 20px;
+        padding: 12px;
+        background: #e3f2fd;
+        border-left: 4px solid #2196F3;
+        border-radius: 4px;
+        color: #1565c0;
+        font-weight: 500;
+    }
+
+    .student-answer-item {
+        background: #f9f9f9;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+
+    .student-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .student-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .student-meta {
+        color: #999;
+        font-size: 12px;
+        margin-top: 3px;
+    }
+
+    .student-points {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .answer-text {
+        color: #555;
+        line-height: 1.7;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 10px 0 0 0;
+    }
+
+    .no-answers {
+        text-align: center;
+        padding: 30px;
+        color: #999;
+        font-size: 14px;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-weight: 500;
+    }
+
+    .btn-submit {
+        background: #27ae60;
+        color: white;
+    }
+
+    .btn-submit:hover {
+        background: #219a52;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .sa-detail-container {
+            padding: 15px;
+        }
+
+        .detail-header {
+            padding: 20px;
+        }
+
+        .detail-header h1 {
+            font-size: 22px;
+        }
+
+        .question-header {
+            padding: 15px;
+        }
+
+        .question-header h2 {
+            font-size: 16px;
+        }
+
+        .student-header {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .student-points {
+            align-self: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="sa-detail-container">
+    <div class="detail-header">
+        <h1>{{ short_answer.name }}</h1>
+        {% if short_answer.description %}
+            <p class="description">{{ short_answer.description }}</p>
+        {% endif %}
+    </div>
+
+    <div class="questions-container">
+        {% if short_answer.questions %}
+            {% for question in short_answer.questions %}
+            <div class="question-section">
+                <div class="question-header">
+                    <h2>Q{{ loop.index }}: {{ question.content }}</h2>
+                    <div class="question-meta">
+                        Points: {{ question.points }} | 
+                        Total Responses: {{ question.question_responses|length }}
+                    </div>
+                </div>
+
+                <div class="answers-container">
+                    {% if question.question_responses %}
+                        <div class="answers-summary">
+                            {{ question.question_responses|length }} student(s) answered this question
+                        </div>
+
+                        {% for response in question.question_responses %}
+                            <div class="student-answer-item">
+                                <div class="student-header">
+                                    <div>
+                                        <div class="student-name">
+                                            {{ response.submission.user.username if response.submission.user else 'Unknown User' }}
+                                            {% if response.submission.submitted_at %}
+                                                <span style="color: #999; font-weight: normal; font-size: 12px;">
+                                                    (Submitted: {{ response.submission.submitted_at.strftime('%Y-%m-%d %H:%M') }})
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if response.points %}
+                                        <div class="student-points">
+                                            {{ response.points }} / {{ question.points }} pts
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="answer-text">
+                                    {{ response.text_answer or 'No answer provided' }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-answers">
+                            No student answers yet for this question.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-answers">
+                <p>No questions available for this short answer activity.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('short_answer.short_answer_start', course_code=course.code, short_answer_id=short_answer.id) }}" class="btn btn-submit">
+            Submit Answer
+        </a>
+        <button class="btn btn-secondary" onclick="history.back()">
+            Back
+        </button>
+    </div>
+</div>
+{% endblock %}

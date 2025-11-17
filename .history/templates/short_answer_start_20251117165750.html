@@ -1,0 +1,299 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block title %}{{ short_answer.name }} - Submit Answer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .submission-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        max-width: 900px;
+    }
+    
+    .submission-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .submission-header h1 {
+        color: #8a1c32;
+        margin: 0 0 10px 0;
+    }
+    
+    .submission-header p {
+        color: #666;
+        margin: 5px 0;
+    }
+    
+    .timer {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .timer-label {
+        font-weight: bold;
+        color: #856404;
+    }
+    
+    .timer-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #856404;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .question-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 10px;
+    }
+    
+    .question-label label {
+        color: #8a1c32;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    .question-points {
+        color: #666;
+        font-size: 12px;
+    }
+    
+    .form-control {
+        width: 100%;
+        min-height: 120px;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #8a1c32;
+        box-shadow: 0 0 0 3px rgba(138, 28, 50, 0.1);
+    }
+    
+    .char-counter {
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    .char-counter.warning {
+        color: #ffc107;
+    }
+    
+    .char-counter.error {
+        color: #e74c3c;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 2px solid #f0f0f0;
+    }
+    
+    .btn-submit {
+        background: #27ae60;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .btn-submit:hover:not(:disabled) {
+        background: #219a52;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-submit:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .error-message {
+        background: #f8d7da;
+        border-left: 4px solid #e74c3c;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .success-message {
+        background: #d4edda;
+        border-left: 4px solid #27ae60;
+        color: #155724;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="submission-container">
+    <div class="submission-header">
+        <h1>{{ short_answer.name }}</h1>
+        {% if short_answer.description %}
+            <p>{{ short_answer.description }}</p>
+        {% endif %}
+    </div>
+    
+    {% if short_answer.duration %}
+    <div class="timer">
+        <span class="timer-label">Time Remaining:</span>
+        <span class="timer-value" id="timer">{{ short_answer.duration }}:00</span>
+    </div>
+    {% endif %}
+    
+    <form id="submission-form">
+        {% for question in short_answer.questions %}
+        <div class="form-group">
+            <div class="question-label">
+                <label for="question-{{ question.id }}">
+                    Question {{ loop.index }}: {{ question.content }}
+                </label>
+                <span class="question-points">{{ question.points or 5 }} points</span>
+            </div>
+            <textarea 
+                class="form-control" 
+                id="question-{{ question.id }}" 
+                name="answer-{{ question.id }}"
+                placeholder="Enter your answer here..."
+                maxlength="5000"
+                onkeyup="updateCounter({{ question.id }})"
+            ></textarea>
+            <div class="char-counter">
+                <span id="count-{{ question.id }}">0</span> / 5000 characters
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="action-buttons">
+            <button type="submit" class="btn-submit" id="submit-btn">Submit Answers</button>
+            <a href="{{ url_for('short_answer.short_answer_detail', course_code=course.code, short_answer_id=short_answer.id) }}" class="btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+let timeRemaining = {{ short_answer.duration or 20 }} * 60;
+
+// Timer
+function updateTimer() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    document.getElementById('timer').textContent = 
+        String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    
+    if (timeRemaining > 0) {
+        timeRemaining--;
+        setTimeout(updateTimer, 1000);
+    } else {
+        document.getElementById('submit-btn').disabled = true;
+        alert('Time is up! Your submission has been saved.');
+        submitForm();
+    }
+}
+
+// Character counter
+function updateCounter(questionId) {
+    const textarea = document.getElementById('question-' + questionId);
+    const counter = document.getElementById('count-' + questionId);
+    const length = textarea.value.length;
+    counter.textContent = length;
+    
+    if (length > 4500) {
+        counter.parentElement.classList.add('warning');
+    } else {
+        counter.parentElement.classList.remove('warning');
+    }
+}
+
+// Form submission
+function submitForm() {
+    const answers = [];
+    {% for question in short_answer.questions %}
+    answers.push({
+        question_id: {{ question.id }},
+        text_answer: document.getElementById('question-{{ question.id }}').value
+    });
+    {% endfor %}
+    
+    fetch('{{ url_for("short_answer.short_answer_start", course_code=course.code, short_answer_id=short_answer.id) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ answers: answers })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert('Error submitting answers: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error submitting answers');
+    });
+}
+
+document.getElementById('submission-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitForm();
+});
+
+// Start timer if duration is set
+{% if short_answer.duration %}
+updateTimer();
+{% endif %}
+</script>
+{% endblock %}

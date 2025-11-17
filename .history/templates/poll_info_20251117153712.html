@@ -1,0 +1,733 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}Poll - {{ poll.name }}{% endblock %}
+
+{% block main_content %}
+<div class="poll-page-wrapper">
+    <!-- Page Header with Title and Stats -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1 class="page-title">{{ poll.name }}</h1>
+            {% if poll.description %}
+                <p class="page-subtitle">{{ poll.description }}</p>
+            {% endif %}
+        </div>
+        <div class="stats-overview">
+            <div class="stat-card">
+                <span class="stat-label">Total Responses</span>
+                <span class="stat-value" id="totalResponses">0</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Questions</span>
+                <span class="stat-value">{{ poll.questions|length }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Your Status</span>
+                <span class="stat-value">
+                    {% if poll.used_attempts > 0 %}
+                        <span class="status-participated">Participated</span>
+                    {% else %}
+                        <span class="status-pending">Not Answered</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Poll Cards Section -->
+        <div class="poll-cards-section">
+            <h2 class="section-title">Poll Questions</h2>
+            <div class="poll-cards-container">
+                {% if poll.questions %}
+                    {% for question in poll.questions %}
+                    <div class="poll-card">
+                        <div class="card-header">
+                            <div class="card-title-section">
+                                <h3 class="card-title">Q{{ loop.index }}: {{ question.content }}</h3>
+                                <div class="card-meta">
+                                    {% if question.type == 'mcq' %}
+                                        <span class="poll-type-badge mcq">Single Choice</span>
+                                    {% else %}
+                                        <span class="poll-type-badge saq">Short Answer</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-content">
+                            {% if question.type == 'mcq' and question.choices %}
+                                <div class="choices-section">
+                                    {% for choice in question.choices %}
+                                    <div class="choice-row">
+                                        <span class="choice-text">{{ choice.content }}</span>
+                                        <span class="choice-stats">
+                                            <span class="vote-count" data-votes="0">0</span>
+                                            <span class="vote-percentage">(0%)</span>
+                                        </span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% elif question.type == 'saq' %}
+                                <div class="saq-info">
+                                    <i class="fas fa-pen-fancy"></i>
+                                    <span>Open-ended response question</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-footer">
+                            <span class="participants-count">
+                                <i class="fas fa-users"></i>
+                                <span id="participants-q{{ loop.index }}">0</span> responses
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-content">
+                        <p>No questions available for this poll.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Results Statistics Section -->
+        <div class="results-section">
+            <h2 class="section-title">Poll Results & Statistics</h2>
+            
+            {% if poll.questions %}
+                <div class="results-container">
+                    {% for question in poll.questions %}
+                    {% if question.type == 'mcq' and question.choices %}
+                    <div class="result-card">
+                        <h3 class="result-title">Q{{ loop.index }}: {{ question.content }}</h3>
+                        
+                        <!-- Chart -->
+                        <div class="chart-wrapper">
+                            <canvas id="chart-q{{ loop.index }}" class="poll-chart"></canvas>
+                        </div>
+
+                        <!-- Statistics Table -->
+                        <div class="stats-table">
+                            <div class="stats-header">
+                                <span class="col-option">Option</span>
+                                <span class="col-votes">Votes</span>
+                                <span class="col-percentage">Percentage</span>
+                            </div>
+                            {% for choice in question.choices %}
+                            <div class="stats-row">
+                                <span class="col-option">{{ choice.content }}</span>
+                                <span class="col-votes" id="votes-q{{ loop.index0 }}-{{ loop.index }}">0</span>
+                                <span class="col-percentage" id="percent-q{{ loop.index0 }}-{{ loop.index }}">0%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="result-footer">
+                            <span class="total-participants">
+                                <strong>Total Responses:</strong> <span id="total-q{{ loop.index }}">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-content">
+                    <p>No results available yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="action-buttons">
+            {% if poll.can_attempt %}
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/start" class="btn btn-participate">
+                    <i class="fas fa-edit"></i>
+                    {% if poll.used_attempts > 0 %}
+                        Retake Poll
+                    {% else %}
+                        Participate in Poll
+                    {% endif %}
+                </a>
+            {% else %}
+                <button class="btn btn-closed" disabled>
+                    <i class="fas fa-lock"></i>
+                    Poll Closed
+                </button>
+            {% endif %}
+            
+            <a href="/course/{{ course.code }}/poll" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i>
+                Back to Polls
+            </a>
+        </div>
+
+        <div class="user-status">
+            {% if poll.used_attempts > 0 %}
+                <i class="fas fa-check-circle"></i>
+                <span>You have responded to this poll</span>
+            {% else %}
+                <i class="fas fa-circle"></i>
+                <span>You haven't responded yet</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.poll-page-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Header Section */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+}
+
+.header-content {
+    margin-bottom: 25px;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    line-height: 1.6;
+}
+
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 15px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.status-participated {
+    background-color: #4caf50;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+.status-pending {
+    background-color: #ff9800;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+/* Main Content */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #667eea;
+}
+
+/* Poll Cards Section */
+.poll-cards-section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.poll-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.poll-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.poll-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    padding: 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.card-title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    flex: 1;
+}
+
+.card-meta {
+    display: flex;
+    gap: 8px;
+}
+
+.poll-type-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.poll-type-badge.mcq {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.poll-type-badge.saq {
+    background-color: #e7e7ff;
+    color: #5e5e9c;
+}
+
+.card-content {
+    padding: 15px;
+}
+
+.choices-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.choice-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.choice-text {
+    color: #555;
+    font-weight: 500;
+}
+
+.choice-stats {
+    display: flex;
+    gap: 10px;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.vote-count {
+    font-weight: 700;
+    color: #667eea;
+}
+
+.saq-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #f0f7ff;
+    border-radius: 6px;
+    color: #666;
+    font-style: italic;
+}
+
+.saq-info i {
+    color: #667eea;
+}
+
+.card-footer {
+    padding: 10px 15px;
+    background: #f9f9f9;
+    border-top: 1px solid #e0e0e0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.participants-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Results Section */
+.results-section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.result-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    background: #ffffff;
+}
+
+.result-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.chart-wrapper {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.poll-chart {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.stats-table {
+    background: #f9f9f9;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 15px;
+}
+
+.stats-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 15px;
+    padding: 12px 15px;
+    background: #e8eef7;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 15px;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    align-items: center;
+}
+
+.stats-row:last-child {
+    border-bottom: none;
+}
+
+.col-option {
+    color: #555;
+    font-weight: 500;
+}
+
+.col-votes {
+    font-weight: 700;
+    color: #667eea;
+}
+
+.col-percentage {
+    font-weight: 600;
+    color: #333;
+}
+
+.result-footer {
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.total-participants {
+    display: inline-block;
+}
+
+.total-participants span {
+    color: #667eea;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Action Bar */
+.action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-participate {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+}
+
+.btn-participate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+}
+
+.btn-closed {
+    background: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-back {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-back:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.user-status i {
+    font-size: 1.2rem;
+}
+
+.user-status i.fa-check-circle {
+    color: #4caf50;
+}
+
+.user-status i.fa-circle {
+    color: #ff9800;
+}
+
+.no-content {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-size: 1.05rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 25px;
+    }
+
+    .page-title {
+        font-size: 1.8rem;
+    }
+
+    .stats-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .action-bar {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .action-buttons {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .stats-header,
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts for each question
+    {% for question in poll.questions %}
+        {% if question.type == 'mcq' and question.choices %}
+        initializeChart({{ loop.index }}, [
+            {% for choice in question.choices %}'{{ choice.content }}'{{ "," if not loop.last }}{% endfor %}
+        ]);
+        {% endif %}
+    {% endfor %}
+});
+
+function initializeChart(questionIndex, choices) {
+    const ctx = document.getElementById(`chart-q${questionIndex}`);
+    if (!ctx) return;
+
+    // Sample data - in production, fetch from backend
+    const votes = new Array(choices.length).fill(0);
+    const totalVotes = 0;
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: choices,
+            datasets: [{
+                data: votes.length > 0 ? votes : [1],
+                backgroundColor: [
+                    '#FF6B6B',
+                    '#4ECDC4',
+                    '#45B7D1',
+                    '#FFA07A',
+                    '#98D8C8',
+                    '#F7DC6F',
+                    '#BB8FCE',
+                    '#85C1E2'
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 12 },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const value = context.parsed || 0;
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${context.label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

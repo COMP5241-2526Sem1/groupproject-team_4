@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}{% block course_title %}LEARN@POLYU - Teacher Courses{% endblock %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo" onclick="window.location.href='/teacher_home'">
+            <img src="{{ url_for('static', filename='polyulogo.png') }}" alt="PolyU Logo">
+            {% if course %}
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">{{ course.code }}</div>
+                <div style="font-size:14px;margin-top:4px;">{{ course.name }}</div>
+            {% else %}
+                <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+            {% endif %}
+        </div>
+        <nav>
+            {% block sidebar_links %}
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher_course/' + window.location.pathname.split('/')[2] + '/';">Announcement</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher_course/' + window.location.pathname.split('/')[2] + '/';">Content</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/quiz';">Quiz</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/course/' + window.location.pathname.split('/')[2] + '/quiz/grades';">Grades</a>
+            <a href="/logout">Sign Out</a>
+            {% endblock %}
+        </nav>
+
+    <main class="main-content">
+        {% block course_content %}{% endblock %}
+        
+        <!-- Display messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </main>
+</div>
+<script>
+    // Dynamically generate course dropdown menu
+    function populateCourseDropdown() {
+        fetch('/teacher_course_list/list')
+            .then(response => response.json())
+            .then(data => {
+                const dropdown = document.getElementById('course-dropdown');
+                dropdown.innerHTML = '';
+                if (data.my_courses) {
+                    data.my_courses.forEach(course => {
+                        const link = document.createElement('a');
+                        link.href = `/teacher_course/${course.code}`;
+                        link.textContent = course.name;
+                        dropdown.appendChild(link);
+                    });
+                } else if (data.length > 0) {
+                    data.forEach(course => {
+                        const link = document.createElement('a');
+                        link.href = `/teacher_course/${course.code}`;
+                        link.textContent = course.name;
+                        dropdown.appendChild(link);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading courses:', error));
+    }
+
+    // Call after page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        populateCourseDropdown();
+        // Keep existing scripts from teacher_home.html if needed
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,12 @@
+运行以下命令来删除"Caching DNS Information - Critical Thinking Questions"短答题：
+
+python delete_caching_dns_sa.py
+
+这将：
+1. 查找包含"Caching DNS Information"的短答题
+2. 删除所有相关的提交内容
+3. 删除所有相关的问题
+4. 删除短答题活动本身
+
+执行完毕后刷新页面：
+http://127.0.0.1:5000/teacher/course/PHYS101/short-answer

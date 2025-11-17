@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Question Function Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .question-container { border: 1px solid #ccc; padding: 15px; margin: 10px 0; background: #f9f9f9; }
+        .btn { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; border: none; }
+        .btn-danger { background: #dc3545; color: white; border: none; }
+        .diagnostic { background: #e9ecef; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Add Question Function Test</h1>
+        
+        <div class="diagnostic">
+            <h3>Diagnostic Results:</h3>
+            <div id="diagnostic-results"></div>
+        </div>
+        
+        <h2>Test Add Question Functionality</h2>
+        <button id="test-add-question" class="btn btn-primary">Test Add Question Function</button>
+        <button id="clear-questions" class="btn btn-danger">Clear All Questions</button>
+        
+        <div id="questions-container">
+            <!-- Questions will be added here -->
+        </div>
+        
+        <h3>Console Output:</h3>
+        <div id="console-output" style="background: #f8f9fa; padding: 10px; border: 1px solid #dee2e6; font-family: monospace; white-space: pre-wrap;"></div>
+    </div>
+
+    <script>
+        // Console output capture
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            consoleOutput.textContent += args.join(' ') + '\n';
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            consoleOutput.textContent += 'ERROR: ' + args.join(' ') + '\n';
+            originalError.apply(console, args);
+        };
+        
+        // Diagnostic function
+        function runDiagnostic() {
+            const results = document.getElementById('diagnostic-results');
+            let diagnosticHTML = '';
+            
+            // Check if addQuestion function exists
+            if (typeof addQuestion === 'function') {
+                diagnosticHTML += '<p class="success">✅ addQuestion() function is defined</p>';
+            } else {
+                diagnosticHTML += '<p class="error">❌ addQuestion() function is NOT defined</p>';
+            }
+            
+            // Check if questions container exists
+            const questionsContainer = document.getElementById('questions-container');
+            if (questionsContainer) {
+                diagnosticHTML += '<p class="success">✅ Questions container found</p>';
+            } else {
+                diagnosticHTML += '<p class="error">❌ Questions container NOT found</p>';
+            }
+            
+            // Check if test button exists
+            const testButton = document.getElementById('test-add-question');
+            if (testButton) {
+                diagnosticHTML += '<p class="success">✅ Test button found</p>';
+            } else {
+                diagnosticHTML += '<p class="error">❌ Test button NOT found</p>';
+            }
+            
+            results.innerHTML = diagnosticHTML;
+        }
+        
+        // Copy of the addQuestion function from teacher_edit_quiz.html
+        function addQuestion() {
+            console.log('addQuestion() function called');
+            
+            try {
+                const questionsContainer = document.getElementById('questions-container');
+                if (!questionsContainer) {
+                    console.error('Questions container not found!');
+                    return;
+                }
+                
+                const questionCount = questionsContainer.children.length;
+                const newQuestionNum = questionCount + 1;
+                
+                console.log('Creating question number:', newQuestionNum);
+                
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-container';
+                questionDiv.id = `question-${newQuestionNum}`;
+                
+                questionDiv.innerHTML = `
+                    <h4>Question ${newQuestionNum}</h4>
+                    <div class="form-group">
+                        <label>Type:</label>
+                        <select name="questions[${newQuestionNum}][type]" onchange="toggleQuestionType(${newQuestionNum})">
+                            <option value="mcq">Multiple Choice</option>
+                            <option value="short_answer">Short Answer</option>
+                            <option value="essay">Essay</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Question:</label>
+                        <textarea name="questions[${newQuestionNum}][content]" placeholder="Enter question content" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Points:</label>
+                        <input type="number" name="questions[${newQuestionNum}][points]" value="10" min="1">
+                    </div>
+                    <div id="choices-${newQuestionNum}">
+                        <label>Choices:</label>
+                        <div id="choices-list-${newQuestionNum}">
+                            <div class="choice-item">
+                                <input type="radio" name="questions[${newQuestionNum}][correct_choice]" value="1">
+                                <input type="text" name="questions[${newQuestionNum}][choices][1]" placeholder="Choice 1">
+                            </div>
+                            <div class="choice-item">
+                                <input type="radio" name="questions[${newQuestionNum}][correct_choice]" value="2">
+                                <input type="text" name="questions[${newQuestionNum}][choices][2]" placeholder="Choice 2">
+                            </div>
+                        </div>
+                        <button type="button" onclick="addChoice(${newQuestionNum})">Add Choice</button>
+                    </div>
+                    <button type="button" onclick="removeQuestion(${newQuestionNum})" class="btn btn-danger">Remove Question</button>
+                `;
+                
+                questionsContainer.appendChild(questionDiv);
+                console.log('Question added successfully!');
+                
+            } catch (error) {
+                console.error('Error in addQuestion():', error);
+            }
+        }
+        
+        // Supporting functions
+        function toggleQuestionType(questionNum) {
+            console.log('Toggling question type for question', questionNum);
+        }
+        
+        function addChoice(questionNum) {
+            console.log('Adding choice for question', questionNum);
+        }
+        
+        function removeQuestion(questionNum) {
+            console.log('Removing question', questionNum);
+            const questionDiv = document.getElementById(`question-${questionNum}`);
+            if (questionDiv) {
+                questionDiv.remove();
+                console.log('Question removed successfully!');
+            } else {
+                console.error('Question div not found!');
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('test-add-question').addEventListener('click', function() {
+            console.log('Test button clicked');
+            addQuestion();
+        });
+        
+        document.getElementById('clear-questions').addEventListener('click', function() {
+            console.log('Clear button clicked');
+            document.getElementById('questions-container').innerHTML = '';
+            console.log('All questions cleared!');
+        });
+        
+        // Run diagnostic on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, running diagnostic...');
+            runDiagnostic();
+        });
+    </script>
+</body>
+</html>

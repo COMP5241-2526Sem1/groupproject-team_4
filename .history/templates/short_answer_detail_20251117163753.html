@@ -1,0 +1,365 @@
+{% extends 'course_base.html' %}
+
+{% block title %}{{ short_answer.name }} - Short Answer{% endblock %}
+
+{% block main_content %}
+<div class="short-answer-detail-container">
+    <div class="short-answer-header">
+        <h1>{{ short_answer.name }}</h1>
+        {% if short_answer.description %}
+            <p class="description">{{ short_answer.description }}</p>
+        {% endif %}
+    </div>
+
+    <div class="short-answer-info">
+        <div class="info-item">
+            <span class="label">Duration:</span>
+            <span class="value">{{ short_answer.duration }} minutes</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Total Points:</span>
+            <span class="value">{{ short_answer.point }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Questions:</span>
+            <span class="value">{{ short_answer.questions|length }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Your Submissions:</span>
+            <span class="value">{{ submissions|length }}</span>
+        </div>
+    </div>
+
+    <div class="questions-preview">
+        <h2>Questions in this Activity</h2>
+        {% if short_answer.questions %}
+            <div class="questions-list">
+                {% for question in short_answer.questions %}
+                    <div class="question-item">
+                        <div class="question-number">Q{{ loop.index }}</div>
+                        <div class="question-content">
+                            <p>{{ question.content }}</p>
+                            <span class="question-points">{{ question.points }} points</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="no-questions">No questions available yet.</p>
+        {% endif %}
+    </div>
+
+    {% if submissions %}
+        <div class="submissions-history">
+            <h2>Your Submissions</h2>
+            <div class="submissions-list">
+                {% for submission in submissions %}
+                    <div class="submission-card">
+                        <div class="submission-header">
+                            <span class="submission-date">
+                                Submitted: {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') if submission.submitted_at else 'N/A' }}
+                            </span>
+                            {% if submission.total_score %}
+                                <span class="submission-score">Score: {{ submission.total_score }}/{{ short_answer.point }}</span>
+                            {% endif %}
+                        </div>
+                        {% if submission.QuestionResponse %}
+                            <div class="submission-responses">
+                                {% for response in submission.QuestionResponse %}
+                                    <div class="response-item">
+                                        <strong>Q{{ loop.index }}:</strong> {{ response.text_answer or 'No answer provided' }}
+                                        {% if response.points %}
+                                            <span class="response-score">({{ response.points }} pts)</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="action-buttons">
+        <a href="{{ url_for('short_answer.short_answer_start', course_code=course.code, short_answer_id=short_answer.id) }}" 
+           class="btn btn-primary">
+            <i class="fas fa-pencil-alt"></i> Submit Answer
+        </a>
+        <a href="{{ url_for('short_answer.teacher_short_answer_list', course_code=course.code) }}" 
+           class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Short Answer List
+        </a>
+    </div>
+</div>
+
+<style>
+    .short-answer-detail-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .short-answer-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .short-answer-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 28px;
+    }
+
+    .short-answer-header .description {
+        margin: 0;
+        font-size: 16px;
+        opacity: 0.95;
+    }
+
+    .short-answer-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .info-item {
+        background: white;
+        border: 1px solid #e0e0e0;
+        padding: 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .info-item .label {
+        font-weight: 600;
+        color: #666;
+    }
+
+    .info-item .value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #2196F3;
+    }
+
+    .questions-preview {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .questions-preview h2 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+
+    .questions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .question-item {
+        display: flex;
+        gap: 15px;
+        padding: 12px;
+        background: #f9f9f9;
+        border-radius: 6px;
+        border-left: 4px solid #2196F3;
+    }
+
+    .question-number {
+        min-width: 40px;
+        height: 40px;
+        background: #2196F3;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .question-content {
+        flex: 1;
+    }
+
+    .question-content p {
+        margin: 0 0 8px 0;
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .question-points {
+        display: inline-block;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .no-questions {
+        text-align: center;
+        color: #999;
+        padding: 20px;
+    }
+
+    .submissions-history {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .submissions-history h2 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+
+    .submissions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .submission-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        padding: 15px;
+        background: #fafafa;
+    }
+
+    .submission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .submission-date {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .submission-score {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .submission-responses {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .response-item {
+        background: white;
+        padding: 10px;
+        border-radius: 4px;
+        border-left: 3px solid #2196F3;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .response-score {
+        display: inline-block;
+        margin-left: 8px;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background: #2196F3;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1976d2;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    @media (max-width: 768px) {
+        .short-answer-detail-container {
+            padding: 15px;
+        }
+
+        .short-answer-header {
+            padding: 20px;
+        }
+
+        .short-answer-header h1 {
+            font-size: 22px;
+        }
+
+        .short-answer-info {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}

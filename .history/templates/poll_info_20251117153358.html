@@ -1,0 +1,470 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}Poll - {{ poll.name }}{% endblock %}
+
+{% block main_content %}
+<div class="poll-detail-wrapper">
+    <!-- Poll Header Section -->
+    <div class="poll-header-section">
+        <div class="poll-header-main">
+            <h1 class="poll-title">{{ poll.name }}</h1>
+            {% if poll.description %}
+                <p class="poll-subtitle">{{ poll.description }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Poll Meta Information -->
+        <div class="poll-meta-info">
+            <div class="meta-item">
+                <span class="meta-label">Total Questions</span>
+                <span class="meta-value">{{ poll.questions|length }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Your Attempts</span>
+                <span class="meta-value">
+                    {{ poll.used_attempts }}
+                    {% if poll.max_attempts > 0 %}
+                        / {{ poll.max_attempts }}
+                    {% else %}
+                        / Unlimited
+                    {% endif %}
+                </span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Poll Status</span>
+                <span class="meta-value">
+                    {% if poll.can_attempt %}
+                        <span class="status-badge active">Open</span>
+                    {% else %}
+                        <span class="status-badge closed">Closed</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Preview -->
+    <div class="questions-section">
+        <h3 class="section-heading">Questions Preview</h3>
+        <div class="questions-container">
+            {% if poll.questions %}
+                {% for question in poll.questions %}
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-number">Q{{ loop.index }}</span>
+                        <span class="question-type">
+                            {% if question.type == 'mcq' %}
+                                <span class="type-badge mcq">Multiple Choice</span>
+                            {% else %}
+                                <span class="type-badge saq">Short Answer</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <p class="question-text">{{ question.content }}</p>
+                    
+                    {% if question.type == 'mcq' and question.choices %}
+                    <div class="choices-list">
+                        {% for choice in question.choices %}
+                        <div class="choice-item">
+                            <span class="choice-marker">●</span>
+                            <span class="choice-text">{{ choice.content }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% elif question.type == 'saq' %}
+                    <div class="saq-placeholder">
+                        <i class="fas fa-pen-fancy"></i> Open-ended response question
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="no-questions">No questions available for this poll.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Section -->
+    <div class="action-section">
+        <div class="action-buttons">
+            {% if poll.used_attempts > 0 %}
+                <!-- Already participated -->
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/results" class="btn btn-primary">
+                    <i class="fas fa-chart-pie"></i> View Results
+                </a>
+                {% if poll.can_attempt %}
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/start" class="btn btn-success">
+                    <i class="fas fa-redo"></i> Retake Poll
+                </a>
+                {% endif %}
+            {% else %}
+                <!-- Not yet participated -->
+                {% if poll.can_attempt %}
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/start" class="btn btn-success btn-large">
+                    <i class="fas fa-play-circle"></i> Start Poll
+                </a>
+                {% else %}
+                <button class="btn btn-disabled" disabled>
+                    <i class="fas fa-lock"></i> Poll Closed
+                </button>
+                {% endif %}
+            {% endif %}
+            
+            <a href="/course/{{ course.code }}/poll" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <!-- Info Message -->
+        <div class="info-message">
+            {% if poll.used_attempts > 0 %}
+                <p>✓ You have already responded to this poll. {% if poll.can_attempt %}You can retake it if attempts remain.{% else %}No more attempts available.{% endif %}</p>
+            {% else %}
+                {% if poll.can_attempt %}
+                    <p>Click "Start Poll" to begin. Your responses will be recorded immediately after submission.</p>
+                {% else %}
+                    <p>⚠ This poll is no longer accepting responses.</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.poll-detail-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.poll-header-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+}
+
+.poll-header-main {
+    margin-bottom: 25px;
+}
+
+.poll-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.5px;
+}
+
+.poll-subtitle {
+    font-size: 1.05rem;
+    opacity: 0.95;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.poll-meta-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.meta-item {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 15px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-label {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.meta-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background-color: #4caf50;
+    color: white;
+}
+
+.status-badge.closed {
+    background-color: #f44336;
+    color: white;
+}
+
+.questions-section {
+    margin-bottom: 30px;
+}
+
+.section-heading {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-heading::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+.questions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.question-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.question-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.question-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.question-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.question-type {
+    display: flex;
+    gap: 8px;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-badge.mcq {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.type-badge.saq {
+    background-color: #e7e7ff;
+    color: #5e5e9c;
+}
+
+.question-text {
+    font-size: 1rem;
+    color: #333;
+    margin: 10px 0 15px 0;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.choices-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-left: 20px;
+}
+
+.choice-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.choice-marker {
+    color: #667eea;
+    font-weight: bold;
+    margin-top: 2px;
+}
+
+.choice-text {
+    line-height: 1.4;
+}
+
+.saq-placeholder {
+    background: #f5f5f5;
+    padding: 12px 15px;
+    border-radius: 6px;
+    color: #666;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.saq-placeholder i {
+    color: #667eea;
+}
+
+.no-questions {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}
+
+.action-section {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    border: 1px solid #e0e0e0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+}
+
+.btn-success.btn-large {
+    padding: 16px 40px;
+    font-size: 1.1rem;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btn-disabled {
+    background: #ccc;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.info-message {
+    background: #f0f7ff;
+    border-left: 4px solid #667eea;
+    padding: 15px;
+    border-radius: 6px;
+    color: #333;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.info-message p {
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .poll-header-section {
+        padding: 25px;
+    }
+
+    .poll-title {
+        font-size: 1.6rem;
+    }
+
+    .poll-meta-info {
+        grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .question-card {
+        padding: 15px;
+    }
+}
+</style>
+{% endblock %}

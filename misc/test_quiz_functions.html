@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz Edit Function Test</title>
+</head>
+<body>
+    <h1>Testing Quiz Edit Functions</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Create an iframe to load the quiz edit page
+        const iframe = document.createElement('iframe');
+        iframe.style.width = '100%';
+        iframe.style.height = '600px';
+        iframe.style.border = '1px solid #ccc';
+        iframe.src = '/teacher/course/CS101/quiz/9/edit';
+        
+        document.body.appendChild(iframe);
+        
+        // Wait for iframe to load
+        iframe.onload = function() {
+            const result = document.getElementById('result');
+            
+            try {
+                // Check if functions exist in the iframe context
+                const iframeWindow = iframe.contentWindow;
+                
+                if (typeof iframeWindow.addQuestion === 'function') {
+                    result.innerHTML = '<p style="color: green;">✅ addQuestion function exists in iframe!</p>';
+                    console.log('addQuestion function found in iframe');
+                } else {
+                    result.innerHTML = '<p style="color: red;">❌ addQuestion function NOT found in iframe</p>';
+                    console.log('addQuestion function NOT found in iframe');
+                }
+                
+                // Check other functions
+                const functions = ['loadExistingQuestions', 'addExistingQuestion', 'removeQuestion'];
+                
+                functions.forEach(funcName => {
+                    if (typeof iframeWindow[funcName] === 'function') {
+                        console.log(`${funcName} function found in iframe`);
+                    } else {
+                        console.log(`${funcName} function NOT found in iframe`);
+                    }
+                });
+                
+            } catch (error) {
+                result.innerHTML = '<p style="color: red;">❌ Error accessing iframe: ' + error.message + '</p>';
+                console.error('Error accessing iframe:', error);
+            }
+        };
+    </script>
+</body>
+</html>

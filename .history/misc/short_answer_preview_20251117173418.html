@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短答题页面 - 预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .sa-detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .detail-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .detail-header h1 {
+            margin: 0 0 15px 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .detail-header .description {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.95;
+            line-height: 1.5;
+        }
+
+        .questions-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .question-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .question-title-section {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .question-number {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .question-content {
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .question-meta {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .answers-section {
+            padding: 20px;
+            background: white;
+        }
+
+        .answers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .responses-count {
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .student-answer-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .student-answer-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-color: #667eea;
+        }
+
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .student-name-time {
+            flex: 1;
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .student-time {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .student-points {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 70px;
+        }
+
+        .answer-text {
+            color: #555;
+            line-height: 1.7;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="sa-detail-container">
+        <div class="detail-header">
+            <h1>缓存DNS信息 - 批判性思维题</h1>
+            <p class="description">这个活动探索缓存DNS信息的机制、优点和局限，以加深对DNS解析和缓存效应的理解。</p>
+        </div>
+
+        <div class="questions-container">
+            <!-- 第一个问题 -->
+            <div class="question-card">
+                <div class="question-title-section">
+                    <div class="question-number">Q1</div>
+                    <div class="question-content">解释缓存DNS条目如何改进名称解析过程中的响应时间。包括TTL在您的解释中的作用。</div>
+                    <div class="question-meta">满分: 5 分 | 共有 5 人提交</div>
+                </div>
+
+                <div class="answers-section">
+                    <div class="answers-header">
+                        <span style="color: #666; font-size: 14px;">学生提交情况</span>
+                        <div class="responses-count">5 人已提交</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">alice_johnson</span>
+                                <span class="student-time">提交于: 2025-11-17 10:30</span>
+                            </div>
+                            <div class="student-points">3 / 5 分</div>
+                        </div>
+                        <div class="answer-text">缓存DNS条目意味着频繁访问的域名不需要每次都查询根服务器，可以直接从本地缓存返回IP地址。这大大加快了解析速度。TTL（生存时间）决定了缓存条目的有效期，超过TTL后条目将被删除。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">bob_williams</span>
+                                <span class="student-time">提交于: 2025-11-17 10:35</span>
+                            </div>
+                            <div class="student-points">4 / 5 分</div>
+                        </div>
+                        <div class="answer-text">DNS缓存允许本地服务器存储已解析的域名和IP地址映射。当用户查询时，如果缓存中存在记录，可以立即返回结果，无需等待DNS递归查询完成。TTL值决定了缓存何时过期，较长的TTL可以减少查询，但可能导致地址更新延迟。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">carol_davis</span>
+                                <span class="student-time">提交于: 2025-11-17 10:42</span>
+                            </div>
+                            <div class="student-points">4 / 5 分</div>
+                        </div>
+                        <div class="answer-text">缓存改进响应时间因为它减少了对上游DNS服务器的依赖。本地DNS服务器可以保存先前查询的结果。TTL是一个整数值，表示缓存记录保持有效的秒数，之后将被重新查询。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">daniel_miller</span>
+                                <span class="student-time">提交于: 2025-11-17 10:50</span>
+                            </div>
+                            <div class="student-points">3 / 5 分</div>
+                        </div>
+                        <div class="answer-text">DNS缓存存储先前的查询结果，使后续相同的查询可以更快地完成。TTL（生存时间）指定缓存条目过期的时间。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">emma_wilson</span>
+                                <span class="student-time">提交于: 2025-11-17 11:00</span>
+                            </div>
+                            <div class="student-points">3 / 5 分</div>
+                        </div>
+                        <div class="answer-text">通过缓存DNS查询的结果，可以加快响应速度。TTL值确定缓存条目的有效期。</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二个问题 -->
+            <div class="question-card">
+                <div class="question-title-section">
+                    <div class="question-number">Q2</div>
+                    <div class="question-content">讨论依赖缓存DNS条目进行名称到地址转换的潜在缺陷或风险。</div>
+                    <div class="question-meta">满分: 6 分 | 共有 5 人提交</div>
+                </div>
+
+                <div class="answers-section">
+                    <div class="answers-header">
+                        <span style="color: #666; font-size: 14px;">学生提交情况</span>
+                        <div class="responses-count">5 人已提交</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">alice_johnson</span>
+                                <span class="student-time">提交于: 2025-11-17 10:31</span>
+                            </div>
+                            <div class="student-points">5 / 6 分</div>
+                        </div>
+                        <div class="answer-text">过时的缓存可能导致用户访问错误的服务器。如果网站更换了IP地址，但某些客户端的缓存未更新，用户将无法访问更新后的网站。这种延迟可能导致服务中断。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">bob_williams</span>
+                                <span class="student-time">提交于: 2025-11-17 10:36</span>
+                            </div>
+                            <div class="student-points">6 / 6 分</div>
+                        </div>
+                        <div class="answer-text">缓存DNS的风险包括：1) 缓存中毒攻击 - 恶意方可能注入错误的DNS记录；2) 过时信息 - 如果主机改变了IP地址，缓存可能导致访问失败；3) 隐私问题 - 缓存可能泄露用户的浏览历史；4) 一致性问题 - 不同的缓存可能有不同的数据版本。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">carol_davis</span>
+                                <span class="student-time">提交于: 2025-11-17 10:43</span>
+                            </div>
+                            <div class="student-points">6 / 6 分</div>
+                        </div>
+                        <div class="answer-text">主要风险是缓存数据的陈旧性。如果域名的IP地址在缓存过期前更改，客户端将尝试连接到过时的IP地址，导致连接失败。此外，DNS缓存中毒是一种攻击，恶意代理可以注入虚假的DNS记录到缓存中。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">daniel_miller</span>
+                                <span class="student-time">提交于: 2025-11-17 10:51</span>
+                            </div>
+                            <div class="student-points">4 / 6 分</div>
+                        </div>
+                        <div class="answer-text">缓存可能包含过时的数据，导致连接到错误的IP地址。还可能受到DNS缓存中毒攻击。</div>
+                    </div>
+
+                    <div class="student-answer-item">
+                        <div class="student-info">
+                            <div class="student-name-time">
+                                <span class="student-name">emma_wilson</span>
+                                <span class="student-time">提交于: 2025-11-17 11:01</span>
+                            </div>
+                            <div class="student-points">4 / 6 分</div>
+                        </div>
+                        <div class="answer-text">过时的缓存可能导致连接失败。DNS缓存中毒攻击可能注入虚假的DNS记录。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-submit">提交答案</button>
+            <button class="btn btn-secondary">返回</button>
+        </div>
+    </div>
+</body>
+</html>

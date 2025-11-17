@@ -1,0 +1,570 @@
+{% extends 'teacher_course_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>AI Content Generator</h2>
+    <p class="text-muted">Generate educational content using AI for {{ course.name }} ({{ course.code }})</p>
+
+    <div class="row mt-4">
+        <!-- Quiz Generation Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-question-circle text-primary"></i> Generate Quiz
+                    </h5>
+                    <p class="card-text">
+                        Create comprehensive quizzes with multiple choice and short answer questions based on your teaching materials.
+                    </p>
+                    <button class="btn btn-primary btn-block" data-bs-toggle="modal" data-bs-target="#quizModal">
+                        <i class="fas fa-plus"></i> Generate Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Poll Generation Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-poll text-success"></i> Generate Poll
+                    </h5>
+                    <p class="card-text">
+                        Create engaging polls to gather student opinions and encourage class discussion on various topics.
+                    </p>
+                    <button class="btn btn-success btn-block" data-bs-toggle="modal" data-bs-target="#pollModal">
+                        <i class="fas fa-plus"></i> Generate Poll
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Short Answer Generation Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-edit text-info"></i> Generate Short Answer
+                    </h5>
+                    <p class="card-text">
+                        Create thought-provoking short answer questions that require critical thinking and detailed responses.
+                    </p>
+                    <button class="btn btn-info btn-block" data-bs-toggle="modal" data-bs-target="#shortAnswerModal">
+                        <i class="fas fa-plus"></i> Generate Short Answer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz Generation Modal -->
+<div class="modal fade" id="quizModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Quiz with AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quizForm">
+                    <div class="mb-3">
+                        <label for="quizTopic" class="form-label">Topic *</label>
+                        <input type="text" class="form-control" id="quizTopic" required
+                               placeholder="e.g., Object-Oriented Programming">
+                    </div>
+                    <div class="mb-3">
+                        <label for="quizMaterials" class="form-label">Teaching Materials (Optional)</label>
+                        <textarea class="form-control" id="quizMaterials" rows="4"
+                                  placeholder="Paste lecture notes, key concepts, or learning objectives here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quizNumQuestions" class="form-label">Number of Questions</label>
+                        <input type="number" class="form-control" id="quizNumQuestions" value="5" min="3" max="10">
+                    </div>
+                </form>
+                <div id="quizLoading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generating...</span>
+                    </div>
+                    <p class="mt-2">AI is generating your quiz...</p>
+                </div>
+                <div id="quizPreview" style="display: none;">
+                    <h6>Preview:</h6>
+                    <div id="quizPreviewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="generateQuizBtn">
+                    <i class="fas fa-magic"></i> Generate
+                </button>
+                <button type="button" class="btn btn-success" id="saveQuizBtn" style="display: none;">
+                    <i class="fas fa-save"></i> Save Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Poll Generation Modal -->
+<div class="modal fade" id="pollModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Poll with AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="pollForm">
+                    <div class="mb-3">
+                        <label for="pollTopic" class="form-label">Topic *</label>
+                        <input type="text" class="form-control" id="pollTopic" required
+                               placeholder="e.g., Software Development Practices">
+                    </div>
+                    <div class="mb-3">
+                        <label for="pollMaterials" class="form-label">Teaching Materials (Optional)</label>
+                        <textarea class="form-control" id="pollMaterials" rows="4"
+                                  placeholder="Paste context or discussion points here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pollNumQuestions" class="form-label">Number of Questions</label>
+                        <input type="number" class="form-control" id="pollNumQuestions" value="3" min="1" max="8">
+                    </div>
+                </form>
+                <div id="pollLoading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Generating...</span>
+                    </div>
+                    <p class="mt-2">AI is generating your poll...</p>
+                </div>
+                <div id="pollPreview" style="display: none;">
+                    <h6>Preview:</h6>
+                    <div id="pollPreviewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="generatePollBtn">
+                    <i class="fas fa-magic"></i> Generate
+                </button>
+                <button type="button" class="btn btn-success" id="savePollBtn" style="display: none;">
+                    <i class="fas fa-save"></i> Save Poll
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Short Answer Generation Modal -->
+<div class="modal fade" id="shortAnswerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Short Answer Questions with AI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="shortAnswerForm">
+                    <div class="mb-3">
+                        <label for="saTopic" class="form-label">Topic *</label>
+                        <input type="text" class="form-control" id="saTopic" required
+                               placeholder="e.g., Design Patterns">
+                    </div>
+                    <div class="mb-3">
+                        <label for="saMaterials" class="form-label">Teaching Materials (Optional)</label>
+                        <textarea class="form-control" id="saMaterials" rows="4"
+                                  placeholder="Paste learning objectives or key concepts here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="saNumQuestions" class="form-label">Number of Questions</label>
+                        <input type="number" class="form-control" id="saNumQuestions" value="3" min="1" max="6">
+                    </div>
+                </form>
+                <div id="saLoading" class="text-center" style="display: none;">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Generating...</span>
+                    </div>
+                    <p class="mt-2">AI is generating short answer questions...</p>
+                </div>
+                <div id="saPreview" style="display: none;">
+                    <h6>Preview:</h6>
+                    <div id="saPreviewContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" id="generateSABtn">
+                    <i class="fas fa-magic"></i> Generate
+                </button>
+                <button type="button" class="btn btn-success" id="saveSABtn" style="display: none;">
+                    <i class="fas fa-save"></i> Save Questions
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let generatedQuizData = null;
+let generatedPollData = null;
+let generatedSAData = null;
+
+// Generate Quiz
+document.getElementById('generateQuizBtn').addEventListener('click', async function() {
+    const topic = document.getElementById('quizTopic').value;
+    const materials = document.getElementById('quizMaterials').value;
+    const numQuestions = document.getElementById('quizNumQuestions').value;
+    
+    if (!topic) {
+        alert('Please enter a topic');
+        return;
+    }
+    
+    document.getElementById('quizLoading').style.display = 'block';
+    document.getElementById('quizPreview').style.display = 'none';
+    this.disabled = true;
+    
+    try {
+        const response = await fetch('/api/ai/quiz', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                input: topic,
+                teaching_materials: materials,
+                num_questions: parseInt(numQuestions)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        generatedQuizData = data;
+        displayQuizPreview(data);
+        
+        document.getElementById('quizLoading').style.display = 'none';
+        document.getElementById('quizPreview').style.display = 'block';
+        document.getElementById('saveQuizBtn').style.display = 'inline-block';
+        
+    } catch (error) {
+        alert('Error generating quiz: ' + error.message);
+    } finally {
+        this.disabled = false;
+        document.getElementById('quizLoading').style.display = 'none';
+    }
+});
+
+// Display Quiz Preview
+function displayQuizPreview(data) {
+    let html = `
+        <div class="card">
+            <div class="card-body">
+                <h5>${data.quiz_name || 'Generated Quiz'}</h5>
+                <p class="text-muted">${data.description || ''}</p>
+                <p><strong>Duration:</strong> ${data.duration} minutes | <strong>Total Questions:</strong> ${data.questions.length}</p>
+                <hr>
+    `;
+    
+    data.questions.forEach((q, idx) => {
+        html += `
+            <div class="mb-3">
+                <strong>Q${idx + 1}. ${q.content}</strong> (${q.points} points)
+                <div class="ms-3 mt-2">
+        `;
+        
+        if (q.type === 'mcq' && q.choices) {
+            q.choices.forEach((choice, cidx) => {
+                const badge = choice.correct ? '<span class="badge bg-success">Correct</span>' : '';
+                html += `<div>${String.fromCharCode(65 + cidx)}. ${choice.text} ${badge}</div>`;
+            });
+        } else if (q.type === 'saq') {
+            html += `<div class="text-muted">Short answer question</div>`;
+            if (q.sample_answer) {
+                html += `<div class="small"><strong>Sample answer:</strong> ${q.sample_answer}</div>`;
+            }
+        }
+        
+        html += `</div></div>`;
+    });
+    
+    html += `</div></div>`;
+    document.getElementById('quizPreviewContent').innerHTML = html;
+}
+
+// Save Quiz
+document.getElementById('saveQuizBtn').addEventListener('click', async function() {
+    if (!generatedQuizData) return;
+    
+    this.disabled = true;
+    
+    try {
+        const response = await fetch('/api/ai/save-quiz', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                course_code: '{{ course.code }}',
+                quiz_data: generatedQuizData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Quiz saved successfully!');
+            window.location.href = '/teacher/course/{{ course.code }}/quiz';
+        } else {
+            alert('Error saving quiz: ' + result.error);
+        }
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        this.disabled = false;
+    }
+});
+
+// Generate Poll
+document.getElementById('generatePollBtn').addEventListener('click', async function() {
+    const topic = document.getElementById('pollTopic').value.trim();
+    const materials = document.getElementById('pollMaterials').value.trim();
+    const numQuestions = document.getElementById('pollNumQuestions').value;
+    
+    console.log('Poll generation clicked', {topic, materials, numQuestions});
+    
+    if (!topic) {
+        alert('Please enter a topic');
+        return;
+    }
+    
+    document.getElementById('pollLoading').style.display = 'block';
+    document.getElementById('pollPreview').style.display = 'none';
+    this.disabled = true;
+    
+    try {
+        const payload = {
+            topic: topic,
+            teaching_materials: materials,
+            num_questions: parseInt(numQuestions)
+        };
+        
+        console.log('Sending poll request:', payload);
+        
+        const response = await fetch('/api/ai/poll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        console.log('Poll response:', data);
+        
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        generatedPollData = data;
+        displayPollPreview(data);
+        
+        document.getElementById('pollLoading').style.display = 'none';
+        document.getElementById('pollPreview').style.display = 'block';
+        document.getElementById('savePollBtn').style.display = 'inline-block';
+        
+    } catch (error) {
+        alert('Error generating poll: ' + error.message);
+    } finally {
+        this.disabled = false;
+        document.getElementById('pollLoading').style.display = 'none';
+    }
+});
+
+// Display Poll Preview (similar to quiz)
+function displayPollPreview(data) {
+    let html = `
+        <div class="card">
+            <div class="card-body">
+                <h5>${data.poll_name || 'Generated Poll'}</h5>
+                <p class="text-muted">${data.description || ''}</p>
+                <hr>
+    `;
+    
+    data.questions.forEach((q, idx) => {
+        html += `
+            <div class="mb-3">
+                <strong>Q${idx + 1}. ${q.content}</strong>
+                <div class="ms-3 mt-2">
+        `;
+        
+        if (q.choices) {
+            q.choices.forEach((choice, cidx) => {
+                html += `<div>${String.fromCharCode(65 + cidx)}. ${choice.text}</div>`;
+            });
+        }
+        
+        html += `</div></div>`;
+    });
+    
+    html += `</div></div>`;
+    document.getElementById('pollPreviewContent').innerHTML = html;
+}
+
+// Save Poll
+document.getElementById('savePollBtn').addEventListener('click', async function() {
+    if (!generatedPollData) return;
+    
+    this.disabled = true;
+    
+    try {
+        const response = await fetch('/api/ai/save-poll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                course_code: '{{ course.code }}',
+                poll_data: generatedPollData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Poll saved successfully!');
+            window.location.href = '/teacher/course/{{ course.code }}/poll';
+        } else {
+            alert('Error saving poll: ' + result.error);
+        }
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        this.disabled = false;
+    }
+});
+
+// Generate Short Answer
+document.getElementById('generateSABtn').addEventListener('click', async function() {
+    const topic = document.getElementById('saTopic').value;
+    const materials = document.getElementById('saMaterials').value;
+    const numQuestions = document.getElementById('saNumQuestions').value;
+    
+    if (!topic) {
+        alert('Please enter a topic');
+        return;
+    }
+    
+    document.getElementById('saLoading').style.display = 'block';
+    document.getElementById('saPreview').style.display = 'none';
+    this.disabled = true;
+    
+    try {
+        const response = await fetch('/api/ai/short-answer', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                topic: topic,
+                teaching_materials: materials,
+                num_questions: parseInt(numQuestions)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        generatedSAData = data;
+        displaySAPreview(data);
+        
+        document.getElementById('saLoading').style.display = 'none';
+        document.getElementById('saPreview').style.display = 'block';
+        document.getElementById('saveSABtn').style.display = 'inline-block';
+        
+    } catch (error) {
+        alert('Error generating short answer questions: ' + error.message);
+    } finally {
+        this.disabled = false;
+        document.getElementById('saLoading').style.display = 'none';
+    }
+});
+
+// Display Short Answer Preview
+function displaySAPreview(data) {
+    let html = `
+        <div class="card">
+            <div class="card-body">
+                <h5>${data.name || 'Generated Short Answer Activity'}</h5>
+                <p class="text-muted">${data.description || ''}</p>
+                <hr>
+    `;
+    
+    data.questions.forEach((q, idx) => {
+        html += `
+            <div class="mb-3">
+                <strong>Q${idx + 1}. ${q.content}</strong> (${q.points} points)
+                <div class="ms-3 mt-2">
+                    <div class="small"><strong>Sample Answer:</strong> ${q.sample_answer || 'N/A'}</div>
+        `;
+        
+        if (q.grading_criteria) {
+            html += `<div class="small mt-1"><strong>Grading Criteria:</strong> ${q.grading_criteria}</div>`;
+        }
+        
+        html += `</div></div>`;
+    });
+    
+    html += `</div></div>`;
+    document.getElementById('saPreviewContent').innerHTML = html;
+}
+
+// Save Short Answer
+document.getElementById('saveSABtn').addEventListener('click', async function() {
+    if (!generatedSAData) return;
+    
+    this.disabled = true;
+    
+    try {
+        const response = await fetch('/api/ai/save-short-answer', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                course_code: '{{ course.code }}',
+                short_answer_data: generatedSAData
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Short answer questions saved successfully!');
+            window.location.href = '/teacher/course/{{ course.code }}';
+        } else {
+            alert('Error saving short answer questions: ' + result.error);
+        }
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        this.disabled = false;
+    }
+});
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+.btn-block {
+    width: 100%;
+}
+</style>
+{% endblock %}

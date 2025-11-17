@@ -1,0 +1,478 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}{{ poll.name }}{% endblock %}
+
+{% block main_content %}
+<style>
+    .poll-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        min-height: 100vh;
+    }
+
+    .poll-header {
+        margin-bottom: 20px;
+    }
+
+    .poll-header h1 {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .poll-description {
+        color: #666;
+        font-size: 1.05rem;
+        margin-bottom: 20px;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        margin-bottom: 30px;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .progress-label {
+        font-size: 0.95rem;
+        color: #666;
+        font-weight: 600;
+    }
+
+    .progress-counter {
+        font-size: 0.95rem;
+        color: #2196F3;
+        font-weight: 700;
+    }
+
+    .progress-bar-bg {
+        width: 100%;
+        height: 8px;
+        background-color: #e0e0e0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2196F3 0%, #1976D2 100%);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    /* Question Card */
+    .question-view {
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 400px);
+    }
+
+    .poll-question-card {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .question-number {
+        display: inline-block;
+        background: #2196F3;
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        width: fit-content;
+    }
+
+    .question-content {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    .poll-options {
+        list-style-type: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        flex: 1;
+    }
+
+    .poll-option {
+        padding: 15px 18px;
+        background-color: #f9f9f9;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .poll-option:hover {
+        background-color: #f0f8ff;
+        border-color: #2196F3;
+        box-shadow: 0 2px 6px rgba(33, 150, 243, 0.15);
+    }
+
+    .poll-option.selected {
+        background-color: #e3f2fd;
+        border-color: #2196F3;
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.25);
+    }
+
+    .option-text {
+        flex: 1;
+        color: #555;
+        font-weight: 500;
+        font-size: 1.05rem;
+    }
+
+    .option-count {
+        margin-left: 15px;
+        padding-left: 15px;
+        border-left: 1px solid #ddd;
+        color: #999;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+
+    .poll-option:hover .option-count {
+        color: #2196F3;
+    }
+
+    .option-count-number {
+        font-weight: 700;
+        color: #2196F3;
+    }
+
+    .saq-indicator {
+        padding: 15px 18px;
+        background-color: #e3f2fd;
+        border: 2px solid #90caf9;
+        border-radius: 6px;
+        color: #1565c0;
+        font-size: 1rem;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Navigation Buttons */
+    .navigation-buttons {
+        margin-top: 30px;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .nav-button-group {
+        display: flex;
+        gap: 12px;
+    }
+
+    button, a.btn {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-prev {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-prev:hover:not(:disabled) {
+        background-color: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .btn-prev:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-next {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .btn-next:hover:not(:disabled) {
+        background-color: #138496;
+        transform: translateY(-2px);
+    }
+
+    .btn-next:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-participate {
+        background-color: #2196F3;
+        color: white;
+    }
+
+    .btn-participate:hover {
+        background-color: #1976D2;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-closed {
+        background-color: #ccc;
+        color: #666;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .btn-back {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background-color: #5a6268;
+        transform: translateY(-2px);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .no-content {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+        font-size: 1.05rem;
+    }
+
+    @media (max-width: 768px) {
+        .poll-container {
+            padding: 15px;
+        }
+
+        .poll-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .poll-question-card {
+            padding: 20px;
+        }
+
+        .question-content {
+            font-size: 1.2rem;
+        }
+
+        .navigation-buttons {
+            flex-direction: column;
+        }
+
+        button, a.btn {
+            width: 100%;
+            text-align: center;
+        }
+
+        .nav-button-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .nav-button-group button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="poll-container">
+    {% if poll.questions %}
+        <div class="poll-header">
+            <h1>{{ poll.name }}</h1>
+            {% if poll.description %}
+                <p class="poll-description">{{ poll.description }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-info">
+                <span class="progress-label">Progress</span>
+                <span class="progress-counter">
+                    <span id="current-question">1</span> / <span id="total-questions">{{ poll.questions|length }}</span>
+                </span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Questions View -->
+        <div class="question-view" id="questions-container">
+            {% for question in poll.questions %}
+            <div class="poll-question-card" id="question-{{ loop.index0 }}" style="{% if loop.index0 != 0 %}display: none;{% endif %}">
+                <div class="question-number">Question {{ loop.index }} of {{ poll.questions|length }}</div>
+                <div class="question-content">{{ question.content }}</div>
+
+                {% if question.type == 'mcq' and question.choices %}
+                <ul class="poll-options">
+                    {% for choice in question.choices %}
+                    <li class="poll-option" onclick="selectOption(this)">
+                        <span class="option-text">{{ choice.content }}</span>
+                        <span class="option-count">
+                            <i class="fas fa-user"></i>
+                            <span class="option-count-number" data-choice-id="{{ choice.id }}">0</span>
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% elif question.type == 'saq' %}
+                <div class="saq-indicator">
+                    <i class="fas fa-comment-dots"></i> This is an open-ended question
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation-buttons">
+            <div class="nav-button-group">
+                <button class="btn btn-prev" id="btn-prev" onclick="previousQuestion()" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <button class="btn btn-next" id="btn-next" onclick="nextQuestion()">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="action-buttons">
+                {% if poll.can_attempt %}
+                    <a href="/course/{{ course.code }}/poll/{{ poll.id }}/start" class="btn btn-participate">
+                        <i class="fas fa-check-circle"></i> Participate
+                    </a>
+                {% else %}
+                    <button class="btn btn-closed" disabled>
+                        <i class="fas fa-lock"></i> Poll Closed
+                    </button>
+                {% endif %}
+                
+                <a href="/course/{{ course.code }}/poll" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <div class="no-content">
+            <p>No questions available for this poll.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+let currentQuestion = 0;
+const totalQuestions = {{ poll.questions|length }};
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgressBar();
+    updateNavigationButtons();
+    loadVoteCounts();
+});
+
+function nextQuestion() {
+    if (currentQuestion < totalQuestions - 1) {
+        hideQuestion(currentQuestion);
+        currentQuestion++;
+        showQuestion(currentQuestion);
+        updateProgressBar();
+        updateNavigationButtons();
+        window.scrollTo(0, 0);
+    }
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) {
+        hideQuestion(currentQuestion);
+        currentQuestion--;
+        showQuestion(currentQuestion);
+        updateProgressBar();
+        updateNavigationButtons();
+        window.scrollTo(0, 0);
+    }
+}
+
+function showQuestion(index) {
+    const question = document.getElementById('question-' + index);
+    if (question) {
+        question.style.display = 'flex';
+    }
+}
+
+function hideQuestion(index) {
+    const question = document.getElementById('question-' + index);
+    if (question) {
+        question.style.display = 'none';
+    }
+}
+
+function updateProgressBar() {
+    const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+    document.getElementById('current-question').textContent = currentQuestion + 1;
+}
+
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    
+    prevBtn.disabled = currentQuestion === 0;
+    nextBtn.disabled = currentQuestion === totalQuestions - 1;
+    
+    if (currentQuestion === totalQuestions - 1) {
+        nextBtn.innerHTML = '<i class="fas fa-check"></i> Done';
+        nextBtn.disabled = true;
+    } else {
+        nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+    }
+}
+
+function selectOption(element) {
+    const siblings = element.parentNode.querySelectorAll('.poll-option');
+    siblings.forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+}
+
+function loadVoteCounts() {
+    const countElements = document.querySelectorAll('.option-count-number');
+    countElements.forEach(el => {
+        el.textContent = '0';
+    });
+}
+</script>
+{% endblock %}

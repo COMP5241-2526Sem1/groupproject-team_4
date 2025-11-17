@@ -1,0 +1,527 @@
+{% extends "course_base.html" %}
+
+{% block title %}{{ word_cloud.name }} - Word Cloud{% endblock %}
+
+{% block styles %}
+<style>
+    .word-cloud-container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .word-cloud-display {
+        width: 100%;
+        min-height: 300px;
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        margin: 20px 0;
+        background: #f9f9f9;
+        transition: all 0.3s ease;
+    }
+    .word-cloud-word {
+        display: inline-block;
+        margin: 5px;
+        padding: 5px 10px;
+        border-radius: 4px;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .word-cloud-word:hover {
+        background: #0056b3;
+        transform: scale(1.1);
+    }
+    .word-input-area {
+        margin-top: 20px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    .word-input-area textarea {
+        width: 100%;
+        min-height: 100px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+    }
+    .btn-submit {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .btn-submit:hover {
+        background: #218838;
+    }
+    .btn-submit:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+    }
+    .stats {
+        margin: 10px 0;
+        padding: 15px;
+        background: #e9ecef;
+        border-radius: 4px;
+    }
+    .alert {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+    }
+    .alert-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+    }
+    .alert-info {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+    }
+    
+    /* Enhanced animations for word cloud */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.8) translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    .word-cloud-display span {
+        animation: fadeIn 0.6s ease-out forwards;
+        position: relative;
+    }
+    
+    .word-cloud-display span:hover {
+        animation: float 2s ease-in-out infinite;
+        z-index: 10;
+    }
+    
+    /* Clickable word indicator */
+    .word-cloud-display span {
+        cursor: pointer !important;
+        user-select: none;
+    }
+    
+    .word-cloud-display span:active {
+        transform: scale(0.95) !important;
+        transition: transform 0.1s ease !important;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="word-cloud-container">
+    <h1>{{ word_cloud.name }}</h1>
+    <p>{{ word_cloud.description }}</p>
+    
+    <div class="stats">
+        <strong>Statistics:</strong>
+        <span id="stats-text">Loading...</span>
+    </div>
+    
+    <div id="word-cloud-display" class="word-cloud-display">
+        <p style="color: #666;">Loading word cloud...</p>
+    </div>
+</div>
+
+{% if not is_available %}
+    <div class="alert alert-warning">
+        This word cloud is not currently available.
+    </div>
+{% else %}
+    <div id="submission-notice" class="alert" style="display: none;"></div>
+    <div class="word-input-area">
+        <h4>Submit Your Words</h4>
+        <p>Enter words separated by spaces, commas, or new lines (max 50 characters per word):</p>
+        <textarea id="word-input" placeholder="Enter your words here..." oninput="validateWordInput()"></textarea>
+        <div id="word-validation-message" style="color: #dc3545; font-size: 14px; margin-top: 5px; display: none;"></div>
+        <button id="submit-btn" class="btn-submit" onclick="submitWords()">Submit Words</button>
+    </div>
+{% endif %}
+
+<script>
+// Removed attempt tracking since multiple submissions are now allowed
+
+// Store previous data for comparison and ETag
+let previousWordData = null;
+let previousStats = null;
+let currentETag = null;
+
+// Load word cloud data with HTTP caching
+function loadWordCloudData() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    if (currentETag) {
+        headers['If-None-Match'] = currentETag;
+    }
+    
+    fetch('/api/word_cloud/{{ word_cloud.id }}/data', { 
+        method: 'GET',
+        headers: headers,
+        credentials: 'same-origin'  // Include cookies for authentication
+    })
+        .then(response => {
+            if (response.status === 304) {
+                // Not Modified - data hasn't changed, no need to update
+                console.log('Word cloud data unchanged (304 Not Modified)');
+                return null;
+            }
+            
+            if (response.status === 401 || response.status === 403) {
+                // Authentication issue - redirect to login
+                console.error('Authentication required, redirecting to login');
+                window.location.href = '/login';
+                return null;
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Store ETag for next request
+            currentETag = response.headers.get('ETag');
+            return response.json();
+        })
+        .then(data => {
+            if (!data) {
+                // 304 Not Modified - no changes
+                return;
+            }
+            
+            if (data.error) {
+                console.error('Error loading word cloud:', data.error);
+                document.getElementById('word-cloud-display').innerHTML = '<p style="color: red;">Error loading word cloud data: ' + data.error + '</p>';
+                return;
+            }
+            
+            // Check if data has actually changed (additional safety check)
+            const currentWordData = JSON.stringify(data.words);
+            const currentStats = data.total_words + ',' + data.total_submissions;
+            
+            if (currentWordData !== previousWordData || currentStats !== previousStats) {
+                // Data has changed, update the display
+                renderWordCloud(data.words);
+                document.getElementById('stats-text').textContent = 
+                    data.total_words + ' unique words, ' + data.total_submissions + ' total submissions';
+                
+                // Store the new data for next comparison
+                previousWordData = currentWordData;
+                previousStats = currentStats;
+            }
+            // If data hasn't changed, do nothing - no re-render needed
+        })
+        .catch(error => {
+            console.error('Error loading word cloud:', error);
+            document.getElementById('word-cloud-display').innerHTML = '<p style="color: red;">Error loading word cloud data</p>';
+        });
+}
+
+// Render word cloud
+function renderWordCloud(words) {
+    const container = document.getElementById('word-cloud-display');
+    
+    if (!words || words.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #6c757d; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif;"><div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">☁</div><div style="font-size: 18px; font-weight: 500; margin-bottom: 8px; color: #495057;">No words yet</div><div style="font-size: 14px; color: #868e96;">Be the first to contribute to this word cloud</div></div>';
+        return;
+    }
+    
+    // Sort words by frequency (highest first) for better visual hierarchy
+    words.sort((a, b) => b.frequency - a.frequency);
+    
+    // Sort words by frequency to place largest in center
+    const sortedWords = [...words].sort((a, b) => b.frequency - a.frequency);
+    
+    // Create a vibrant color palette with more variety
+    const vibrantColors = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', 
+        '#FF8E53', '#6C5CE7', '#A29BFE', '#FD79A8', '#FDCB6E', '#6C5CE7',
+        '#00B894', '#00CEC9', '#0984E3', '#6C5CE7', '#A29BFE', '#FD79A8',
+        '#E17055', '#00B894', '#00CEC9', '#74B9FF', '#A29BFE', '#FD79A8',
+        '#FF7675', '#74B9FF', '#00B894', '#00CEC9', '#0984E3', '#6C5CE7'
+    ];
+    
+    // Calculate container dimensions for positioning
+    const containerWidth = 800;
+    const containerHeight = 600;
+    const centerX = containerWidth / 2;
+    const centerY = containerHeight / 2;
+    
+    // Final solution: Dynamic spacing based on word dimensions
+    const placedWords = [];
+    const maxWords = 15; // Limit to ensure perfect spacing
+    
+    function calculateWordDimensions(word, fontSize) {
+        // Final conservative dimension estimation
+        const avgCharWidth = fontSize * 0.35; // Minimal character width
+        const wordWidth = Math.max(word.text.length * avgCharWidth, fontSize * 0.8);
+        const wordHeight = fontSize * 0.6; // Minimal height multiplier
+        return { width: wordWidth, height: wordHeight };
+    }
+    
+    function findValidPosition(word, fontSize, rotation) {
+        const wordIndex = placedWords.length;
+        const dimensions = calculateWordDimensions(word, fontSize);
+        
+        // Dynamic layout: adjust spacing based on word size
+        const baseSpacing = Math.max(dimensions.width, dimensions.height) + 80; // Dynamic spacing
+        
+        // Use a 3x5 layout for perfect spacing
+        const cols = 3;
+        const rows = 5;
+        const col = wordIndex % cols;
+        const row = Math.floor(wordIndex / cols);
+        
+        // Calculate available space
+        const availableWidth = containerWidth - 100;
+        const availableHeight = containerHeight - 100;
+        
+        // Dynamic spacing based on largest word so far
+        let maxWidth = dimensions.width;
+        let maxHeight = dimensions.height;
+        for (const placed of placedWords) {
+            maxWidth = Math.max(maxWidth, placed.width);
+            maxHeight = Math.max(maxHeight, placed.height);
+        }
+        
+        const dynamicColSpacing = Math.max(baseSpacing, maxWidth + 60);
+        const dynamicRowSpacing = Math.max(baseSpacing * 0.8, maxHeight + 40);
+        
+        // Calculate position with dynamic spacing
+        const totalWidth = (cols - 1) * dynamicColSpacing;
+        const totalHeight = (rows - 1) * dynamicRowSpacing;
+        
+        const startX = (containerWidth - totalWidth) / 2;
+        const startY = (containerHeight - totalHeight) / 2;
+        
+        let x = startX + col * dynamicColSpacing;
+        let y = startY + row * dynamicRowSpacing;
+        
+        // Minimal randomness
+        const randomOffset = 5;
+        x += (Math.random() - 0.5) * randomOffset;
+        y += (Math.random() - 0.5) * randomOffset;
+        
+        // Ensure within very conservative bounds
+        const margin = Math.max(dimensions.width, dimensions.height) / 2 + 50;
+        x = Math.max(margin, Math.min(containerWidth - margin, x));
+        y = Math.max(margin, Math.min(containerHeight - margin, y));
+        
+        return { x, y, width: dimensions.width, height: dimensions.height };
+    }
+    
+    // Limit words to prevent overcrowding
+    const limitedWords = sortedWords.slice(0, maxWords);
+    
+    let html = '';
+    limitedWords.forEach((word, index) => {
+        const fontSize = word.size; // Backend provides size from 14px to 120px based on frequency
+        
+        // Assign unique color to each word
+        const color = vibrantColors[index % vibrantColors.length];
+        
+        // Minimal rotation for better readability
+        const rotation = (index * 10) % 20 - 10; // Rotation between -10 and +10 degrees
+        
+        // Find valid position with collision detection
+        const position = findValidPosition(word, fontSize, rotation);
+        placedWords.push(position);
+        
+        // Font weights based on frequency
+        const weight = word.frequency > 20 ? '800' : word.frequency > 15 ? '700' : word.frequency > 8 ? '600' : word.frequency > 3 ? '500' : '400';
+        
+        // Dynamic word cloud with positioning
+        html += `<span style="
+            font-size: ${fontSize}px;
+            color: ${color};
+            font-weight: ${weight};
+            position: absolute;
+            left: ${position.x}px;
+            top: ${position.y}px;
+            transform: translate(-50%, -50%) rotate(${rotation}deg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            line-height: 1;
+            letter-spacing: -0.01em;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            z-index: ${word.frequency};
+            white-space: nowrap;
+        " onclick="addWordToInput('${word.text}')" onmouseover="this.style.transform='translate(-50%, -50%) scale(1.1) rotate(0deg)'; this.style.zIndex='100'; this.style.textShadow='0 2px 4px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translate(-50%, -50%) scale(1) rotate(${rotation}deg)'; this.style.zIndex='${word.frequency}'; this.style.textShadow='0 1px 2px rgba(0,0,0,0.1)';" title="${word.text} (${word.frequency} occurrences)">${word.text}</span>`;
+    });
+    
+    container.innerHTML = html;
+    container.style.position = 'relative';
+    container.style.width = containerWidth + 'px';
+    container.style.height = containerHeight + 'px';
+    container.style.margin = '0 auto';
+    container.style.background = '#f8f9fa';
+    container.style.borderRadius = '12px';
+    container.style.overflow = 'hidden';
+    container.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
+}
+
+// Update attempts display (placeholder - no attempts tracking needed)
+function updateAttemptsDisplay() {
+    // No attempts tracking needed since multiple submissions are allowed
+}
+
+// Add clicked word to the input box
+function addWordToInput(word) {
+    const wordInput = document.getElementById('word-input');
+    
+    // Clear the input box and add the clicked word
+    wordInput.value = word;
+    
+    // Trigger validation and focus on the input
+    validateWordInput();
+    wordInput.focus();
+    
+    // Add a brief visual feedback
+    wordInput.style.backgroundColor = '#e8f5e8';
+    setTimeout(() => {
+        wordInput.style.backgroundColor = '';
+    }, 300);
+}
+
+// Real-time validation of word input
+function validateWordInput() {
+    const wordInput = document.getElementById('word-input');
+    const validationMessage = document.getElementById('word-validation-message');
+    const words = wordInput.value.trim();
+    
+    if (!words) {
+        validationMessage.style.display = 'none';
+        return;
+    }
+    
+    const wordList = words.split(/[\s,\n]+/).filter(word => word.trim());
+    const longWords = wordList.filter(word => word.length > 50);
+    
+    if (longWords.length > 0) {
+        validationMessage.textContent = `Warning: ${longWords.length} word(s) exceed 50 characters`;
+        validationMessage.style.display = 'block';
+    } else {
+        validationMessage.style.display = 'none';
+    }
+}
+
+// Show notice message
+function showNotice(message, type = 'success') {
+    const notice = document.getElementById('submission-notice');
+    notice.textContent = message;
+    notice.style.display = 'block';
+    
+    // Set appropriate styling based on type
+    if (type === 'success') {
+        notice.className = 'alert alert-success';
+        notice.style.background = '#d4edda';
+        notice.style.border = '1px solid #c3e6cb';
+        notice.style.color = '#155724';
+    } else if (type === 'error') {
+        notice.className = 'alert alert-danger';
+        notice.style.background = '#f8d7da';
+        notice.style.border = '1px solid #f5c6cb';
+        notice.style.color = '#721c24';
+    }
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        notice.style.display = 'none';
+    }, 5000);
+}
+
+// Submit words
+function submitWords() {
+    const wordInput = document.getElementById('word-input');
+    const words = wordInput.value.trim();
+    
+    if (!words) {
+        showNotice('Please enter at least one word', 'error');
+        return;
+    }
+    
+    // Validate word length - database field is limited to 50 characters
+    const wordList = words.split(/[\s,\n]+/).filter(word => word.trim());
+    const longWords = wordList.filter(word => word.length > 50);
+    
+    if (longWords.length > 0) {
+        showNotice('Words cannot be longer than 50 characters. Please shorten these words: ' + longWords.join(', '), 'error');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Submitting...';
+    
+    fetch('/api/word_cloud/{{ word_cloud.id }}/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ words: words })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showNotice(data.error, 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Submit Words';
+        } else {
+            showNotice(data.message, 'success');
+            wordInput.value = '';
+            loadWordCloudData();
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Submit Words';
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting words:', error);
+        showNotice('Error submitting words. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Submit Words';
+    });
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadWordCloudData();
+    
+    // Auto-refresh every 1 second to show updates from other users
+    setInterval(loadWordCloudData, 1000);
+});
+</script>
+
+<style>
+#word-cloud span:hover {
+    z-index: 10;
+    position: relative;
+}
+</style>
+{% endblock %}

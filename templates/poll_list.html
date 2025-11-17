@@ -1,0 +1,51 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}Poll List - {{ course.name if course else 'Student Home' }}{% endblock %}
+
+{% block styles %}
+<style>
+.poll-completed {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+</style>
+{% endblock %}
+
+{% block main_content %}
+    <h1>Poll List</h1>
+    <p>Course: {{ course.name if course else 'Unknown Course' }}</p>
+    
+    {% if message %}
+    <div class="success-message">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
+
+   {% if polls %}
+    <div class="quiz-list">
+        {% for poll in polls %}
+            <a href="/course/{{ course.code }}/poll/{{ poll.id }}" class="poll-container-link">
+                <div class="quiz-container">
+                    <h3>{{ poll.name }}</h3>
+                    <p>Start Date: {{ poll.start_datetime.strftime('%Y-%m-%d %H:%M') if poll.start_datetime else 'N/A' }}</p>
+                    <p>End Date: {{ poll.end_datetime.strftime('%Y-%m-%d %H:%M') if poll.end_datetime else 'N/A' }}</p>
+                    <p>Used Attempts: {{ poll.used_attempts }}/{{ poll.max_attempts }}</p>
+                    {% if poll.can_attempt %}
+                    <span class="btn">View Poll</span>
+                    {% else %}
+                    <span class="poll-completed">Poll Completed</span>
+                    {% endif %}
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No polls available for this course.</p>
+    {% endif %}
+
+{% endblock %}

@@ -1,0 +1,538 @@
+{% extends 'teacher_course_base.html' %}
+
+{% block title %}Short Answer Results - {{ short_answer.name if short_answer else 'Results' }}{% endblock %}
+
+{% block course_content %}
+<div class="short-answer-results-container">
+    {% if error_message %}
+        <div class="error-container">
+            <h1>Error</h1>
+            <p>{{ error_message }}</p>
+            <button onclick="window.location.href='/teacher/course/{{ course.code }}/short-answer'">Back to Short Answer List</button>
+        </div>
+    {% else %}
+        <div class="results-header">
+            <h1>{{ short_answer.name }}</h1>
+            {% if short_answer.description %}
+                <p class="description">{{ short_answer.description }}</p>
+            {% endif %}
+        </div>
+
+        <div class="submissions-summary">
+            <div class="summary-stat">
+                <span class="label">Total Submissions:</span>
+                <span class="value" id="total-submissions">{{ submissions|length }}</span>
+            </div>
+        </div>
+
+        <div class="submissions-carousel">
+            {% if submissions and submissions|length > 0 %}
+                <div class="carousel-wrapper">
+                    <div class="submissions-view" id="submissions-view">
+                        {% for submission in submissions %}
+                            <div class="submission-slide" id="slide-{{ loop.index0 }}">
+                                <div class="slide-header">
+                                    <div class="student-info">
+                                        <strong>Student {{ loop.index }}</strong>
+                                        <span class="submission-time">Submitted: {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') if submission.submitted_at else 'N/A' }}</span>
+                                    </div>
+                                    {% if submission.total_score %}
+                                        <div class="score-badge">
+                                            <span class="score">{{ submission.total_score }}</span>
+                                            <span class="score-label">points</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="questions-responses">
+                                    {% for question in short_answer.questions %}
+                                        <div class="question-response-item">
+                                            <div class="question-text">
+                                                <strong>Q{{ loop.index }}: {{ question.content }}</strong>
+                                            </div>
+                                            <div class="student-answer">
+                                                {% set response = submission.QuestionResponse|selectattr('question_id', 'equalto', question.id)|first %}
+                                                {% if response %}
+                                                    <p>{{ response.text_answer or '<em>No answer provided</em>' }}</p>
+                                                    {% if response.points %}
+                                                        <span class="answer-points">Points: {{ response.points }}</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <p><em>No answer provided</em></p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Navigation Controls -->
+                    <div class="carousel-controls">
+                        <button class="nav-btn prev-btn" id="prev-btn" onclick="previousSlide()">
+                            Previous
+                        </button>
+                        <div class="progress-info">
+                            <span id="current-slide">1</span> / <span id="total-slides">{{ submissions|length }}</span>
+                        </div>
+                        <button class="nav-btn next-btn" id="next-btn" onclick="nextSlide()">
+                            Next
+                        </button>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="no-submissions">
+                    <p>No submissions yet for this activity.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="window.location.href='/teacher/course/{{ course.code }}/short-answer'">
+                Back to Short Answer List
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .short-answer-results-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .error-container {
+        background: #ffebee;
+        border: 1px solid #ef5350;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .error-container h1 {
+        color: #c62828;
+        margin-bottom: 10px;
+    }
+
+    .error-container button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #c62828;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .error-container button:hover {
+        background: #b71c1c;
+    }
+
+    .results-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .results-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 28px;
+    }
+
+    .results-header .description {
+        margin: 0;
+        font-size: 16px;
+        opacity: 0.95;
+    }
+
+    .submissions-summary {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: flex-start;
+        gap: 30px;
+    }
+
+    .summary-stat {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .summary-stat .label {
+        color: #666;
+        font-weight: 500;
+    }
+
+    .summary-stat .value {
+        color: #2196F3;
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    .submissions-carousel {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .carousel-wrapper {
+        position: relative;
+    }
+
+    .submissions-view {
+        position: relative;
+        height: 500px;
+        overflow: hidden;
+    }
+
+    .submission-slide {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        padding: 30px;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.5s ease-in-out;
+        overflow-y: auto;
+    }
+
+    .submission-slide.active {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .submission-slide.prev {
+        transform: translateX(-100%);
+    }
+
+    .slide-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+        margin-bottom: 20px;
+    }
+
+    .student-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .student-info strong {
+        color: #333;
+        font-size: 16px;
+    }
+
+    .submission-time {
+        color: #999;
+        font-size: 13px;
+    }
+
+    .score-badge {
+        background: #e8f5e9;
+        border: 2px solid #4caf50;
+        border-radius: 8px;
+        padding: 8px 16px;
+        text-align: center;
+    }
+
+    .score-badge .score {
+        display: block;
+        font-size: 24px;
+        font-weight: bold;
+        color: #2e7d32;
+    }
+
+    .score-badge .score-label {
+        display: block;
+        font-size: 12px;
+        color: #558b2f;
+    }
+
+    .questions-responses {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .question-response-item {
+        background: #f9f9f9;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        padding: 15px;
+    }
+
+    .question-text {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .question-text strong {
+        color: #2196F3;
+    }
+
+    .student-answer {
+        background: white;
+        border-left: 4px solid #2196F3;
+        padding: 12px;
+        border-radius: 4px;
+        margin-top: 8px;
+    }
+
+    .student-answer p {
+        margin: 0 0 8px 0;
+        color: #555;
+        line-height: 1.6;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .student-answer p:last-child {
+        margin-bottom: 0;
+    }
+
+    .answer-points {
+        display: inline-block;
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .no-submissions {
+        padding: 40px 20px;
+        text-align: center;
+        color: #999;
+    }
+
+    .carousel-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 30px;
+        background: #f5f5f5;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .nav-btn {
+        padding: 10px 16px;
+        border: none;
+        background: #2196F3;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.3s ease;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+        background: #1976d2;
+    }
+
+    .nav-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .nav-btn i {
+        font-size: 14px;
+    }
+
+    .progress-info {
+        color: #666;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .progress-bar-container {
+        height: 6px;
+        background: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin: 0;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transition: width 0.3s ease;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .short-answer-results-container {
+            padding: 15px;
+        }
+
+        .results-header {
+            padding: 20px;
+        }
+
+        .results-header h1 {
+            font-size: 22px;
+        }
+
+        .submission-slide {
+            padding: 20px;
+            height: 600px;
+        }
+
+        .carousel-controls {
+            padding: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .progress-info {
+            flex: 1 1 100%;
+            text-align: center;
+            order: 3;
+        }
+
+        .submissions-summary {
+            flex-direction: column;
+            gap: 15px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .submission-slide {
+            padding: 15px;
+            height: 700px;
+        }
+
+        .results-header h1 {
+            font-size: 18px;
+        }
+
+        .nav-btn {
+            padding: 6px 10px;
+            font-size: 11px;
+        }
+
+        .question-response-item {
+            padding: 12px;
+        }
+    }
+</style>
+
+<script>
+    let currentSlide = 0;
+    let totalSlides = 0;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all slides
+        const slides = document.querySelectorAll('.submission-slide');
+        totalSlides = slides.length;
+        
+        if (totalSlides > 0) {
+            document.getElementById('total-slides').textContent = totalSlides;
+            showSlide(0);
+        }
+    });
+
+    function showSlide(n) {
+        const slides = document.querySelectorAll('.submission-slide');
+        
+        if (n >= totalSlides) {
+            currentSlide = totalSlides - 1;
+        } else if (n < 0) {
+            currentSlide = 0;
+        } else {
+            currentSlide = n;
+        }
+
+        // Remove active class from all slides
+        slides.forEach(slide => {
+            slide.classList.remove('active', 'prev');
+        });
+
+        // Add active class to current slide
+        if (slides[currentSlide]) {
+            slides[currentSlide].classList.add('active');
+        }
+
+        // Update progress indicators
+        document.getElementById('current-slide').textContent = currentSlide + 1;
+        const progress = totalSlides > 0 ? ((currentSlide + 1) / totalSlides) * 100 : 0;
+        document.getElementById('progress-bar').style.width = progress + '%';
+
+        // Update button states
+        document.getElementById('prev-btn').disabled = currentSlide === 0;
+        document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
+    }
+
+    function nextSlide() {
+        showSlide(currentSlide + 1);
+    }
+
+    function previousSlide() {
+        showSlide(currentSlide - 1);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight') nextSlide();
+        if (e.key === 'ArrowLeft') previousSlide();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,350 @@
+{% extends 'course_base.html' %}
+
+{% block title %}Start {{ short_answer.name }} - Short Answer{% endblock %}
+
+{% block main_content %}
+<div class="short-answer-start-container">
+    <div class="short-answer-header">
+        <h1>{{ short_answer.name }}</h1>
+        <p class="description">{{ short_answer.description }}</p>
+    </div>
+
+    <div class="short-answer-form">
+        <form id="shortAnswerForm">
+            <div class="form-info">
+                <div class="info-badge">
+                    <i class="fas fa-clock"></i> {{ short_answer.duration }} minutes
+                </div>
+                <div class="info-badge">
+                    <i class="fas fa-star"></i> {{ short_answer.point }} points
+                </div>
+                <div class="info-badge">
+                    <i class="fas fa-list"></i> {{ short_answer.questions|length }} questions
+                </div>
+            </div>
+
+            {% if short_answer.questions %}
+                <div class="questions-container">
+                    {% for question in short_answer.questions %}
+                        <div class="question-block">
+                            <div class="question-header">
+                                <h3>Question {{ loop.index }} of {{ short_answer.questions|length }}</h3>
+                                <span class="question-points">{{ question.points }} points</span>
+                            </div>
+                            <p class="question-text">{{ question.content }}</p>
+                            <div class="form-group">
+                                <textarea 
+                                    id="answer_{{ question.id }}"
+                                    name="answer_{{ question.id }}"
+                                    class="form-control question-answer"
+                                    rows="6"
+                                    placeholder="Enter your answer here..."
+                                    data-question-id="{{ question.id }}">
+                                </textarea>
+                                <div class="char-count">
+                                    <span id="char_count_{{ question.id }}">0</span> / 5000 characters
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-questions-alert">
+                    <p>No questions available for this activity.</p>
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check"></i> Submit Answers
+                </button>
+                <a href="{{ url_for('short_answer.short_answer_detail', course_code=course.code, short_answer_id=short_answer.id) }}" 
+                   class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .short-answer-start-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .short-answer-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+
+    .short-answer-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 28px;
+    }
+
+    .short-answer-header .description {
+        margin: 0;
+        font-size: 16px;
+        opacity: 0.95;
+    }
+
+    .short-answer-form {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 30px;
+    }
+
+    .form-info {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .info-badge {
+        background: #f0f4f8;
+        border: 1px solid #e0e0e0;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .info-badge i {
+        color: #2196F3;
+        font-size: 16px;
+    }
+
+    .questions-container {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .question-block {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 20px;
+        background: #fafafa;
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .question-header h3 {
+        margin: 0;
+        color: #333;
+        font-size: 18px;
+    }
+
+    .question-points {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .question-text {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .question-answer {
+        padding: 12px;
+        border: 1px solid #d0d0d0;
+        border-radius: 6px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 14px;
+        resize: vertical;
+        transition: border-color 0.3s ease;
+    }
+
+    .question-answer:focus {
+        outline: none;
+        border-color: #2196F3;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    .char-count {
+        font-size: 12px;
+        color: #999;
+        margin-top: 6px;
+        text-align: right;
+    }
+
+    .no-questions-alert {
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 6px;
+        padding: 15px;
+        color: #856404;
+        text-align: center;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 28px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background: #2196F3;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1976d2;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (max-width: 768px) {
+        .short-answer-start-container {
+            padding: 15px;
+        }
+
+        .short-answer-header {
+            padding: 20px;
+        }
+
+        .short-answer-header h1 {
+            font-size: 22px;
+        }
+
+        .short-answer-form {
+            padding: 20px;
+        }
+
+        .form-info {
+            flex-direction: column;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    // Character counter for textareas
+    document.querySelectorAll('.question-answer').forEach(textarea => {
+        const questionId = textarea.dataset.questionId;
+        const countSpan = document.getElementById(`char_count_${questionId}`);
+        
+        textarea.addEventListener('input', function() {
+            countSpan.textContent = this.value.length;
+            if (this.value.length > 4500) {
+                countSpan.style.color = '#ff9800';
+            } else if (this.value.length > 4800) {
+                countSpan.style.color = '#f44336';
+            } else {
+                countSpan.style.color = '#999';
+            }
+        });
+    });
+
+    // Form submission
+    document.getElementById('shortAnswerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        
+        try {
+            // Collect all answers
+            const answers = [];
+            document.querySelectorAll('.question-answer').forEach(textarea => {
+                answers.push({
+                    question_id: parseInt(textarea.dataset.questionId),
+                    text_answer: textarea.value
+                });
+            });
+            
+            // Submit to server
+            const response = await fetch('{{ url_for("short_answer.short_answer_start", course_code=course.code, short_answer_id=short_answer.id) }}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({answers: answers})
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Your answers have been submitted successfully!');
+                window.location.href = '{{ url_for("short_answer.short_answer_detail", course_code=course.code, short_answer_id=short_answer.id) }}';
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error occurred'));
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Submit Answers';
+            }
+        } catch (error) {
+            alert('Error submitting answers: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Submit Answers';
+        }
+    });
+</script>
+{% endblock %}

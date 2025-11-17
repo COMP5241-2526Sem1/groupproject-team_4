@@ -1,0 +1,91 @@
+{% extends 'base_quiz.html' %}
+
+{% block title %}Start Quiz - {{ quiz.name }}{% endblock %}
+
+{% block quiz_scripts %}
+        // Simple validation before submitting
+        function validateQuizForm() {
+            const form = document.getElementById('quiz-form');
+            const questions = form.querySelectorAll('.question');
+            let isValid = true;
+            
+            questions.forEach(question => {
+                const questionType = question.dataset.type;
+                
+                if (questionType === 'mcq') {
+                    const selectedOption = question.querySelector('input[name^="question-"]:checked');
+                    if (!selectedOption) {
+                        isValid = false;
+                        // Highlight the question if not answered
+                        question.style.border = '2px solid #d32f2f';
+                    } else {
+                        question.style.border = 'none';
+                    }
+                } else if (questionType === 'saq') {
+                    const answerText = question.querySelector('textarea[name^="question-"]').value.trim();
+                    if (answerText === '') {
+                        isValid = false;
+                        // Highlight the question if not answered
+                        question.style.border = '2px solid #d32f2f';
+                    } else {
+                        question.style.border = 'none';
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                alert('Please answer all questions before submitting.');
+            }
+            
+            return isValid;
+        }
+{% endblock %}
+
+{% block main_content %}
+        {% if error_message %}
+        <div class="error-message">
+            {{ error_message }}
+        </div>
+        {% endif %}
+        
+        <div class="quiz-header">
+            <h1>{{ quiz.name }}</h1>
+            {% if quiz.description %}
+            <div class="quiz-description">{{ quiz.description }}</div>
+            {% endif %}
+            <div class="quiz-info">
+                <p>Question Count: {{ questions|length }}</p>
+                {% if quiz.used_attempts is defined %}
+                <p>Attempts Used: {{ quiz.used_attempts }} / {{ quiz.max_attempts }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <form id="quiz-form" action="/course/{{ course_id }}/quiz/{{ quiz.id }}/submit" method="POST" onsubmit="return validateQuizForm();">
+            {% for question in questions %}
+            <div class="question" data-type="{{ question.type }}">
+                <div class="question-number">Question {{ loop.index }} ({{ question.points }} point{% if question.points > 1 %}s{% endif %})</div>
+                <div class="question-content">{{ question.content }}</div>
+                
+                {% if question.type == 'mcq' %}
+                {% for choice in question.choices %}
+                <div class="choice">
+                    <label>
+                        <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}" required>
+                        {{ choice.content }}
+                    </label>
+                </div>
+                {% endfor %}
+                {% elif question.type == 'saq' %}
+                <div class="short-answer">
+                    <textarea name="question-{{ question.id }}" placeholder="Type your answer here..." required></textarea>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <div class="quiz-submit">
+                <button type="submit" class="submit-btn">Submit Quiz</button>
+            </div>
+        </form>
+{% endblock %}

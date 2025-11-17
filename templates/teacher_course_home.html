@@ -1,0 +1,116 @@
+{% extends 'teacher_course_base.html' %}
+{% block course_title %}{{ course.name if course else 'Course Home' }}{% endblock %}
+{% block styles %}
+<style>
+    .course-info {
+        margin-bottom: 20px;
+    }
+    .course-info h1 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .course-info p {
+        margin: 8px 0;
+        color: #666;
+    }
+    .course-actions {
+        margin-top: 20px;
+    }
+    .teacher-controls {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+    }
+    .teacher-controls h3 {
+        color: #8a1c32;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .control-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .control-btn {
+        padding: 10px 20px;
+        background: #8a1c32;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: background 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    .control-btn:hover {
+        background: #6e1728;
+    }
+    .control-btn.secondary {
+        background: #6c757d;
+    }
+    .control-btn.secondary:hover {
+        background: #5a6268;
+    }
+</style>
+{% endblock %}
+{% block main_content %}
+    {% if course %}
+    <div class="course-info">
+        <h1>{{ course.name }}</h1>
+        <p><strong>Description:</strong> {{ course.description }}</p>
+        <p><strong>Code:</strong> {{ course.code }}</p>
+        <p><strong>Teacher:</strong> {{ course.teacher.username }}</p>
+        <p><strong>Department:</strong> {{ course.department.name if course.department else 'N/A' }}</p>
+    </div>
+    {% endif %}
+
+    <div class="teacher-controls">
+        <h3>Teacher Controls</h3>
+        <div class="control-buttons">
+            <a href="/teacher/course/{{ course.code }}/quiz" class="control-btn">Manage Quizzes</a>
+            <a href="/teacher/course/{{ course.code }}/poll" class="control-btn">Manage Polls</a>
+            <a href="/teacher/course/{{ course.code }}/word_cloud" class="control-btn">Manage Word Clouds</a>
+            <a href="/teacher_course/{{ course.code }}/enrolled_list" class="control-btn">Manage Students</a>
+            <a href="/teacher_course/create" class="control-btn secondary">Create New Course</a>
+        </div>
+    </div>
+
+    <div class="course-actions">
+        <h2>Course Navigation</h2>
+        <p>Use the sidebar to navigate through different course sections:</p>
+        <ul>
+            <li><strong>Announcement:</strong> Post and manage course announcements</li>
+            <li><strong>Content:</strong> Manage course materials and resources</li>
+            <li><strong>Quiz:</strong> Create and manage quizzes</li>
+            <li><strong>Poll:</strong> Create and manage polls</li>
+            <li><strong>Word Cloud:</strong> Create interactive word cloud activities</li>
+            <li><strong>Grades:</strong> View and manage student grades</li>
+        </ul>
+    </div>
+
+    <script>
+        function loadAnnouncement() {
+            window.location.href = '/teacher_course/' + '{{ course.code }}';
+        }
+        function loadContent() {
+            window.location.href = '/teacher_course/' + '{{ course.code }}';
+        }
+        function loadQuiz() {
+            window.location.href = '/teacher/course/' + '{{ course.code }}' + '/quiz';
+        }
+        function loadPoll() {
+            window.location.href = '/teacher/course/' + '{{ course.code }}' + '/poll';
+        }
+        function loadWordCloud() {
+            window.location.href = '/teacher/course/' + '{{ course.code }}' + '/word_cloud';
+        }
+        function loadGrades() {
+            window.location.href = '/course/' + '{{ course.code }}' + '/quiz/grades';
+        }
+    </script>
+<div id="profile-section" class="section" style="display:none;"> </div>
+<div id="activity-section" class="section" style="display:none;"> </div>
+<div id="messages-section" class="section" style="display:none;"> </div>
+{% endblock %}

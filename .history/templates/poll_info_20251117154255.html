@@ -1,0 +1,356 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}{{ poll.name }}{% endblock %}
+
+{% block main_content %}
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.poll-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+.poll-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    color: white;
+    margin-bottom: 20px;
+}
+
+/* Poll Header */
+.poll-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.poll-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 18px;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.poll-question-number {
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0.9;
+    letter-spacing: 0.5px;
+}
+
+.favorite-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 18px;
+}
+
+.favorite-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* Question Section */
+.question-section {
+    padding: 30px 20px;
+}
+
+.question-title {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.question-box {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 28px;
+    word-break: break-word;
+}
+
+.options-title {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Options Section */
+.options-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.option-item {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.option-item:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateX(4px);
+}
+
+.option-content {
+    flex: 1;
+}
+
+.option-label {
+    font-size: 15px;
+    font-weight: 500;
+    display: block;
+    word-break: break-word;
+}
+
+.option-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+}
+
+.option-count i {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.count-number {
+    font-weight: 700;
+    font-size: 16px;
+    min-width: 24px;
+    text-align: right;
+}
+
+/* Action Section */
+.action-section {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.participate-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.25);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.participate-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.participate-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.participate-btn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.participate-btn i {
+    font-size: 18px;
+}
+
+/* No Content */
+.no-content {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .poll-container {
+        margin: 10px auto;
+        padding: 0 10px;
+    }
+
+    .poll-card {
+        border-radius: 12px;
+    }
+
+    .poll-header {
+        padding: 16px;
+    }
+
+    .question-section {
+        padding: 20px 16px;
+    }
+
+    .question-box {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .action-section {
+        padding: 16px;
+    }
+
+    .participate-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+}
+</style>
+
+<div class="poll-container">
+    {% if poll.questions %}
+        {% for question in poll.questions %}
+        <div class="poll-card">
+            <!-- Poll Header -->
+            <div class="poll-header">
+                <div class="poll-info">
+                    <button class="back-btn" onclick="window.location.href='/course/{{ course.code }}/poll'" title="返回">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span class="poll-question-number">第{{ loop.index }}题</span>
+                </div>
+                <button class="favorite-btn" title="收藏">
+                    <i class="fas fa-star"></i>
+                </button>
+            </div>
+
+            <!-- Question Title and Description -->
+            <div class="question-section">
+                <h2 class="question-title">标题：</h2>
+                <div class="question-box">{{ question.content }}</div>
+
+                {% if question.type == 'mcq' and question.choices %}
+                <h3 class="options-title">选项：</h3>
+                
+                <!-- Options List -->
+                <div class="options-section">
+                    {% for choice in question.choices %}
+                    <div class="option-item">
+                        <div class="option-content">
+                            <span class="option-label">{{ choice.content }}</span>
+                        </div>
+                        <div class="option-count">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="count-number" data-choice-id="{{ choice.id }}">0</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif question.type == 'saq' %}
+                <p style="font-size: 14px; opacity: 0.9; font-style: italic;">
+                    <i class="fas fa-pen-fancy"></i> 这是开放性问题
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Action Button -->
+            <div class="action-section">
+                {% if poll.can_attempt %}
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/start" class="participate-btn">
+                    <i class="fas fa-check-circle"></i>
+                    参加投票
+                </a>
+                {% else %}
+                <button class="participate-btn disabled" disabled>
+                    <i class="fas fa-lock"></i>
+                    投票已关闭
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-content">
+            <p>暂无问题</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load vote counts from backend
+    loadVoteCounts();
+});
+
+function loadVoteCounts() {
+    // TODO: Implement backend endpoint to fetch vote statistics
+    // For now, showing placeholder counts of 0
+    const countElements = document.querySelectorAll('.count-number');
+    countElements.forEach(el => {
+        // In production, fetch real data from backend
+        el.textContent = '0';
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,8 @@
+psycopg2==2.8.6
+flask
+flask_sqlalchemy
+werkzeug
+sqlalchemy
+pymysql
+python-dotenv
+openai>=2.0.0

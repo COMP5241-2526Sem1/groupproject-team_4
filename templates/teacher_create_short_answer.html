@@ -1,0 +1,214 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block course_title %}Create Short Answer Activity - {{ course.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #333;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .question-card {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: #f9f9f9;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .btn-primary {
+        background: #27ae60;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #219a52;
+    }
+    
+    .btn-secondary {
+        background: #7f8c8d;
+        color: white;
+    }
+    
+    .btn-danger {
+        background: #e74c3c;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="create-container">
+    <h2>Create Short Answer Activity</h2>
+    <p class="text-muted">Create questions that require detailed written responses</p>
+    
+    <form id="shortAnswerForm">
+        <div class="form-group">
+            <label for="name">Activity Name *</label>
+            <input type="text" id="name" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" class="form-control" rows="3"></textarea>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 form-group">
+                <label for="duration">Duration (minutes)</label>
+                <input type="number" id="duration" class="form-control" value="20" min="1">
+            </div>
+            
+            <div class="col-md-4 form-group">
+                <label for="attemptLimit">Attempt Limit</label>
+                <input type="number" id="attemptLimit" class="form-control" value="1" min="1">
+            </div>
+            
+            <div class="col-md-4 form-group">
+                <label for="points">Total Points</label>
+                <input type="number" id="points" class="form-control" value="100" min="0">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="startDate">Start Date/Time</label>
+                <input type="datetime-local" id="startDate" class="form-control">
+            </div>
+            
+            <div class="col-md-6 form-group">
+                <label for="endDate">End Date/Time</label>
+                <input type="datetime-local" id="endDate" class="form-control">
+            </div>
+        </div>
+        
+        <hr>
+        <h4>Questions</h4>
+        <div id="questionsContainer"></div>
+        
+        <button type="button" class="btn btn-secondary" onclick="addQuestion()">
+            <i class="fas fa-plus"></i> Add Question
+        </button>
+        
+        <hr>
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('short_answer.teacher_short_answer_list', course_code=course.code) }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Create Activity
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+let questionCount = 0;
+
+function addQuestion() {
+    questionCount++;
+    const container = document.getElementById('questionsContainer');
+    
+    const questionCard = document.createElement('div');
+    questionCard.className = 'question-card';
+    questionCard.innerHTML = `
+        <h5>Question ${questionCount}</h5>
+        <div class="form-group">
+            <label>Question Text *</label>
+            <textarea class="form-control question-content" rows="3" required></textarea>
+        </div>
+        <div class="form-group">
+            <label>Points</label>
+            <input type="number" class="form-control question-points" value="10" min="1">
+        </div>
+        <div class="form-group">
+            <label>Sample Answer (for grading reference)</label>
+            <textarea class="form-control question-sample" rows="2" placeholder="Optional: Expected answer or key points"></textarea>
+        </div>
+        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.question-card').remove()">
+            <i class="fas fa-trash"></i> Remove Question
+        </button>
+    `;
+    
+    container.appendChild(questionCard);
+}
+
+// Add first question by default
+addQuestion();
+
+document.getElementById('shortAnswerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const questions = [];
+    document.querySelectorAll('.question-card').forEach(card => {
+        questions.push({
+            content: card.querySelector('.question-content').value,
+            points: parseInt(card.querySelector('.question-points').value),
+            sample_answer: card.querySelector('.question-sample').value
+        });
+    });
+    
+    const data = {
+        name: document.getElementById('name').value,
+        description: document.getElementById('description').value,
+        duration: parseInt(document.getElementById('duration').value),
+        attempt_limit: parseInt(document.getElementById('attemptLimit').value),
+        point: parseInt(document.getElementById('points').value),
+        point_in_course: 0,
+        start_datetime: document.getElementById('startDate').value || null,
+        end_datetime: document.getElementById('endDate').value || null,
+        questions: questions
+    };
+    
+    try {
+        const response = await fetch('{{ url_for("short_answer.teacher_create_short_answer", course_code=course.code) }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Short answer activity created successfully!');
+            window.location.href = result.redirect;
+        } else {
+            alert('Error: ' + result.error);
+        }
+    } catch (error) {
+        alert('Error creating activity: ' + error.message);
+    }
+});
+</script>
+{% endblock %}

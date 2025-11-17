@@ -1,0 +1,361 @@
+{% extends 'teacher_course_specific_base.html' %}
+
+{% block title %}Short Answer Results - {{ short_answer.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 20px 0;
+    }
+    
+    .results-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .results-header h1 {
+        color: #8a1c32;
+        margin: 0 0 10px 0;
+    }
+    
+    .results-header p {
+        color: #666;
+        margin: 5px 0;
+    }
+    
+    .progress-bar {
+        background: #e0e0e0;
+        height: 8px;
+        border-radius: 4px;
+        margin: 20px 0;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        background: linear-gradient(90deg, #8a1c32, #c41e3a);
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .carousel-container {
+        position: relative;
+        background: #f9f9f9;
+        border-radius: 8px;
+        padding: 30px;
+        min-height: 400px;
+    }
+    
+    .submission-card {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .submission-card.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    .submission-header {
+        background: linear-gradient(135deg, #8a1c32, #c41e3a);
+        color: white;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .student-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .student-info-left h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+    
+    .student-info-right {
+        text-align: right;
+    }
+    
+    .submission-date {
+        font-size: 12px;
+        opacity: 0.9;
+        margin: 5px 0;
+    }
+    
+    .submission-score {
+        font-size: 20px;
+        font-weight: bold;
+    }
+    
+    .questions-section {
+        margin-top: 20px;
+    }
+    
+    .question-block {
+        background: white;
+        border-left: 4px solid #8a1c32;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+    }
+    
+    .question-content {
+        font-weight: bold;
+        color: #8a1c32;
+        margin-bottom: 10px;
+    }
+    
+    .answer-text {
+        background: #f5f5f5;
+        padding: 12px;
+        border-radius: 4px;
+        line-height: 1.6;
+        color: #333;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .answer-score {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    .btn-nav {
+        background: #8a1c32;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+    
+    .btn-nav:hover:not(:disabled) {
+        background: #c41e3a;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-nav:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+    
+    .back-button {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #8a1c32;
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.2s;
+    }
+    
+    .back-button:hover {
+        color: #c41e3a;
+    }
+    
+    .stats-box {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .stat-card {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 4px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #8a1c32;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<a href="{{ url_for('short_answer.teacher_short_answer_list', course_code=course.code) }}" class="back-button">
+    ← Back to Short Answer Activities
+</a>
+
+<div class="results-container">
+    <div class="results-header">
+        <h1>{{ short_answer.name }}</h1>
+        {% if short_answer.description %}
+            <p><strong>Description:</strong> {{ short_answer.description }}</p>
+        {% endif %}
+        
+        <div class="stats-box">
+            <div class="stat-card">
+                <div class="stat-number">{{ submissions|length }}</div>
+                <div class="stat-label">Total Submissions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ short_answer.questions|length }}</div>
+                <div class="stat-label">Questions</div>
+            </div>
+        </div>
+    </div>
+    
+    {% if submissions %}
+        <div class="progress-text">
+            Viewing submission <span id="current-submission">1</span> of <span id="total-submissions">{{ submissions|length }}</span>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        
+        <div class="carousel-container">
+            {% for submission in submissions %}
+            <div class="submission-card {% if loop.index0 == 0 %}active{% endif %}" data-index="{{ loop.index0 }}">
+                <div class="submission-header">
+                    <div class="student-info">
+                        <div class="student-info-left">
+                            <h3>Student Submission #{{ loop.index }}</h3>
+                        </div>
+                        <div class="student-info-right">
+                            <div class="submission-date">
+                                Submitted: {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M:%S') if submission.submitted_at else 'Unknown' }}
+                            </div>
+                            <div class="submission-score">
+                                Score: {{ submission.total_score or 0 }} pts
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="questions-section">
+                    {% for question in short_answer.questions %}
+                    {% set response = submission.QuestionResponse|selectattr('question_id', 'equalto', question.id)|first %}
+                    <div class="question-block">
+                        <div class="question-content">
+                            Q{{ loop.index }}: {{ question.content }}
+                        </div>
+                        {% if response and response.text_answer %}
+                            <div class="answer-text">{{ response.text_answer }}</div>
+                            <div class="answer-score">
+                                Points: {{ response.points or 0 }} / {{ question.points or 5 }}
+                            </div>
+                        {% else %}
+                            <div class="answer-text" style="color: #999; font-style: italic;">No answer provided</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="navigation-buttons">
+            <button class="btn-nav" id="prev-btn" onclick="previousSubmission()" disabled>
+                ← Previous
+            </button>
+            <button class="btn-nav" id="next-btn" onclick="nextSubmission()">
+                Next →
+            </button>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No submissions yet for this activity.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+let currentIndex = 0;
+const totalSubmissions = {{ submissions|length }};
+
+function updateDisplay() {
+    // Update progress
+    const progressPercent = ((currentIndex + 1) / totalSubmissions) * 100;
+    document.getElementById('progress-fill').style.width = progressPercent + '%';
+    
+    // Update text
+    document.getElementById('current-submission').textContent = currentIndex + 1;
+    
+    // Show/hide cards
+    document.querySelectorAll('.submission-card').forEach((card, index) => {
+        card.classList.toggle('active', index === currentIndex);
+    });
+    
+    // Update button states
+    document.getElementById('prev-btn').disabled = currentIndex === 0;
+    document.getElementById('next-btn').disabled = currentIndex === totalSubmissions - 1;
+}
+
+function nextSubmission() {
+    if (currentIndex < totalSubmissions - 1) {
+        currentIndex++;
+        updateDisplay();
+    }
+}
+
+function previousSubmission() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        updateDisplay();
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextSubmission();
+    if (e.key === 'ArrowLeft') previousSubmission();
+});
+
+// Initialize
+updateDisplay();
+</script>
+{% endblock %}

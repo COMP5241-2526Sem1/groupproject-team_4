@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Home{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .sidebar {
+        background: linear-gradient(180deg, #8a1c32 0%, #6b1526 100%);
+    }
+    
+    .sidebar .logo img {
+        filter: brightness(0) invert(1);
+    }
+    
+    .sidebar nav a {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar nav a::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: #fff;
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar nav a.active::before,
+    .sidebar nav a:hover::before {
+        transform: scaleY(1);
+    }
+    
+    .sidebar nav a i {
+        margin-right: 12px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .main-content {
+        background: #f8f9fa;
+    }
+    
+    h1 {
+        background: linear-gradient(135deg, #8a1c32 0%, #a62c43 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="/static/polyulogo.png" alt="PolyU Logo">
+            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
+        </div>
+        <nav>
+            <a href="/institution" class="active">
+                <i class="fas fa-home"></i> Institution Page
+            </a>
+            <div class="dropdown">
+                <a href="/course/my">
+                    <i class="fas fa-book"></i> My Course
+                </a>
+                <div class="dropdown-content" id="course-dropdown">
+                    <!-- Dynamically generate course options -->
+                </div>
+            </div>
+            <a href="/activity">
+                <i class="fas fa-clipboard-list"></i> Activity
+            </a>
+            <a href="/grades">
+                <i class="fas fa-chart-bar"></i> Grades
+            </a>
+            <a href="/assist">
+                <i class="fas fa-question-circle"></i> Assist
+            </a>
+            <a href="/course_registration">
+                <i class="fas fa-user-plus"></i> Course Registration
+            </a>
+            <a href="/profile">
+                <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="/logout" style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </a>
+        </nav>
+    </aside>
+    <main class="main-content">
+        <h1>Welcome to Student Home</h1>
+        <div id="institution-section" class="section"> </div>
+        <div id="profile-section" class="section" style="display:none;"> </div>
+        <div id="activity-section" class="section" style="display:none;"> </div>
+        <div id="courses-section" class="section" style="display:none;">
+            <div style="display:flex;gap:32px;margin-bottom:32px;">
+                <button id="tab-add" class="course-tab-btn active" onclick="showCourseTab('add')">Add Courses</button>
+        <button id="tab-table" class="course-tab-btn" onclick="showCourseTab('table')">View Schedule</button>
+            </div>
+            <div id="add-course-area">
+                <h2 style="color:#8a1c32;">Available Courses</h2>
+                <div id="available-courses">Loading...</div>
+            </div>
+            <div id="table-course-area" style="display:none;">
+                <h2 style="color:#8a1c32;">My Courses</h2>
+                <div id="my-courses">Loading...</div>
+            </div>
+            <div id="course-msg" style="margin-top:24px;color:#d81e06;font-size:1.1rem;"></div>
+        </div>
+        <div id="calendar-section" class="section" style="display:none;"> </div>
+        <div id="messages-section" class="section" style="display:none;"> </div>
+        <div id="grades-section" class="section" style="display:none;"> </div>
+        <div id="assist-section" class="section" style="display:none;"> </div>
+        <div id="tools-section" class="section" style="display:none;"> </div>
+    </main>
+</div>
+<script>
+    // Navigation is now handled through URL-based routing instead of JavaScript
+</script>
+<script>
+        // Dynamically generate course dropdown menu
+        function populateCourseDropdown() {
+            fetch('/course/my')
+                .then(response => response.json())
+                .then(courses => {
+                    const dropdown = document.getElementById('course-dropdown');
+                    dropdown.innerHTML = '';
+                    courses.forEach(course => {
+                        const link = document.createElement('a');
+                        link.href = `/course/${course.code}`;
+                        link.textContent = course.name;
+                        dropdown.appendChild(link);
+                    });
+                })
+                .catch(error => console.error('Error loading courses:', error));
+        }
+
+        // Call after page loads
+        document.addEventListener('DOMContentLoaded', populateCourseDropdown);
+    </script>
+{% endblock %}

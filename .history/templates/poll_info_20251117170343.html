@@ -1,0 +1,283 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}Poll - {{ poll.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .poll-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin: 20px 0;
+    }
+    
+    .poll-header {
+        background: linear-gradient(135deg, #8a1c32, #c41e3a);
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .poll-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 28px;
+    }
+    
+    .poll-header p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    
+    .poll-content {
+        padding: 40px;
+    }
+    
+    .progress-bar {
+        background: #e0e0e0;
+        height: 8px;
+        border-radius: 4px;
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        background: linear-gradient(90deg, #8a1c32, #c41e3a);
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .question-container {
+        min-height: 300px;
+    }
+    
+    .question-text {
+        font-size: 18px;
+        font-weight: bold;
+        color: #8a1c32;
+        margin-bottom: 30px;
+    }
+    
+    .choice-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .choice-item {
+        margin-bottom: 15px;
+    }
+    
+    .choice-button {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        font-size: 16px;
+        text-align: left;
+        transition: all 0.2s;
+    }
+    
+    .choice-button:hover {
+        border-color: #8a1c32;
+        background: #f9f9f9;
+    }
+    
+    .choice-button.selected {
+        border-color: #8a1c32;
+        background: #f0f5ff;
+        font-weight: bold;
+    }
+    
+    .vote-count {
+        float: right;
+        color: #999;
+        font-size: 12px;
+    }
+    
+    .navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn-nav {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+        font-size: 14px;
+    }
+    
+    .btn-prev {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-prev:hover:not(:disabled) {
+        background: #5a6268;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-next {
+        background: #8a1c32;
+        color: white;
+    }
+    
+    .btn-next:hover:not(:disabled) {
+        background: #c41e3a;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-nav:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .btn-back {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-back:hover {
+        background: #5a6268;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="poll-container">
+    <div class="poll-header">
+        <h1>{{ poll.name }}</h1>
+        {% if poll.description %}
+            <p>{{ poll.description }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="poll-content">
+        {% if poll.questions %}
+            <div class="progress-text">
+                Question <span id="current-q">1</span> of <span id="total-q">{{ poll.questions|length }}</span>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress" style="width: 0%"></div>
+            </div>
+            
+            <div class="question-container" id="question-container">
+                <!-- Questions will be inserted here by JavaScript -->
+            </div>
+            
+            <div class="navigation">
+                <button class="btn-nav btn-prev" id="prev-btn" onclick="previousQuestion()" disabled>← Previous</button>
+                <button class="btn-nav btn-next" id="next-btn" onclick="nextQuestion()">Next →</button>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn-nav btn-back" onclick="window.location.href='/course/{{ course.code }}/poll'">Back to List</button>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 40px;">
+                <p>No questions available for this poll.</p>
+                <button class="btn-nav btn-back" onclick="window.location.href='/course/{{ course.code }}/poll'">Back to List</button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const questions = {{ poll.questions|tojson|safe }};
+let currentIndex = 0;
+
+function renderQuestion() {
+    const q = questions[currentIndex];
+    const container = document.getElementById('question-container');
+    
+    let html = '<div class="question-text">' + q.content + '</div>';
+    html += '<ul class="choice-list">';
+    
+    if (q.choices) {
+        q.choices.forEach(choice => {
+            const selected = choice.is_selected ? ' selected' : '';
+            const count = choice.votes || 0;
+            html += '<li class="choice-item">';
+            html += '<button type="button" class="choice-button' + selected + '" onclick="selectChoice(' + currentIndex + ', ' + choice.id + ')">';
+            html += choice.content + '<span class="vote-count">(' + count + ' votes)</span>';
+            html += '</button></li>';
+        });
+    }
+    
+    html += '</ul>';
+    container.innerHTML = html;
+    
+    // Update progress
+    const progress = ((currentIndex + 1) / questions.length) * 100;
+    document.getElementById('progress').style.width = progress + '%';
+    document.getElementById('current-q').textContent = currentIndex + 1;
+    
+    // Update buttons
+    document.getElementById('prev-btn').disabled = currentIndex === 0;
+    document.getElementById('next-btn').disabled = currentIndex === questions.length - 1;
+}
+
+function selectChoice(questionIndex, choiceId) {
+    questions[questionIndex].choices.forEach(c => c.is_selected = false);
+    const choice = questions[questionIndex].choices.find(c => c.id === choiceId);
+    if (choice) {
+        choice.is_selected = true;
+        choice.votes = (choice.votes || 0) + 1;
+        
+        // Send vote to server
+        fetch('/api/poll/vote', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({poll_id: {{ poll.id }}, question_id: questions[questionIndex].id, choice_id: choiceId})
+        });
+        
+        renderQuestion();
+    }
+}
+
+function nextQuestion() {
+    if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+    }
+}
+
+function previousQuestion() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextQuestion();
+    if (e.key === 'ArrowLeft') previousQuestion();
+});
+
+// Initial render
+renderQuestion();
+</script>
+{% endblock %}

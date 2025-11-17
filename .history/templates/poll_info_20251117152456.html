@@ -1,0 +1,488 @@
+{% extends 'poll_base.html' %}
+
+{% block title %}Poll - {{ poll.name }}{% endblock %}
+
+{% block main_content %}
+<div class="poll-detail-container">
+    <!-- Poll Header -->
+    <div class="poll-header">
+        <div class="poll-header-content">
+            <h1 class="poll-title">{{ poll.name }}</h1>
+            {% if poll.description %}
+                <p class="poll-description">{{ poll.description }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Poll Status Card -->
+        <div class="poll-status-card">
+            <div class="status-item">
+                <span class="status-label">Status</span>
+                <span class="status-value">
+                    {% if poll.can_attempt %}
+                        <span class="badge badge-open">Open</span>
+                    {% else %}
+                        <span class="badge badge-closed">Closed</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Your Attempts</span>
+                <span class="status-value">
+                    {{ poll.used_attempts }}
+                    {% if poll.max_attempts > 0 %}
+                        / {{ poll.max_attempts }}
+                    {% else %}
+                        / Unlimited
+                    {% endif %}
+                </span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Duration</span>
+                <span class="status-value"><i class="fas fa-clock"></i> {{ poll.start_datetime.strftime('%H:%M') if poll.start_datetime else 'No time limit' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Poll Info Section -->
+    <div class="poll-info-section">
+        <h3 class="section-title"><i class="fas fa-info-circle"></i> Poll Information</h3>
+        <div class="info-grid">
+            <div class="info-card">
+                <h4>Total Questions</h4>
+                <p class="info-value">{{ poll.questions|length }}</p>
+            </div>
+            <div class="info-card">
+                <h4>Question Types</h4>
+                <p class="info-value">
+                    {% set mcq_count = poll.questions|selectattr('type', 'equalto', 'mcq')|list|length %}
+                    {% set saq_count = poll.questions|selectattr('type', 'equalto', 'saq')|list|length %}
+                    {% if mcq_count > 0 %}<span class="tag mcq-tag">MCQ: {{ mcq_count }}</span>{% endif %}
+                    {% if saq_count > 0 %}<span class="tag saq-tag">SAQ: {{ saq_count }}</span>{% endif %}
+                </p>
+            </div>
+            <div class="info-card">
+                <h4>Poll Type</h4>
+                <p class="info-value"><span class="badge badge-poll">Opinion Poll</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Preview Section -->
+    <div class="questions-preview-section">
+        <h3 class="section-title"><i class="fas fa-list"></i> Questions Preview</h3>
+        <div class="questions-list">
+            {% for question in poll.questions %}
+            <div class="question-preview">
+                <div class="question-header">
+                    <span class="question-number">Q{{ loop.index }}</span>
+                    <span class="question-type-badge">
+                        {% if question.type == 'mcq' %}
+                            <span class="badge badge-mcq">Multiple Choice</span>
+                        {% else %}
+                            <span class="badge badge-saq">Short Answer</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="question-content">{{ question.content }}</p>
+                
+                {% if question.type == 'mcq' and question.choices %}
+                <div class="choices-preview">
+                    {% for choice in question.choices %}
+                    <div class="choice-item">
+                        <i class="fas fa-circle"></i> {{ choice.content }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif question.type == 'saq' %}
+                <div class="saq-preview">
+                    <i class="fas fa-pen"></i> <em>Open-ended response question</em>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Action Buttons Section -->
+    <div class="poll-actions-section">
+        {% if poll.used_attempts > 0 %}
+            <!-- Already participated -->
+            <div class="action-buttons">
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/results" class="btn btn-primary btn-lg">
+                    <i class="fas fa-chart-bar"></i> View Results
+                </a>
+                {% if poll.can_attempt %}
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/start" class="btn btn-success btn-lg">
+                    <i class="fas fa-play"></i> Retake Poll
+                </a>
+                {% endif %}
+            </div>
+            <p class="help-text">You have already participated in this poll. You can view the results or retake it if attempts remain.</p>
+        {% else %}
+            <!-- Not yet participated -->
+            <div class="action-buttons">
+                {% if poll.can_attempt %}
+                <a href="/course/{{ course.code }}/poll/{{ poll.id }}/start" class="btn btn-success btn-lg">
+                    <i class="fas fa-play"></i> Start Poll
+                </a>
+                {% else %}
+                <button class="btn btn-danger btn-lg" disabled>
+                    <i class="fas fa-lock"></i> Poll Closed
+                </button>
+                {% endif %}
+            </div>
+            {% if not poll.can_attempt %}
+            <p class="help-text warning">This poll has reached its attempt limit or is no longer available.</p>
+            {% else %}
+            <p class="help-text">Click the button above to begin the poll. Your response will be recorded and you can view results after submission.</p>
+            {% endif %}
+        {% endif %}
+
+        <a href="/course/{{ course.code }}/poll" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Back to Poll List
+        </a>
+    </div>
+</div>
+
+<style>
+.poll-detail-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.poll-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+}
+
+.poll-header-content {
+    margin-bottom: 20px;
+}
+
+.poll-title {
+    font-size: 2.5rem;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.poll-description {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    margin: 0;
+}
+
+.poll-status-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.status-item {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.status-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-open {
+    background-color: #4caf50;
+    color: white;
+}
+
+.badge-closed {
+    background-color: #f44336;
+    color: white;
+}
+
+.badge-poll {
+    background-color: #2196f3;
+    color: white;
+}
+
+.badge-mcq {
+    background-color: #ff9800;
+    color: white;
+}
+
+.badge-saq {
+    background-color: #9c27b0;
+    color: white;
+}
+
+.section-title {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.poll-info-section {
+    margin-bottom: 30px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.info-card h4 {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.tag {
+    display: inline-block;
+    padding: 4px 10px;
+    margin-right: 5px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.mcq-tag {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.saq-tag {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.questions-preview-section {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.question-preview {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.question-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.question-number {
+    background: #667eea;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.question-type-badge {
+    display: inline-block;
+}
+
+.question-content {
+    margin: 10px 0;
+    font-size: 1rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.choices-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+}
+
+.choice-item {
+    padding: 8px;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.saq-preview {
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+    color: #666;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+.poll-actions-section {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
+    color: white;
+}
+
+.btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.btn-lg {
+    padding: 15px 35px;
+    font-size: 1.1rem;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.help-text {
+    color: #666;
+    font-size: 0.95rem;
+    margin: 15px 0 0 0;
+}
+
+.help-text.warning {
+    color: #f44336;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .poll-header {
+        padding: 25px;
+    }
+
+    .poll-title {
+        font-size: 1.8rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .poll-status-card {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

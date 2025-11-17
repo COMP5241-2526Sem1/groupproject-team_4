@@ -1,0 +1,285 @@
+﻿{% extends 'teacher_course_specific_base.html' %}
+
+{% block title %}AI Generate - {{ short_answer.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ai-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .ai-modal-content {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 30px;
+    }
+    
+    .ai-modal-header {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .ai-modal-header h2 {
+        margin: 0;
+        color: #8a1c32;
+        font-size: 20px;
+    }
+    
+    .ai-modal-close {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #999;
+    }
+    
+    .ai-modal-close:hover {
+        color: #333;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-label .required {
+        color: #e74c3c;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #8a1c32;
+        box-shadow: 0 0 0 3px rgba(138, 28, 50, 0.1);
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+    }
+    
+    .form-help {
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+    }
+    
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn-modal {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    
+    .btn-generate {
+        background: #27ae60;
+        color: white;
+    }
+    
+    .btn-generate:hover:not(:disabled) {
+        background: #219a52;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .btn-generate:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #ccc;
+        border-top-color: #27ae60;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-right: 8px;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+        background: #f8d7da;
+        border-left: 4px solid #e74c3c;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .success-message {
+        background: #d4edda;
+        border-left: 4px solid #27ae60;
+        color: #155724;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block course_content %}
+<div class="ai-modal" id="ai-modal">
+    <div class="ai-modal-content" style="position: relative;">
+        <button class="ai-modal-close" onclick="window.history.back()"></button>
+        
+        <div class="ai-modal-header">
+            <h2> AI Question Generator</h2>
+            <p>Generate questions for: <strong>{{ short_answer.name }}</strong></p>
+        </div>
+        
+        <form id="ai-form">
+            <div class="form-group">
+                <label class="form-label">
+                    Topic <span class="required">*</span>
+                </label>
+                <input type="text" class="form-control" id="topic" name="topic" required
+                       placeholder="e.g., Photosynthesis, Quantum Mechanics, French Revolution">
+                <div class="form-help">Enter the subject or topic for the questions</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    Number of Questions
+                </label>
+                <input type="number" class="form-control" id="num_questions" name="num_questions" 
+                       value="3" min="1" max="10">
+                <div class="form-help">How many questions to generate (1-10)</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    Difficulty Level
+                </label>
+                <select class="form-control" id="difficulty" name="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    Teaching Materials / Context (Optional)
+                </label>
+                <textarea class="form-control" id="teaching_materials" name="teaching_materials"
+                          placeholder="Paste any relevant course materials, lecture notes, or context to help the AI generate more appropriate questions..."></textarea>
+                <div class="form-help">Provide context to help generate more relevant questions</div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button type="submit" class="btn-modal btn-generate" id="generate-btn">
+                    Generate Questions
+                </button>
+                <button type="button" class="btn-modal btn-cancel" onclick="window.history.back()">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('ai-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const topic = document.getElementById('topic').value;
+    if (!topic.trim()) {
+        alert('Please enter a topic');
+        return;
+    }
+    
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span>Generating...';
+    
+    try {
+        const response = await fetch('/api/ai/short-answer', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                short_answer_id: {{ short_answer.id }},
+                topic: topic,
+                num_questions: parseInt(document.getElementById('num_questions').value),
+                difficulty: document.getElementById('difficulty').value,
+                teaching_materials: document.getElementById('teaching_materials').value
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Questions generated successfully!');
+            window.location.href = '/teacher/course/{{ course.code }}/short-answer/{{ short_answer.id }}/edit';
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Questions';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error generating questions');
+        btn.disabled = false;
+        btn.innerHTML = 'Generate Questions';
+    }
+});
+</script>
+{% endblock %}

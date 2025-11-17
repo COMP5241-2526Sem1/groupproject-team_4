@@ -1,0 +1,192 @@
+{% extends 'course_base.html' %}
+
+{% block title %}{{ course.name if course else 'Course Home' }}{% endblock %}
+
+{% block sidebar_links %}
+<a href="/course/{{ course.code if course and course.code else course_code or '' }}">Course Home</a>
+    <a href="/course/{{ course.code if course and course.code else course_code or '' }}/quiz">Quiz List</a>
+<a href="/logout">Sign Out</a>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Quiz-specific styles */
+    .quiz-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .quiz-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        color: #333;
+    }
+    .question-container {
+        margin-bottom: 25px;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+    }
+    .question-text {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        font-weight: 500;
+    }
+    .question-options {
+        list-style-type: none;
+        padding: 0;
+    }
+    .question-option {
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .question-option:hover {
+        background-color: #f0f0f0;
+        border-color: #ccc;
+    }
+    .question-option.selected {
+        background-color: #e8f5e9;
+        border-color: #4caf50;
+    }
+    .quiz-navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    .quiz-button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+    }
+    .quiz-button:hover {
+        background-color: #388e3c;
+    }
+    .quiz-button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .previous-button {
+        background-color: #757575;
+    }
+    .previous-button:hover {
+        background-color: #616161;
+    }
+    .question-counter {
+        text-align: center;
+        margin-bottom: 15px;
+        color: #666;
+    }
+    .quiz-results {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #e8f5e9;
+        border-radius: 6px;
+    }
+    
+    /* Quiz List Styles */
+    .quiz-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .quiz-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 1px solid #ddd;
+    }
+    
+    .quiz-item:hover {
+        background-color: #f5f8fa;
+        border-color: #2196F3;
+        box-shadow: 0 4px 8px rgba(33, 150, 243, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .quiz-item:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(33, 150, 243, 0.15);
+    }
+    
+    .quiz-item-completed {
+        background-color: #f8fff8;
+        border-color: #c8e6c9;
+    }
+    
+    .quiz-item-content {
+        flex: 1;
+    }
+    
+    .quiz-item-content h3 {
+        margin-top: 0;
+        margin-bottom: 8px;
+        color: #333;
+        font-size: 1.2em;
+    }
+    
+    .quiz-item-content p {
+        margin: 4px 0;
+        color: #666;
+        font-size: 0.95em;
+    }
+    
+    .quiz-item-action {
+        margin-left: 20px;
+    }
+    
+    .quiz-item-action .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #2196F3;
+        color: white;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: background-color 0.3s;
+    }
+    
+    .quiz-item-action .btn:hover {
+        background-color: #1976D2;
+    }
+    
+    .quiz-completed {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Common quiz-related scripts
+    {% block quiz_scripts %}{% endblock %}
+</script>
+{% endblock %}
