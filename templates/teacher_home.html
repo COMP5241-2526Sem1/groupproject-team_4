@@ -2,27 +2,103 @@
 
 {% block title %}Dashboard{% endblock %}
 
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .sidebar {
+        background: linear-gradient(180deg, #8a1c32 0%, #6b1526 100%);
+    }
+    
+    .sidebar .logo img {
+        filter: brightness(0) invert(1);
+    }
+    
+    .sidebar nav a {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar nav a::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: #fff;
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar nav a.active::before,
+    .sidebar nav a:hover::before {
+        transform: scaleY(1);
+    }
+    
+    .sidebar nav a i {
+        margin-right: 12px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .main-content {
+        background: #f8f9fa;
+    }
+    
+    .data-table {
+        background: white;
+    }
+    
+    #create-course-btn {
+        background: linear-gradient(135deg, #8a1c32 0%, #a62c43 100%);
+        box-shadow: 0 4px 12px rgba(138, 28, 50, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    #create-course-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(138, 28, 50, 0.4);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <aside class="sidebar">
         <div class="logo">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <img src="/static/polyulogo.png" alt="PolyU Logo">
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
-            <a href="/teacher_home" class="active">Dashboard</a>
+            <a href="/teacher_home" class="active">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
             <div class="dropdown">
-                <a href="/teacher_course_list">My Courses</a>
+                <a href="/teacher_course_list">
+                    <i class="fas fa-book"></i> My Courses
+                </a>
                 <div class="dropdown-content" id="course-dropdown">
                     <!-- Dynamically generate course options -->
                 </div>
             </div>
-            <a href="/activity">Activity</a>
-            <a href="/grades">Grades</a>
-            <a href="/assist">Assist</a>
-            <a href="/teacher_course/create">Create Course</a>
-            <a href="/profile">Profile</a>
-            <a href="/logout">Sign Out</a>
+            <a href="/activity">
+                <i class="fas fa-clipboard-list"></i> Activity
+            </a>
+            <a href="/grades">
+                <i class="fas fa-chart-bar"></i> Grades
+            </a>
+            <a href="/assist">
+                <i class="fas fa-question-circle"></i> Assist
+            </a>
+            <a href="/teacher_course/create">
+                <i class="fas fa-plus-circle"></i> Create Course
+            </a>
+            <a href="/profile">
+                <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="/logout" style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </a>
         </nav>
     </aside>
     <main class="main-content">

@@ -3,58 +3,125 @@
 {% block title %}Course Registration{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
     .course-tab-btn {
-        padding: 12px 24px;
+        padding: 14px 32px;
         border: 2px solid #8a1c32;
         background: white;
         color: #8a1c32;
-        border-radius: 6px;
+        border-radius: 10px;
         cursor: pointer;
-        font-weight: bold;
+        font-weight: 600;
+        font-size: 1rem;
         transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .course-tab-btn:hover {
         background: #8a1c32;
         color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(138, 28, 50, 0.2);
     }
     .course-tab-btn.active {
-        background: #8a1c32;
+        background: linear-gradient(135deg, #8a1c32 0%, #a62c43 100%);
         color: white;
+        box-shadow: 0 4px 16px rgba(138, 28, 50, 0.3);
     }
     .course-item {
         background: white;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: box-shadow 0.2s ease;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #8a1c32;
     }
     .course-item:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateX(4px);
+    }
+    .course-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .course-info b {
+        font-size: 1.3rem;
+        color: #8a1c32;
+    }
+    .course-desc {
+        color: #666;
+        font-size: 0.95rem;
+    }
+    .course-meta {
+        display: flex;
+        gap: 20px;
+        margin-top: 8px;
+        font-size: 0.9rem;
+        color: #777;
+    }
+    .course-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
     .course-add-btn {
-        background: #8a1c32;
+        background: linear-gradient(135deg, #8a1c32 0%, #a62c43 100%);
         color: white;
         border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
+        padding: 10px 24px;
+        border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.2s ease;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(138, 28, 50, 0.2);
     }
     .course-add-btn:hover:not(:disabled) {
-        background: #6a1528;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(138, 28, 50, 0.3);
     }
     .course-add-btn:disabled {
         cursor: not-allowed;
-        opacity: 0.6;
+        opacity: 0.5;
+        background: #ccc;
     }
     #course-msg {
         margin-top: 24px;
-        font-size: 1.1rem;
+        padding: 16px;
+        border-radius: 8px;
+        font-size: 1rem;
+        text-align: center;
+    }
+    #course-msg.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    #course-msg.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
     }
     #available-courses, #my-courses {
         min-height: 200px;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 2px dashed #dee2e6;
+    }
+    .empty-state i {
+        font-size: 64px;
+        color: #adb5bd;
+        margin-bottom: 20px;
+        display: block;
+    }
+    .empty-state p {
+        color: #6c757d;
+        font-size: 1.1rem;
     }
 </style>
 {% endblock %}
@@ -64,7 +131,7 @@
 <div class="container">
     <aside class="sidebar">
         <div class="logo">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <img src="/static/polyulogo.png" alt="PolyU Logo">
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
@@ -163,20 +230,24 @@
             .then(data => {
                 let html = '';
                 if(data.length === 0) {
-                    html = '<div style="text-align:center;padding:40px;color:#666;"><p>No available courses for registration</p></div>';
+                    html = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No available courses for registration at this time</p></div>';
                 } else {
                     data.forEach(c => {
                         const isFull = c.enrolled >= c.capacity;
                         const capacityColor = isFull ? '#d81e06' : '#666';
-                        html += `<div class='course-item' style='display:flex;align-items:center;padding:15px;border-bottom:1px solid #eee;'>
-                            <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
-                            <div style='flex:3;color:#888;font-size:0.9em;'>${c.description||''}</div>
-                            <div style='flex:1;text-align:center;'><span style='background:#f0f0f0;padding:4px 8px;border-radius:4px;'>${c.credit} credits</span></div>
-                            <div style='flex:2;text-align:center;color:${capacityColor};'>${c.enrolled}/${c.capacity}</div>
-                            <div style='flex:2;text-align:center;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
-                            <div style='flex:1;text-align:right;'>
-                                <button onclick='addCourse("${c.code}", event)' class='course-add-btn' ${isFull ? 'disabled style="background:#ccc;cursor:not-allowed;"' : ''}>
-                                    ${isFull ? 'Full' : 'Add'}
+                        html += `<div class='course-item' style='display:flex;align-items:center;padding:20px;gap:16px;background:white !important;'>
+                            <div class='course-info' style='flex:1;'>
+                                <div style='font-size:1.4rem;font-weight:700;color:#8a1c32 !important;margin-bottom:8px;'>${c.name}</div>
+                                <div class='course-desc' style='color:#555 !important;font-size:1rem;line-height:1.5;'>${c.description||'No description available'}</div>
+                                <div class='course-meta' style='display:flex;gap:16px;margin-top:10px;font-size:0.95rem;color:#666 !important;'>
+                                    <span style='color:#666 !important;'><i class="fas fa-book" style="color:#8a1c32;margin-right:6px;"></i>${c.credit} credits</span>
+                                    <span style='color:${capacityColor} !important;'><i class="fas fa-users" style="color:${capacityColor};margin-right:6px;"></i>${c.enrolled}/${c.capacity}</span>
+                                    <span style='color:#666 !important;'><i class="fas fa-clock" style="color:#8a1c32;margin-right:6px;"></i>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</span>
+                                </div>
+                            </div>
+                            <div style='flex:0 0 auto;'>
+                                <button onclick='addCourse("${c.code}", event)' class='course-add-btn' ${isFull ? 'disabled' : ''}>
+                                    ${isFull ? '<i class="fas fa-ban"></i> Full' : '<i class="fas fa-plus"></i> Add'}
                                 </button>
                             </div>
                         </div>`;
@@ -205,25 +276,29 @@
             .then(data => {
                 let html = '';
                 if(data.length === 0) {
-                    html = '<div style="text-align:center;padding:40px;color:#666;"><p>You have not registered for any courses yet</p></div>';
+                    html = '<div class="empty-state"><i class="fas fa-book-open"></i><p>You have not registered for any courses yet</p><p style="font-size:0.9rem;margin-top:8px;">Click "Available Courses" to browse and add courses</p></div>';
                 } else {
                     let totalCredits = 0;
                     data.forEach(c => {
                         totalCredits += c.credit;
-                        html += `<div class='course-item' style='display:flex;align-items:center;padding:15px;border-bottom:1px solid #eee;'>
-                            <div style='flex:2;font-weight:bold;color:#8a1c32;'>${c.name}</div>
-                            <div style='flex:3;color:#888;font-size:0.9em;'>${c.description||''}</div>
-                            <div style='flex:1;text-align:center;'><span style='background:#f0f0f0;padding:4px 8px;border-radius:4px;'>${c.credit} credits</span></div>
-                            <div style='flex:2;text-align:center;'>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</div>
-                            <div style='flex:1;text-align:right;'>
-                                <button onclick='dropCourse("${c.code}", event)' class='course-add-btn' style='background:#eee;color:#a62c43;border:1px solid #ddd;'>
-                                    Drop
+                        html += `<div class='course-item' style='display:flex;align-items:center;padding:20px;gap:16px;background:white !important;'>
+                            <div class='course-info' style='flex:1;'>
+                                <div style='font-size:1.4rem;font-weight:700;color:#8a1c32 !important;margin-bottom:8px;'>${c.name}</div>
+                                <div class='course-desc' style='color:#555 !important;font-size:1rem;line-height:1.5;'>${c.description||'No description available'}</div>
+                                <div class='course-meta' style='display:flex;gap:16px;margin-top:10px;font-size:0.95rem;color:#666 !important;'>
+                                    <span style='color:#666 !important;'><i class="fas fa-book" style="color:#8a1c32;margin-right:6px;"></i>${c.credit} credits</span>
+                                    <span style='color:#666 !important;'><i class="fas fa-clock" style="color:#8a1c32;margin-right:6px;"></i>${c.day_of_week} ${c.start_time ? c.start_time.substring(0,5) : ''}-${c.end_time ? c.end_time.substring(0,5) : ''}</span>
+                                </div>
+                            </div>
+                            <div style='flex:0 0 auto;'>
+                                <button onclick='dropCourse("${c.code}", event)' class='course-add-btn' style='background:#dc3545;'>
+                                    <i class="fas fa-trash"></i> Drop
                                 </button>
                             </div>
                         </div>`;
                     });
-                    html += `<div style='margin-top:20px;padding:15px;background:#f8f8f8;border-radius:8px;text-align:right;font-weight:bold;color:#8a1c32;'>
-                        Total Credits: ${totalCredits}
+                    html += `<div style='margin-top:24px;padding:20px;background:linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);border-radius:12px;text-align:right;'>
+                        <span style='font-size:1.1rem;color:#2e7d32;'><i class="fas fa-graduation-cap"></i> Total Credits: <strong style="font-size:1.3rem;">${totalCredits}</strong></span>
                     </div>`;
                 }
                 document.getElementById('my-courses').innerHTML = html;

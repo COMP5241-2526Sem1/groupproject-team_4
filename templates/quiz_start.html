@@ -3,56 +3,147 @@
 {% block title %}{{ quiz.name }} - Start Quiz{% endblock %}
 
 {% block quiz_scripts %}
+<script>
+    let startTime = Date.now();
+    let duration = {{ quiz.duration }} * 60 * 1000; // Convert to milliseconds
+    
+    // Timer countdown
+    function updateTimer() {
+        let elapsed = Date.now() - startTime;
+        let remaining = Math.max(0, duration - elapsed);
+        let minutes = Math.floor(remaining / 60000);
+        let seconds = Math.floor((remaining % 60000) / 1000);
+        
+        document.getElementById('timer').textContent = 
+            `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (remaining <= 0) {
+            document.getElementById('quiz-form').submit();
+        }
+    }
+    
+    setInterval(updateTimer, 1000);
+    
+    // Warn before leaving
+    window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Your progress will be lost.';
+    });
+    
     // Simple validation before submitting
     function validateQuizForm() {
-        // Implementation will be handled by server-side validation
-        return true;
+        const questions = document.querySelectorAll('.question');
+        let unanswered = 0;
+        
+        questions.forEach(question => {
+            const type = question.dataset.type;
+            const questionId = question.querySelector('[name^="question-"]').name;
+            
+            if (type === 'mcq') {
+                if (!question.querySelector('input[type="radio"]:checked')) {
+                    unanswered++;
+                }
+            } else if (type === 'saq') {
+                if (!question.querySelector('textarea').value.trim()) {
+                    unanswered++;
+                }
+            }
+        });
+        
+        if (unanswered > 0) {
+            return confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`);
+        }
+        
+        return confirm('Are you sure you want to submit your quiz?');
     }
+</script>
 {% endblock %}
 
 {% block main_content %}
     {% if error_message %}
     <div class="error-message">
-        {{ error_message }}
+        <i class="fas fa-exclamation-circle"></i> {{ error_message }}
     </div>
     {% endif %}
     
     <div class="quiz-header">
-        <h1>{{ quiz.name }}</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>{{ quiz.name }}</h1>
+            <div class="timer-display" style="background: #8a1c32; color: white; padding: 12px 24px; border-radius: 8px; font-size: 1.2rem; font-weight: bold;">
+                <i class="fas fa-clock"></i> Time: <span id="timer">{{ quiz.duration }}:00</span>
+            </div>
+        </div>
         {% if quiz.description %}
         <div class="quiz-description">{{ quiz.description }}</div>
         {% endif %}
-        <div class="quiz-info">
-            <p>Question Count: {{ quiz.questions|length }}</p>
-            <p>Duration: {{ quiz.duration }} minutes</p>
+        <div class="quiz-info" style="display: flex; gap: 24px; margin-top: 16px;">
+            <p><i class="fas fa-question-circle"></i> <strong>Questions:</strong> {{ quiz.questions|length }}</p>
+            <p><i class="fas fa-hourglass-half"></i> <strong>Duration:</strong> {{ quiz.duration }} minutes</p>
+            <p><i class="fas fa-star"></i> <strong>Total Points:</strong> {{ quiz.questions|sum(attribute='points') }}</p>
         </div>
     </div>
     
     <form id="quiz-form" action="/course/{{ course.code if course and course.code else course_code }}/quiz/{{ quiz.id }}/submit" method="POST" onsubmit="return validateQuizForm();">
         {% for question in quiz.questions %}
-        <div class="question" data-type="{{ question.type }}">
-            <div class="question-number">Question {{ loop.index }} ({{ question.points }} point{% if question.points > 1 %}s{% endif %})</div>
-            <div class="question-content">{{ question.content }}</div>
+        <div class="question" data-type="{{ question.type }}" style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s ease;">
+            <div class="question-number" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Question {{ loop.index }}</span>
+                <span style="background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem;">
+                    {{ question.points }} point{% if question.points > 1 %}s{% endif %}
+                </span>
+            </div>
+            <div class="question-content" style="font-size: 1.05rem; margin: 16px 0;">{{ question.content }}</div>
             
             {% if question.type == 'mcq' %}
-            {% for choice in question.choices %}
-            <div class="choice">
-                <label>
-                    <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}">
-                    {{ choice.content }}
-                </label>
+            <div class="choices-container" style="margin-top: 16px;">
+                {% for choice in question.choices %}
+                <div class="choice" style="margin-bottom: 10px;">
+                    <label style="display: flex; align-items: center; padding: 14px 16px; background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                        <input type="radio" name="question-{{ question.id }}" value="{{ choice.id }}" style="margin-right: 12px; width: 18px; height: 18px;">
+                        <span style="flex: 1;">{{ choice.content }}</span>
+                    </label>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
             {% elif question.type == 'saq' %}
-            <div class="short-answer">
-                <textarea name="question-{{ question.id }}" placeholder="Type your answer here..."></textarea>
+            <div class="short-answer" style="margin-top: 16px;">
+                <textarea name="question-{{ question.id }}" placeholder="Type your answer here..." style="width: 100%; min-height: 120px; padding: 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; font-family: inherit; resize: vertical; transition: border-color 0.2s;"></textarea>
             </div>
             {% endif %}
         </div>
         {% endfor %}
         
-        <div class="quiz-submit">
-            <button type="submit" class="submit-btn">Submit Quiz</button>
+        <div class="quiz-submit" style="text-align: center; margin: 40px 0;">
+            <button type="submit" class="submit-btn" style="padding: 14px 48px; font-size: 1.1rem; background: linear-gradient(135deg, #8a1c32 0%, #a62c43 100%); box-shadow: 0 4px 12px rgba(138, 28, 50, 0.3);">
+                <i class="fas fa-check-circle"></i> Submit Quiz
+            </button>
         </div>
     </form>
+    
+    <style>
+        .choice label:hover {
+            background: #e3f2fd !important;
+            border-color: #8a1c32 !important;
+        }
+        
+        .choice input[type="radio"]:checked + span {
+            font-weight: 600;
+            color: #8a1c32;
+        }
+        
+        .choice input[type="radio"]:checked {
+            accent-color: #8a1c32;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #8a1c32 !important;
+            box-shadow: 0 0 0 3px rgba(138, 28, 50, 0.1);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(138, 28, 50, 0.4);
+        }
+    </style>
 {% endblock %}

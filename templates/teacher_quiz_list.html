@@ -108,25 +108,88 @@
     
     .no-quizzes {
         text-align: center;
-        padding: 40px;
-        color: #7f8c8d;
-        font-size: 18px;
+        padding: 60px 40px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .no-quizzes i {
+        font-size: 64px;
+        color: #adb5bd;
+        margin-bottom: 20px;
+        display: block;
+    }
+    
+    .no-quizzes p:first-of-type {
+        color: #495057;
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .no-quizzes p:last-of-type {
+        color: #6c757d;
+        font-size: 16px;
     }
     
     .back-btn {
-        background: #7f8c8d;
+        background: #6c757d;
         color: white;
         padding: 12px 24px;
         text-decoration: none;
-        border-radius: 4px;
+        border-radius: 8px;
         font-weight: bold;
-        transition: background 0.2s;
+        transition: all 0.3s;
         display: inline-block;
         margin-top: 20px;
     }
     
     .back-btn:hover {
-        background: #6c7b7d;
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    /* Modal Improvements */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0;
+        padding: 20px 24px;
+    }
+    
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid #e9ecef;
+        padding: 16px 24px;
+    }
+    
+    #quizPreviewContent .card {
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+    }
+    
+    #quizPreviewContent .card-body {
+        padding: 20px;
+    }
+    
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
     }
 </style>
 {% endblock %}
@@ -136,7 +199,7 @@
     <div class="page-header">
         <h1>Quiz Management - {{ course.name }}</h1>
         <div style="display: flex; gap: 10px;">
-            <button class="create-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" data-bs-toggle="modal" data-bs-target="#aiGeneratorModal">
+            <button class="create-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#aiGeneratorModal">
                 <i class="fas fa-robot"></i> AI Generator
             </button>
             <a href="{{ url_for('quiz.teacher_create_quiz', course_code=course.code) }}" class="create-btn">
@@ -180,8 +243,9 @@
         </table>
     {% else %}
         <div class="no-quizzes">
+            <i class="fas fa-clipboard-question"></i>
             <p>No quizzes have been created for this course yet.</p>
-            <p>Click "Create New Quiz" to get started!</p>
+            <p>Click "AI Generator" or "Create Manually" to get started!</p>
         </div>
     {% endif %}
     

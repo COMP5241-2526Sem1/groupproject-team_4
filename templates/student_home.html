@@ -2,28 +2,95 @@
 
 {% block title %}Student Home{% endblock %}
 
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<style>
+    .sidebar {
+        background: linear-gradient(180deg, #8a1c32 0%, #6b1526 100%);
+    }
+    
+    .sidebar .logo img {
+        filter: brightness(0) invert(1);
+    }
+    
+    .sidebar nav a {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .sidebar nav a::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: #fff;
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar nav a.active::before,
+    .sidebar nav a:hover::before {
+        transform: scaleY(1);
+    }
+    
+    .sidebar nav a i {
+        margin-right: 12px;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .main-content {
+        background: #f8f9fa;
+    }
+    
+    h1 {
+        background: linear-gradient(135deg, #8a1c32 0%, #a62c43 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <aside class="sidebar">
         <div class="logo">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
+            <img src="/static/polyulogo.png" alt="PolyU Logo">
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
-            <a href="/institution" class="active">Institution Page</a>
+            <a href="/institution" class="active">
+                <i class="fas fa-home"></i> Institution Page
+            </a>
             <div class="dropdown">
-                <a href="/course/my">My Course</a>
+                <a href="/course/my">
+                    <i class="fas fa-book"></i> My Course
+                </a>
                 <div class="dropdown-content" id="course-dropdown">
                     <!-- Dynamically generate course options -->
                 </div>
             </div>
-            <a href="/activity">Activity</a>
-
-            <a href="/grades">Grades</a>
-            <a href="/assist">Assist</a>
-            <a href="/course_registration">Course Registration</a>
-            <a href="/profile">Profile</a>
-            <a href="/logout">Sign Out</a>
+            <a href="/activity">
+                <i class="fas fa-clipboard-list"></i> Activity
+            </a>
+            <a href="/grades">
+                <i class="fas fa-chart-bar"></i> Grades
+            </a>
+            <a href="/assist">
+                <i class="fas fa-question-circle"></i> Assist
+            </a>
+            <a href="/course_registration">
+                <i class="fas fa-user-plus"></i> Course Registration
+            </a>
+            <a href="/profile">
+                <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="/logout" style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </a>
         </nav>
     </aside>
     <main class="main-content">
