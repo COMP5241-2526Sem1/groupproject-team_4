@@ -28,7 +28,7 @@
     }
 
     .create-btn {
-        background-color: #8a1c32;
+        background-color: #27ae60;;
         color: white;
         padding: 10px 20px;
         border: none;
@@ -273,7 +273,7 @@
                             <a href="{{ url_for('word_cloud.teacher_edit_word_cloud', course_code=course.code, word_cloud_id=word_cloud.id) }}" class="action-btn edit-btn">
                                 Edit
                             </a>
-                            <a href="{{ url_for('word_cloud.word_cloud_detail', course_code=course.code, word_cloud_id=word_cloud.id) }}" class="action-btn view-btn">
+                            <a href="{{ url_for('word_cloud.teacher_word_cloud_detail', course_code=course.code, word_cloud_id=word_cloud.id) }}" class="action-btn view-btn">
                                 View
                             </a>
                             <form method="POST" action="{{ url_for('word_cloud.teacher_delete_word_cloud', course_code=course.code, word_cloud_id=word_cloud.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this word cloud?');">

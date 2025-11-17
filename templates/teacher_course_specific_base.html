@@ -11,18 +11,18 @@
             <div style="font-size:14px;margin-top:4px;">{{ course.name }}</div>
         </div>
         <nav>
-            <a href="/teacher">Teacher Dashboard</a>
-            <div class="dropdown">
-                <a href="/teacher/course_list" class="{% if request.path.startswith('/teacher/course') %}active{% endif %}">My Courses</a>
-                <div class="dropdown-content" id="course-dropdown">
-                    <!-- Dynamically generate course options -->
-                </div>
-            </div>
-            <a href="/profile">Profile</a>
-            <a href="/logout">Logout</a>
+            {% block sidebar_links %}
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/';">Announcement</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/';">Content</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/quiz';">Quiz</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/poll';">Poll</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/word_cloud';">Word Cloud</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/course/' + window.location.pathname.split('/')[3] + '/grades';">Grades</a>
+            <a href="/logout">Sign Out</a>
+            {% endblock %}
         </nav>
         <div class="bottom">
-            Privacy &nbsp;|&nbsp; Terms &nbsp;|&nbsp; Accessibility
+
         </div>
     </aside>
 

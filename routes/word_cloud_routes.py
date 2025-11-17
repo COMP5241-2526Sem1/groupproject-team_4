@@ -429,6 +429,42 @@ def teacher_update_word_cloud(course_code, word_cloud_id):
         flash(f'Error updating word cloud: {str(e)}', 'error')
         return redirect(url_for('word_cloud.teacher_edit_word_cloud', course_code=course_code, word_cloud_id=word_cloud_id))
 
+@word_cloud_bp.route('/teacher/course/<course_code>/word_cloud/<int:word_cloud_id>')
+@login_required
+def teacher_word_cloud_detail(course_code, word_cloud_id):
+    """Display teacher's view of a specific word cloud"""
+    user = get_current_user()
+    
+    if not user or user.role != 'teacher':
+        return render_template('error.html', error_message="You need to be a teacher to access this page"), 403
+    
+    # Verify course exists and teacher owns it
+    course = Course.query.filter_by(code=course_code).first()
+    if not course:
+        return render_template('error.html', error_message="Course not found"), 404
+    
+    if course.teacher_id != user.id:
+        return render_template('error.html', error_message="You are not the teacher of this course"), 403
+    
+    # Get word cloud
+    word_cloud = WordCloud.query.filter_by(id=word_cloud_id, course_code=course_code).first()
+    if not word_cloud:
+        return render_template('error.html', error_message="Word cloud not found"), 404
+    
+    # Check if word cloud is currently available
+    current_time = datetime.now()
+    is_available = True
+    if word_cloud.start_datetime and current_time < word_cloud.start_datetime:
+        is_available = False
+    if word_cloud.end_datetime and current_time > word_cloud.end_datetime:
+        is_available = False
+    
+    return render_template('word_cloud_detail.html',
+                         course=course,
+                         word_cloud=word_cloud,
+                         is_available=is_available,
+                         user=user)
+
 @word_cloud_bp.route('/teacher/course/<course_code>/word_cloud/<int:word_cloud_id>/delete', methods=['POST'])
 @login_required
 def teacher_delete_word_cloud(course_code, word_cloud_id):
