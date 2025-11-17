@@ -46,7 +46,7 @@ def generate_course_code():
     return ''.join(random.choice(characters) for _ in range(6))
 
 # Teacher course homepage - Display all courses
-@teacher_course_bp.route('/teacher_course_list')
+@teacher_course_bp.route('/teacher/course_list')
 @login_required
 @teacher_required
 def teacher_course_list():
@@ -62,7 +62,7 @@ def teacher_course_list():
     return render_template('teacher_course_list.html', my_courses=my_courses, other_courses=other_courses)
 
 # API endpoint for teacher course list (for dropdown menu)
-@teacher_course_bp.route('/teacher_course_list/list')
+@teacher_course_bp.route('/teacher/course_list/list')
 @login_required
 @teacher_required
 def get_teacher_courses():

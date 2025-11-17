@@ -45,7 +45,7 @@
 <script>
     // Dynamically generate course dropdown menu
     function populateCourseDropdown() {
-        fetch('/teacher_course_list/list')
+        fetch('/teacher/course_list/list')
             .then(response => response.json())
             .then(data => {
                 const dropdown = document.getElementById('course-dropdown');

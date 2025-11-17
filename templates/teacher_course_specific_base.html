@@ -13,13 +13,12 @@
         <nav>
             <a href="/teacher">Teacher Dashboard</a>
             <div class="dropdown">
-                <a href="/teacher_course_list" class="{% if request.path.startswith('/teacher/course') %}active{% endif %}">My Courses</a>
+                <a href="/teacher/course_list" class="{% if request.path.startswith('/teacher/course') %}active{% endif %}">My Courses</a>
                 <div class="dropdown-content" id="course-dropdown">
                     <!-- Dynamically generate course options -->
                 </div>
             </div>
             <a href="/profile">Profile</a>
-            <a href="/activity">Activity</a>
             <a href="/logout">Logout</a>
         </nav>
         <div class="bottom">
@@ -45,7 +44,7 @@
 <script>
     // Dynamically generate course dropdown menu
     function populateCourseDropdown() {
-        fetch('/teacher_course_list/list')
+        fetch('/teacher/course_list/list')
             .then(response => response.json())
             .then(data => {
                 const dropdown = document.getElementById('course-dropdown');

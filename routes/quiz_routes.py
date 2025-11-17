@@ -1108,7 +1108,8 @@ def submit_quiz(course_code, quiz_id):
     if 'current_attempt_id' in session:
         del session['current_attempt_id']
     
-    # Redirect to quiz results page with visibility controls
+    # Redirect to quiz results page with success message
+    flash('Submission Success', 'success')
     return redirect(url_for('quiz.get_quiz_results', course_code=course_code, quiz_id=quiz_id))
 
 @quiz_bp.route('/course/<course_code>/quiz/<int:quiz_id>/grade', methods=['GET'])

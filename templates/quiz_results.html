@@ -4,6 +4,16 @@
 
 {% block main_content %}
     <div class="quiz-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         {% if error_message %}
             <h1>Error</h1>
             <p>{{ error_message }}</p>
@@ -81,7 +91,7 @@
             {% endif %}
             
             <div class="action-buttons">
-                <button onclick="window.location.href='/course/{{ course_code }}/quiz'">Back to Quiz List</button>
+                <button onclick="window.location.href='/course/{{ course_code }}/quiz'">Return to Quiz List</button>
                 {% if quiz.visibility.question_visible or quiz.visibility.student_response_visible %}
                     <button onclick="window.location.href='/course/{{ course_code }}/quiz/{{ quiz.id }}'">View Quiz Details</button>
                 {% endif %}
