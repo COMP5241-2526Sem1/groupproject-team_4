@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LEARN@POLYU - Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+    
+</head>
+<body>
+    
+<div class="admin-dashboard">
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <p>System administration and management</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Courses</h3>
+            <div class="number">8</div>
+        </div>
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <div class="number">17</div>
+        </div>
+        <div class="stat-card">
+            <h3>Teachers</h3>
+            <div class="number">7</div>
+        </div>
+        <div class="stat-card">
+            <h3>Students</h3>
+            <div class="number">8</div>
+        </div>
+    </div>
+
+    <div class="admin-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+            <a href="/admin/course_list" class="action-btn">📚 Manage Courses</a>
+            <a href="/admin/users" class="action-btn">👥 Manage Users</a>
+            <a href="/admin/course/create" class="action-btn secondary">➕ Create Course</a>
+            <a href="/admin/course_list" class="action-btn secondary">📋 View All Courses</a>
+        </div>
+    </div>
+
+    <div class="recent-courses">
+        <h3>Recent Courses</h3>
+        <ul class="course-list">
+            
+            <li>
+                <a href="/admin/course/ENE40P">5434 big data computing</a>
+                <span class="course-code">ENE40P</span>
+            </li>
+            
+            <li>
+                <a href="/admin/course/DEBUG101">Debug Course</a>
+                <span class="course-code">DEBUG101</span>
+            </li>
+            
+            <li>
+                <a href="/admin/course/CS101">Introduction to Computer Science</a>
+                <span class="course-code">CS101</span>
+            </li>
+            
+            <li>
+                <a href="/admin/course/PHYS101">Physics I</a>
+                <span class="course-code">PHYS101</span>
+            </li>
+            
+            <li>
+                <a href="/admin/course/COMP101">Introduction to Programming</a>
+                <span class="course-code">COMP101</span>
+            </li>
+            
+        </ul>
+        
+    </div>
+</div>
+
+</body>
+</html>
