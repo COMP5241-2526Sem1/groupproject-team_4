@@ -92,6 +92,9 @@ app.register_blueprint(course_registration_bp)
 # Register teacher course blueprint
 from routes.teacher_course import teacher_course_bp
 app.register_blueprint(teacher_course_bp)
+# Register admin course blueprint
+from routes.admin_course import admin_course_bp
+app.register_blueprint(admin_course_bp)
 # Register teacher quiz blueprint
 from routes.teacher_quiz_routes import teacher_quiz_bp
 app.register_blueprint(teacher_quiz_bp)
@@ -136,7 +139,33 @@ def teacher_home():
 
 @app.route('/admin_home')
 def admin_home():
-    return render_template('role_home.html', role='Admin')
+    from models.user import User
+    from models.course import Course
+    from flask import session
+    
+    # Get admin user info
+    if 'user_id' in session:
+        admin = User.query.get(session['user_id'])
+        if not admin or admin.role != 'admin':
+            return redirect('/login')
+    else:
+        return redirect('/login')
+    
+    # Get statistics
+    total_courses = Course.query.count()
+    total_users = User.query.count()
+    total_teachers = User.query.filter_by(role='teacher').count()
+    total_students = User.query.filter_by(role='student').count()
+    
+    # Get recent courses
+    recent_courses = Course.query.order_by(Course.created_at.desc()).limit(5).all()
+    
+    return render_template('admin_dashboard.html', 
+                         total_courses=total_courses,
+                         total_users=total_users,
+                         total_teachers=total_teachers,
+                         total_students=total_students,
+                         recent_courses=recent_courses)
 
 
 

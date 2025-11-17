@@ -1,0 +1,119 @@
+{% extends 'admin_course_base.html' %}
+{% block course_title %}{{ course.name if course else 'Course Home' }}{% endblock %}
+{% block styles %}
+<style>
+    .course-info {
+        margin-bottom: 20px;
+    }
+    .course-info h1 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .course-info p {
+        margin: 8px 0;
+        color: #666;
+    }
+    .course-actions {
+        margin-top: 20px;
+    }
+    .admin-controls {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+    }
+    .admin-controls h3 {
+        color: #8a1c32;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .control-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .control-btn {
+        padding: 10px 20px;
+        background: #8a1c32;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: background 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    .control-btn:hover {
+        background: #6e1728;
+    }
+    .control-btn.secondary {
+        background: #6c757d;
+    }
+    .control-btn.secondary:hover {
+        background: #5a6268;
+    }
+    .control-btn.danger {
+        background: #dc3545;
+    }
+    .control-btn.danger:hover {
+        background: #c82333;
+    }
+</style>
+{% endblock %}
+{% block course_content %}
+    {% if course %}
+    <div class="course-info">
+        <h1>{{ course.name }}</h1>
+        <p><strong>Description:</strong> {{ course.description }}</p>
+        <p><strong>Code:</strong> {{ course.code }}</p>
+        <p><strong>Teacher:</strong> {{ course.teacher.username }}</p>
+        <p><strong>Department:</strong> {{ course.department.name if course.department else 'N/A' }}</p>
+        <p><strong>Enrolled Students:</strong> {{ enrolled_count }}</p>
+    </div>
+    {% endif %}
+
+    <div class="admin-controls">
+        <h3>Admin Controls</h3>
+        <div class="control-buttons">
+            <a href="/admin/course/{{ course.code }}/quiz" class="control-btn">Manage Quizzes</a>
+            <a href="/admin/course/{{ course.code }}/poll" class="control-btn">Manage Polls</a>
+            <a href="/admin/course/{{ course.code }}/word_cloud" class="control-btn">Manage Word Clouds</a>
+            <a href="/admin/course/{{ course.code }}/enrolled_list" class="control-btn">Manage Students</a>
+            <a href="/admin/course/create" class="control-btn secondary">Create New Course</a>
+            <a href="/admin/users" class="control-btn secondary">Manage All Users</a>
+            <a href="/admin/course/{{ course.code }}/edit" class="control-btn danger">Edit Course</a>
+        </div>
+    </div>
+
+    <div class="course-actions">
+        <h2>Course Navigation</h2>
+        <p>Use the sidebar to navigate through different course sections:</p>
+        <ul>
+            <li><strong>Dashboard:</strong> View course statistics and student performance</li>
+            <li><strong>Quiz:</strong> Create and manage quizzes</li>
+            <li><strong>Poll:</strong> Create and manage polls</li>
+            <li><strong>Word Cloud:</strong> Create interactive word cloud activities</li>
+            <li><strong>Users:</strong> Manage system users</li>
+            <li><strong>Grades:</strong> View and manage student grades</li>
+        </ul>
+    </div>
+
+    <script>
+        function loadQuiz() {
+            window.location.href = '/admin/course/' + '{{ course.code }}' + '/quiz';
+        }
+        function loadPoll() {
+            window.location.href = '/admin/course/' + '{{ course.code }}' + '/poll';
+        }
+        function loadWordCloud() {
+            window.location.href = '/admin/course/' + '{{ course.code }}' + '/word_cloud';
+        }
+        function loadGrades() {
+            window.location.href = '/admin/course/' + '{{ course.code }}' + '/quiz/grades';
+        }
+    </script>
+<div id="profile-section" class="section" style="display:none;"> </div>
+<div id="activity-section" class="section" style="display:none;"> </div>
+<div id="messages-section" class="section" style="display:none;"> </div>
+{% endblock %}

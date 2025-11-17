@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}LEARN@POLYU - Admin Dashboard{% endblock %}
+
+{% block styles %}
+<style>
+    .admin-dashboard {
+        padding: 20px;
+    }
+    .dashboard-header {
+        margin-bottom: 30px;
+    }
+    .dashboard-header h1 {
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #8a1c32;
+    }
+    .stat-card h3 {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+    .stat-card .number {
+        font-size: 32px;
+        font-weight: bold;
+        color: #333;
+    }
+    .admin-actions {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .admin-actions h3 {
+        color: #8a1c32;
+        margin-top: 0;
+        margin-bottom: 15px;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .action-btn {
+        padding: 10px 20px;
+        background: #8a1c32;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: background 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    .action-btn:hover {
+        background: #6e1728;
+    }
+    .action-btn.secondary {
+        background: #6c757d;
+    }
+    .action-btn.secondary:hover {
+        background: #5a6268;
+    }
+    .recent-courses {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .recent-courses h3 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .course-list {
+        list-style: none;
+        padding: 0;
+    }
+    .course-list li {
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .course-list li:last-child {
+        border-bottom: none;
+    }
+    .course-list a {
+        color: #8a1c32;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .course-list a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <p>System administration and management</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Courses</h3>
+            <div class="number">{{ total_courses }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <div class="number">{{ total_users }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Teachers</h3>
+            <div class="number">{{ total_teachers }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Students</h3>
+            <div class="number">{{ total_students }}</div>
+        </div>
+    </div>
+
+    <div class="admin-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+            <a href="/admin/course_list" class="action-btn">Manage Courses</a>
+            <a href="/admin/users" class="action-btn">Manage Users</a>
+            <a href="/admin/course/create" class="action-btn secondary">Create Course</a>
+            <a href="/admin/course_list" class="action-btn secondary">View All Courses</a>
+        </div>
+    </div>
+
+    <div class="recent-courses">
+        <h3>Recent Courses</h3>
+        <ul class="course-list">
+            {% for course in recent_courses %}
+            <li>
+                <a href="/admin/course/{{ course.code }}">{{ course.name }}</a>
+                <span style="float: right; color: #666;">{{ course.code }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if not recent_courses %}
+        <p style="color: #666;">No courses found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

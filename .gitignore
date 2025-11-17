@@ -24,7 +24,6 @@ tests/
 testing/
 
 # Ignore test output and reports
-*.html
 *.xml
 *.coverage
 .pytest_cache/
