@@ -8,6 +8,8 @@ from models.question import Question
 from models.choice import Choice
 from models.question_response import QuestionResponse
 from models.poll import Poll
+from models.word_cloud import WordCloud
+from models.minigame import Minigame
 from models.attempt import Attempt
 from database import db
 
@@ -120,3 +122,89 @@ def drop_course():
     db.session.delete(enroll)
     db.session.commit()
     return jsonify({'msg': 'course dropped successfully!'})
+
+# Dashboard route for student course dashboard
+@course_bp.route('/course/<course_code>/dashboard', methods=['GET'])
+def course_dashboard(course_code):
+    student_id = session.get('user_id')
+    if not student_id:
+        return jsonify({'msg': 'Not logged in'}), 401
+    
+    # Check if student is enrolled in this course
+    enrollment = CourseEnrollment.query.filter_by(student_id=student_id, course_code=course_code).first()
+    if not enrollment:
+        return jsonify({'msg': 'Not enrolled in this course'}), 403
+    
+    # Get course info
+    course = Course.query.get(course_code)
+    if not course:
+        return jsonify({'msg': 'Course not found'}), 404
+    
+    # Get student attempts for activities (quiz, word cloud, poll, mini games)
+    quiz_attempts = Attempt.query.join(Quiz).filter(
+        Attempt.user_id == student_id,
+        Quiz.course_code == course_code
+    ).count()
+    
+    word_cloud_attempts = Submission.query.join(WordCloud).filter(
+        Submission.user_id == student_id,
+        WordCloud.course_code == course_code
+    ).count()
+    
+    poll_attempts = Submission.query.join(Poll).filter(
+        Submission.user_id == student_id,
+        Poll.course_code == course_code
+    ).count()
+    
+    mini_game_attempts = Submission.query.join(Minigame).filter(
+        Submission.user_id == student_id,
+        Minigame.course_code == course_code
+    ).count()
+    
+    total_completed = quiz_attempts + word_cloud_attempts + poll_attempts + mini_game_attempts
+    total_available = 5  # Total available activities
+    
+    # Get leaderboard data - class participation by total attempts
+    leaderboard_data = []
+    enrollments = CourseEnrollment.query.filter_by(course_code=course_code).all()
+    
+    for enrollment in enrollments:
+        student = User.query.get(enrollment.student_id)
+        if student:
+            # Count total attempts for this student
+            student_quiz_attempts = Attempt.query.join(Quiz).filter(
+                Attempt.user_id == student.id,
+                Quiz.course_code == course_code
+            ).count()
+            
+            student_word_cloud_attempts = Submission.query.join(WordCloud).filter(
+                Submission.user_id == student.id,
+                WordCloud.course_code == course_code
+            ).count()
+            
+            student_poll_attempts = Submission.query.join(Poll).filter(
+                Submission.user_id == student.id,
+                Poll.course_code == course_code
+            ).count()
+            
+            student_mini_game_attempts = Submission.query.join(Minigame).filter(
+                Submission.user_id == student.id,
+                Minigame.course_code == course_code
+            ).count()
+            
+            total_attempts = (student_quiz_attempts + student_word_cloud_attempts + 
+                            student_poll_attempts + student_mini_game_attempts)
+            
+            leaderboard_data.append({
+                'name': student.username,
+                'attempts': total_attempts
+            })
+    
+    # Sort by attempts (descending)
+    leaderboard_data.sort(key=lambda x: x['attempts'], reverse=True)
+    
+    return render_template('dashboard.html', 
+                         course=course,
+                         completed_activities=total_completed,
+                         total_activities=total_available,
+                         leaderboard_data=leaderboard_data)
