@@ -81,7 +81,7 @@ def get_teacher_courses():
     return jsonify(course_list)
 
 # Teacher course detail page
-@teacher_course_bp.route('/teacher_course/<course_code>')
+@teacher_course_bp.route('/teacher/course/<course_code>')
 @login_required
 @teacher_required
 def teacher_course_detail(course_code):
@@ -99,7 +99,7 @@ def teacher_course_detail(course_code):
     return render_template('teacher_course_home.html', course=course, enrolled_count=enrolled_count)
 
 # Create new course page
-@teacher_course_bp.route('/teacher_course/create', methods=['GET', 'POST'])
+@teacher_course_bp.route('/teacher/course/create', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def create_course():
@@ -171,7 +171,7 @@ def create_course():
     return render_template('create_course.html')
 
 # Enrolled students list page
-@teacher_course_bp.route('/teacher_course/<course_code>/enrolled_list', methods=['GET', 'POST'])
+@teacher_course_bp.route('/teacher/course/<course_code>/enrolled_list', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def enrolled_list(course_code):
@@ -222,7 +222,7 @@ def enrolled_list(course_code):
     return render_template('enrolled_list.html', course=course, students=enrolled_students)
 
 # Not enrolled students list page
-@teacher_course_bp.route('/teacher_course/<course_code>/not_enrolled_list', methods=['GET', 'POST'])
+@teacher_course_bp.route('/teacher/course/<course_code>/not_enrolled_list', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def not_enrolled_list(course_code):
@@ -296,7 +296,7 @@ def not_enrolled_list(course_code):
     return render_template('not_enrolled_list.html', course=course, students=not_enrolled_students)
 
 # CSV import students page
-@teacher_course_bp.route('/teacher_course/<course_code>/import_students', methods=['GET', 'POST'])
+@teacher_course_bp.route('/teacher/course/<course_code>/import_students', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def import_students(course_code):
@@ -407,7 +407,7 @@ def import_students(course_code):
     return render_template('import_students.html', course=course)
 
 
-@teacher_course_bp.route('/teacher_course/<course_code>/bulk_remove', methods=['POST'])
+@teacher_course_bp.route('/teacher/course/<course_code>/bulk_remove', methods=['POST'])
 @login_required
 @teacher_required
 def bulk_remove_students(course_code):
@@ -450,7 +450,7 @@ def bulk_remove_students(course_code):
     return redirect(url_for('teacher_course.enrolled_list', course_code=course_code))
 
 
-@teacher_course_bp.route('/teacher_course/<course_code>/bulk_add', methods=['POST'])
+@teacher_course_bp.route('/teacher/course/<course_code>/bulk_add', methods=['POST'])
 @login_required
 @teacher_required
 def bulk_add_students(course_code):

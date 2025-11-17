@@ -1,0 +1,278 @@
+{% extends 'quiz_base.html' %}
+
+{% block title %}User Quiz Submission - {{ student_name }} - Attempt #{{ attempt_number }}{% endblock %}
+
+{% block sidebar_links %}
+{% if teacher_mode %}
+    <a href="/teacher/course/{{ course_code }}">Course Home</a>
+    <a href="/teacher/course/{{ course_code }}/quiz">Quiz List</a>
+    <a href="/logout">Sign Out</a>
+{% else %}
+    {{ super() }}
+{% endif %}
+{% endblock %}
+
+{% block main_content %}
+    <div class="quiz-container">
+        <div class="teacher-mode-banner" style="background: linear-gradient(45deg, #ffeb3b, #ffc107); color: #333; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            👨‍🏫 TEACHER VIEW - Student Quiz Submission
+        </div>
+        
+        {% if submission %}
+            <div class="submission-header" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h1>{{ quiz.name }} - Student Submission</h1>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div style="background: white; padding: 10px; border-radius: 5px;">
+                        <strong>👤 Student:</strong><br>
+                        {{ student_name }} <small style="color: #6c757d;">(ID: {{ user_id }})</small>
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 5px;">
+                        <strong>📝 Attempt #:</strong><br>
+                        {{ attempt_number }}
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 5px;">
+                        <strong>📊 Score:</strong><br>
+                        <span style="font-size: 18px; color: {% if (total_points_awarded / total_points_possible * 100) >= 80 %}#28a745{% elif (total_points_awarded / total_points_possible * 100) >= 60 %}#ffc107{% else %}#dc3545{% endif %};">
+                            {{ "%.1f"|format(total_points_awarded / total_points_possible * 100) }}%
+                        </span>
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 5px;">
+                        <strong>📅 Submitted:</strong><br>
+                        {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+            </div>
+            
+            {% if questions %}
+                <div class="questions-review">
+                    <h3 style="color: #495057; margin-bottom: 15px;">📝 Question Responses</h3>
+                    
+                    {% for question in questions %}
+                        <div class="question-review-item" style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                            <div class="question-header" style="border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px;">
+                                <h4 style="color: #8a1c32; margin: 0;">Question {{ question.number }}</h4>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                                    <span style="color: #6c757d; font-size: 14px;">{{ question.type.upper() }} - {{ question.points }} points</span>
+                                    <span style="padding: 3px 8px; border-radius: 12px; font-size: 12px; background: {% if question.is_correct %}#d4edda{% else %}#f8d7da{% endif %}; color: {% if question.is_correct %}#155724{% else %}#721c24{% endif %};">
+                                        {% if question.is_correct %}✓ Correct{% else %}✗ Incorrect{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="question-content" style="margin-bottom: 15px;">
+                                <p style="font-weight: bold; margin-bottom: 10px;">{{ question.content }}</p>
+                            </div>
+                            
+                            <div class="student-response" style="background: #f8f9fa; border-left: 4px solid {% if question.is_correct %}#28a745{% else %}#dc3545{% endif %}; padding: 15px; margin-bottom: 15px;">
+                                <h5 style="margin: 0 0 10px 0; color: #495057;">Student's Answer:</h5>
+                                
+                                {% if question.type == 'mcq' %}
+                                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 5px; padding: 10px;">
+                                        {% if question.student_answer %}
+                                            <span style="{% if question.is_correct %}color: #28a745; font-weight: bold;{% else %}color: #dc3545;{% endif %}">
+                                                {{ question.student_answer }}
+                                            </span>
+                                            {% if not question.is_correct %}
+                                                <div style="margin-top: 10px; padding: 8px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 3px;">
+                                                    <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <em style="color: #6c757d;">No answer provided</em>
+                                        {% endif %}
+                                    </div>
+                                {% elif question.type == 'saq' %}
+                                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 5px; padding: 10px;">
+                                        {% if question.student_answer %}
+                                            <p style="margin: 0; white-space: pre-wrap;">{{ question.student_answer }}</p>
+                                        {% else %}
+                                            <em style="color: #6c757d;">No answer provided</em>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Grading form for SAQ questions -->
+                                    <div class="grading-section" style="margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+                                        <h6 style="margin: 0 0 10px 0; color: #856404;">📝 Grade this answer:</h6>
+                                        <form class="grade-saq-form" data-question-id="{{ question.id }}" data-submission-id="{{ submission.id }}" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                            <div style="display: flex; gap: 10px; align-items: center;">
+                                                <label style="font-weight: bold; color: #495057;">Points:</label>
+                                                <input type="number" 
+                                                       name="points" 
+                                                       min="0" 
+                                                       max="{{ question.points }}" 
+                                                       step="0.1" 
+                                                       value="{{ question.points_awarded }}" 
+                                                       style="width: 80px; padding: 5px; border: 1px solid #ced4da; border-radius: 3px;">
+                                                <span style="color: #6c757d;">/ {{ question.points }}</span>
+                                            </div>
+
+                                            <button type="submit" class="btn-grade-saq" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-size: 14px;">
+                                                💾 Save Grade
+                                            </button>
+                                        </form>
+                                        <div class="grade-feedback" style="margin-top: 8px; font-size: 14px;"></div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="points-info" style="text-align: right; color: #6c757d; font-size: 14px;">
+                                Points Awarded: <strong>{{ question.points_awarded }}/{{ question.points }}</strong>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="submission-summary" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 8px; padding: 20px; margin-top: 20px;">
+                        <h4 style="color: #1976d2; margin-bottom: 15px;">📊 Submission Summary</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <strong>Total Questions</strong><br>
+                                <span style="font-size: 18px; color: #1976d2;">{{ total_questions }}</span>
+                            </div>
+                            <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <strong>Correct Answers</strong><br>
+                                <span id="correct-answers" style="font-size: 18px; color: #28a745;">{{ correct_answers }}</span>
+                            </div>
+                            <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <strong>Total Points</strong><br>
+                                <span id="total-points" style="font-size: 18px; color: #155724;">{{ total_points_awarded }}/{{ total_points_possible }}</span>
+                            </div>
+                            <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <strong>Final Score</strong><br>
+                                <span id="final-score" style="font-size: 18px; color: {% if (total_points_awarded / total_points_possible * 100) >= 80 %}#28a745{% elif (total_points_awarded / total_points_possible * 100) >= 60 %}#ffc107{% else %}#dc3545{% endif %};">
+                                    {{ "%.1f"|format(total_points_awarded / total_points_possible * 100) }}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0; text-align: center;">
+                    <p style="color: #856404; margin: 0;">No questions found for this submission.</p>
+                </div>
+            {% endif %}
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}/attempt_history'" style="background: #6c757d;">
+                    ← Back to Attempt History
+                </button>
+                
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}'" style="background: #6c757d;">
+                    📋 Back to Quiz Info
+                </button>
+                
+                <button onclick="window.location.href='/course/{{ course_code }}/quiz'" style="background: #6c757d;">
+                    📋 Return to Quiz List
+                </button>
+                
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}'" style="background: #17a2b8;">
+                    🏠 Return to Course
+                </button>
+            </div>
+            
+            <script>
+            // Handle SAQ grading form submissions
+            document.addEventListener('DOMContentLoaded', function() {
+                
+                const gradeForms = document.querySelectorAll('.grade-saq-form');
+                
+                gradeForms.forEach(form => {
+                    form.addEventListener('submit', async function(e) {
+                        e.preventDefault();
+                        
+                        const questionId = form.dataset.questionId;
+                        const submissionId = form.dataset.submissionId;
+                        const points = form.querySelector('input[name="points"]').value;
+                        const maxPoints = form.querySelector('input[name="points"]').max;
+                        const isCorrect = parseFloat(points) === parseFloat(maxPoints);
+                        const feedbackDiv = form.parentElement.querySelector('.grade-feedback');
+                        
+                        try {
+                            const response = await fetch(`/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}/user/{{ user_id }}/submission/${submissionId}/grade/${questionId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    points: parseFloat(points),
+                                    is_correct: isCorrect
+                                })
+                            });
+                            
+                            const data = await response.json();
+                            
+                            if (response.ok) {
+                                feedbackDiv.innerHTML = '<span style="color: #28a745;">✓ Grade saved successfully!</span>';
+                                feedbackDiv.style.display = 'block';
+                                
+                                // Update the points display
+                                const pointsInfo = form.closest('.question-review-item').querySelector('.points-info');
+                                const maxPoints = form.querySelector('input[name="points"]').max;
+                                pointsInfo.innerHTML = `Points Awarded: <strong>${points}/${maxPoints}</strong>`;
+                                
+                                // Update the status badge
+                                const statusBadge = form.closest('.question-review-item').querySelector('span[style*="border-radius: 12px"]');
+                                if (isCorrect) {
+                                    statusBadge.innerHTML = '✓ Correct';
+                                    statusBadge.style.background = '#d4edda';
+                                    statusBadge.style.color = '#155724';
+                                } else {
+                                    statusBadge.innerHTML = '✗ Incorrect';
+                                    statusBadge.style.background = '#f8d7da';
+                                    statusBadge.style.color = '#721c24';
+                                }
+                                
+                                // Update submission summary statistics with server data
+                                if (data.submission_stats) {
+                                    const stats = data.submission_stats;
+                                    
+                                    // Update total points
+                                    const totalPointsElement = document.getElementById('total-points');
+                                    if (totalPointsElement) {
+                                        totalPointsElement.textContent = `${stats.total_points_awarded}/${stats.total_points_possible}`;
+                                    }
+                                    
+                                    // Update correct answers count
+                                    const correctAnswersElement = document.getElementById('correct-answers');
+                                    if (correctAnswersElement) {
+                                        correctAnswersElement.textContent = stats.correct_answers;
+                                    }
+                                    
+                                    // Update final score
+                                    const finalScoreElement = document.getElementById('final-score');
+                                    if (finalScoreElement) {
+                                        finalScoreElement.textContent = `${stats.final_score}%`;
+                                        
+                                        // Update score color based on percentage
+                                        if (stats.final_score >= 80) {
+                                            finalScoreElement.style.color = '#28a745'; // Green
+                                        } else if (stats.final_score >= 60) {
+                                            finalScoreElement.style.color = '#ffc107'; // Yellow
+                                        } else {
+                                            finalScoreElement.style.color = '#dc3545'; // Red
+                                        }
+                                    }
+                                }
+                                
+                                // Hide success message after 3 seconds
+                                setTimeout(() => {
+                                    feedbackDiv.style.display = 'none';
+                                }, 3000);
+                            } else {
+                                feedbackDiv.innerHTML = `<span style="color: #dc3545;">Error: ${data.error}</span>`;
+                                feedbackDiv.style.display = 'block';
+                            }
+                        } catch (error) {
+                            feedbackDiv.innerHTML = '<span style="color: #dc3545;">Network error. Please try again.</span>';
+                            feedbackDiv.style.display = 'block';
+                        }
+                    });
+                });
+            });
+            </script>
+        {% else %}
+            <div class="alert alert-danger" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 16px; text-align: center;">
+                <strong>⚠️ Error:</strong> Submission not found or unavailable.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

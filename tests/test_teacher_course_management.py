@@ -39,7 +39,7 @@ class TeacherCourseManagementTester:
     
     def test_enrolled_students_list(self, course_id):
         """Test enrolled students list page"""
-        url = urljoin(self.base_url, f'/teacher_course/{course_id}/enrolled_list')
+        url = urljoin(self.base_url, f'/teacher/course/{course_id}/enrolled_list')
         response = self.session.get(url)
         
         print(f"\n=== Testing Enrolled Students List (Course {course_id}) ===")
@@ -68,7 +68,7 @@ class TeacherCourseManagementTester:
     
     def test_not_enrolled_students_list(self, course_id):
         """Test not enrolled students list page"""
-        url = urljoin(self.base_url, f'/teacher_course/{course_id}/not_enrolled_list')
+        url = urljoin(self.base_url, f'/teacher/course/{course_id}/not_enrolled_list')
         response = self.session.get(url)
         
         print(f"\n=== Testing Not Enrolled Students List (Course {course_id}) ===")
@@ -97,7 +97,7 @@ class TeacherCourseManagementTester:
     
     def test_import_students_page(self, course_id):
         """Test import students page"""
-        url = urljoin(self.base_url, f'/teacher_course/{course_id}/import_students')
+        url = urljoin(self.base_url, f'/teacher/course/{course_id}/import_students')
         response = self.session.get(url)
         
         print(f"\n=== Testing Import Students Page (Course {course_id}) ===")

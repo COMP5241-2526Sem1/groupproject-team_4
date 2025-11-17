@@ -37,7 +37,7 @@ def test_teacher_specific_routes():
     print("\n2️⃣ Testing teacher/course/3/quiz/4 route...")
     
     # First, let's check what courses the teacher has access to
-    teacher_home_response = session.get(f"{base_url}/teacher_home")
+    teacher_home_response = session.get(f"{base_url}/teacher")
     if teacher_home_response.status_code != 200:
         print(f"❌ Failed to access teacher home: {teacher_home_response.status_code}")
         return False

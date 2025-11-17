@@ -99,13 +99,8 @@ app.register_blueprint(teacher_quiz_bp)
 from routes.word_cloud_routes import word_cloud_bp
 app.register_blueprint(word_cloud_bp)
 # Register AI routes blueprint
-from routes.ai_routes import ai_bp
+from routes.ai_routes import ai_bp# AI routes
 app.register_blueprint(ai_bp)
-
-# Test route for create course layout
-@app.route('/test_create_course_layout')
-def test_create_course_layout():
-    return render_template('test_create_course_layout.html')
 
 # Routes: Login and registration pages
 @app.route('/login')
@@ -121,7 +116,7 @@ def register_page():
 def student_home():
     return render_template('student_home.html')
 
-@app.route('/teacher_home')
+@app.route('/teacher')
 def teacher_home():
     from models.course import Course
     from flask import session

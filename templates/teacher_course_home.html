@@ -72,8 +72,8 @@
             <a href="/teacher/course/{{ course.code }}/quiz" class="control-btn">Manage Quizzes</a>
             <a href="/teacher/course/{{ course.code }}/poll" class="control-btn">Manage Polls</a>
             <a href="/teacher/course/{{ course.code }}/word_cloud" class="control-btn">Manage Word Clouds</a>
-            <a href="/teacher_course/{{ course.code }}/enrolled_list" class="control-btn">Manage Students</a>
-            <a href="/teacher_course/create" class="control-btn secondary">Create New Course</a>
+            <a href="/teacher/course/{{ course.code }}/enrolled_list" class="control-btn">Manage Students</a>
+            <a href="/teacher/course/create" class="control-btn secondary">Create New Course</a>
         </div>
     </div>
 
@@ -92,10 +92,10 @@
 
     <script>
         function loadAnnouncement() {
-            window.location.href = '/teacher_course/' + '{{ course.code }}';
+            window.location.href = '/teacher/course/' + '{{ course.code }}';
         }
         function loadContent() {
-            window.location.href = '/teacher_course/' + '{{ course.code }}';
+            window.location.href = '/teacher/course/' + '{{ course.code }}';
         }
         function loadQuiz() {
             window.location.href = '/teacher/course/' + '{{ course.code }}' + '/quiz';

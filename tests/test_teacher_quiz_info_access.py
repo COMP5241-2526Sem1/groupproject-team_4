@@ -39,7 +39,7 @@ def test_teacher_quiz_info_access():
     
     # 2. Get list of teacher's courses to find a valid course and quiz
     print("\n2️⃣ Getting teacher's courses...")
-    teacher_home_response = session.get(f"{base_url}/teacher_home")
+    teacher_home_response = session.get(f"{base_url}/teacher")
     
     if teacher_home_response.status_code != 200:
         print(f"❌ Failed to access teacher home: {teacher_home_response.status_code}")

@@ -187,13 +187,13 @@
 <h1>{{ course.name }} - Import Students</h1>
 
 <div class="nav-buttons">
-    <a href="/teacher_course/{{ course.code }}" class="nav-btn">Back to Course Details</a>
-    <a href="/teacher_course/{{ course.code }}/enrolled_list" class="nav-btn">Enrolled Students</a>
-    <a href="/teacher_course/{{ course.code }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
+    <a href="/teacher/course/{{ course.code }}" class="nav-btn">Back to Course Details</a>
+        <a href="/teacher/course/{{ course.code }}/enrolled_list" class="nav-btn">Enrolled Students</a>
+        <a href="/teacher/course/{{ course.code }}/not_enrolled_list" class="nav-btn">Not Enrolled Students</a>
 </div>
 
 <div class="import-container">
-    <form method="POST" enctype="multipart/form-data">
+    <form action="/teacher/course/{{ course.code }}/bulk_add" method="POST" enctype="multipart/form-data" id="bulk-add-form">
         <div class="file-upload">
             <label for="csv-file" class="file-label">Select CSV File</label>
             <input type="file" id="csv-file" name="csv_file" accept=".csv" onchange="handleFileSelect(event)">

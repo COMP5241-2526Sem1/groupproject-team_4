@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container">
     <aside class="sidebar">
-        <div class="logo" onclick="window.location.href='/teacher_home'">
+        <div class="logo" onclick="window.location.href='/teacher'">
             <img src="{{ url_for('static', filename='polyu_logo.png') }}" alt="PolyU Logo">
             {% if course %}
                 <div style="font-size:18px;font-weight:bold;margin-top:8px;">{{ course.code }}</div>
@@ -16,8 +16,8 @@
         </div>
         <nav>
             {% block sidebar_links %}
-            <a href="javascript:void(0);" onclick="window.location.href='/teacher_course/' + window.location.pathname.split('/')[2] + '/';">Announcement</a>
-            <a href="javascript:void(0);" onclick="window.location.href='/teacher_course/' + window.location.pathname.split('/')[2] + '/';">Content</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/';">Announcement</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/';">Content</a>
             <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/quiz';">Quiz</a>
             <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
             <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
@@ -53,14 +53,14 @@
                 if (data.my_courses) {
                     data.my_courses.forEach(course => {
                         const link = document.createElement('a');
-                        link.href = `/teacher_course/${course.code}`;
+                        link.href = `/teacher/course/${course.code}`;
                         link.textContent = course.name;
                         dropdown.appendChild(link);
                     });
                 } else if (data.length > 0) {
                     data.forEach(course => {
                         const link = document.createElement('a');
-                        link.href = `/teacher_course/${course.code}`;
+                        link.href = `/teacher/course/${course.code}`;
                         link.textContent = course.name;
                         dropdown.appendChild(link);
                     });

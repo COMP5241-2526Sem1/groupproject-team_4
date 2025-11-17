@@ -4,7 +4,7 @@
 <div id="teacher-home-section" class="section">
     <h1>Course List</h1>
     
-    <a href="/teacher_course/create" class="create-btn">Create New Course</a>
+    <a href="/teacher/course/create" class="create-btn">Create New Course</a>
     
     <!-- My Courses Section -->
     <div class="section">
@@ -33,8 +33,8 @@
                             <td>{{ course.capacity }}</td>
                             <td>{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</td>
                             <td>
-                                <a href="/teacher_course/{{ course.code }}" class="btn-view">View Details</a>
-                                <a href="/teacher_course/{{ course.code }}/enrolled_list" class="btn-view">Manage Students</a>
+                                <a href="/teacher/course/{{ course.code }}" class="btn-view">View Details</a>
+                <a href="/teacher/course/{{ course.code }}/enrolled_list" class="btn-view">Manage Students</a>
                             </td>
                         </tr>
                         {% endfor %}

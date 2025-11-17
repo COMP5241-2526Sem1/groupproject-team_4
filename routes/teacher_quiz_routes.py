@@ -348,3 +348,285 @@ def teacher_quiz_results(course_code, quiz_id):
         results_data['questions'].append(question_data)
     
     return render_template('teacher_quiz_results.html', course=course, quiz=results_data, course_code=course_code)
+
+@teacher_quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/attempt_history', methods=['GET'])
+@teacher_required
+def teacher_quiz_attempt_history(course_code, quiz_id):
+    """Teacher view all quiz attempts with detailed history"""
+    user_id = session.get('user_id')
+    course, error = check_teacher_course_access(course_code, user_id)
+    if error:
+        return render_template('course_home.html', course=None, error_message=error), 404 if error == "Course not found" else 403
+    
+    # Get quiz details
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return render_template('teacher_quiz_attempt_history.html', course=course, quiz=None, attempts=[], stats={}, course_code=course_code, error_message="Quiz not found"), 404
+    
+    # Get all submissions for this quiz with student information
+    submissions = db.session.query(Submission, User, Attempt).join(
+        User, Submission.user_id == User.id
+    ).join(
+        Attempt, db.and_(Attempt.user_id == Submission.user_id, Attempt.quiz_id == Submission.quiz_id)
+    ).filter(
+        Submission.quiz_id == quiz_id
+    ).order_by(Submission.submitted_at.desc()).all()
+    
+    # Get quiz statistics
+    total_students = CourseEnrollment.query.filter_by(course_code=course_code).count()
+    total_attempts = Attempt.query.filter_by(quiz_id=quiz_id).count()
+    completed_submissions = len(submissions)
+    
+    # Calculate average score
+    scores = [sub.grade for sub, _, _ in submissions if sub.grade is not None]
+    average_score = sum(scores) / len(scores) if scores else 0
+    
+    # Prepare attempts data
+    attempts = []
+    for submission, user, attempt in submissions:
+        attempts.append({
+            'id': attempt.id,
+            'user_id': user.id,
+            'student_name': user.username,
+            'student_role': user.role,
+            'attempt_count': attempt.attempt_count,
+            'score': submission.grade,
+            'is_completed': True,
+            'submitted_at': submission.submitted_at,
+            'submission_id': submission.id
+        })
+    
+    # Add in-progress attempts (attempts without submissions)
+    in_progress_attempts = db.session.query(Attempt, User).join(
+        User, Attempt.user_id == User.id
+    ).filter(
+        Attempt.quiz_id == quiz_id,
+        ~db.exists().where(db.and_(Submission.user_id == Attempt.user_id, Submission.quiz_id == Attempt.quiz_id))
+    ).all()
+    
+    for attempt, user in in_progress_attempts:
+        attempts.append({
+            'id': attempt.id,
+            'user_id': user.id,
+            'student_name': user.username,
+            'student_role': user.role,
+            'attempt_count': attempt.attempt_count,
+            'score': None,
+            'is_completed': False,
+            'submitted_at': None,
+            'submission_id': None
+        })
+    
+    # Sort by most recent
+    attempts.sort(key=lambda x: x['submitted_at'] if x['submitted_at'] else x['created_at'], reverse=True)
+    
+    stats = {
+        'total_students': total_students,
+        'total_attempts': total_attempts,
+        'completed_attempts': completed_submissions,
+        'average_score': average_score
+    }
+    
+    return render_template('teacher_quiz_attempt_history.html', course=course, quiz=quiz, attempts=attempts, stats=stats, course_code=course_code)
+
+@teacher_quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/user/<int:user_id>/submission/<int:submission_id>', methods=['GET'])
+@teacher_required
+def teacher_view_user_submission(course_code, quiz_id, user_id, submission_id):
+    """Teacher view individual user quiz submission"""
+    teacher_id = session.get('user_id')
+    course, error = check_teacher_course_access(course_code, teacher_id)
+    if error:
+        return render_template('course_home.html', course=None, error_message=error), 404 if error == "Course not found" else 403
+    
+    # Get quiz details
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return render_template('teacher_user_quiz_submission.html', course=course, quiz=None, submission=None, questions=[], course_code=course_code, error_message="Quiz not found"), 404
+    
+    # Get student details
+    student = User.query.get(user_id)
+    if not student:
+        return render_template('teacher_user_quiz_submission.html', course=course, quiz=quiz, submission=None, questions=[], course_code=course_code, error_message="Student not found"), 404
+    
+    # Get submission details
+    submission = Submission.query.filter_by(id=submission_id, quiz_id=quiz_id, user_id=user_id).first()
+    if not submission:
+        return render_template('teacher_user_quiz_submission.html', course=course, quiz=quiz, submission=None, questions=[], course_code=course_code, error_message="Submission not found"), 404
+    
+    # Get attempt information
+    attempt = Attempt.query.filter_by(user_id=user_id, quiz_id=quiz_id).order_by(Attempt.attempt_count.desc()).first()
+    if not attempt:
+        attempt_count = 1
+    else:
+        attempt_count = attempt.attempt_count
+    
+    # Get all questions for this quiz
+    quiz_questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    # Get all responses for this submission
+    responses = QuestionResponse.query.filter_by(submission_id=submission_id).all()
+    
+    # Prepare questions data
+    questions = []
+    total_points_possible = 0
+    total_points_awarded = 0
+    correct_answers = 0
+    
+    for i, question in enumerate(quiz_questions, 1):
+        # Find the response for this question
+        response = next((r for r in responses if r.question_id == question.id), None)
+        
+        total_points_possible += question.points
+        
+        question_data = {
+            'number': i,
+            'id': question.id,
+            'content': question.content,
+            'type': question.type,
+            'points': question.points,
+            'is_correct': False,
+            'student_answer': None,
+            'correct_answer': None,
+            'points_awarded': 0
+        }
+        
+        if response:
+            question_data['is_correct'] = response.is_correct
+            
+            if question.type == 'mcq':
+                if response.choice_id:
+                    choice = Choice.query.get(response.choice_id)
+                    if choice:
+                        question_data['student_answer'] = choice.content
+                
+                # Get correct answer
+                correct_choice = Choice.query.filter_by(question_id=question.id, is_correct=True).first()
+                if correct_choice:
+                    question_data['correct_answer'] = correct_choice.content
+            
+            elif question.type == 'saq':
+                question_data['student_answer'] = response.text_answer
+                question_data['correct_answer'] = "[Manual grading may be required]"
+            
+            # Calculate points awarded
+            if response.is_correct:
+                question_data['points_awarded'] = question.points
+                total_points_awarded += question.points
+                correct_answers += 1
+        
+        questions.append(question_data)
+    
+    return render_template('teacher_user_quiz_submission.html', 
+                         course=course, 
+                         quiz=quiz, 
+                         submission=submission,
+                         questions=questions,
+                         student_name=student.username,
+                         user_id=user_id,
+                         attempt_number=attempt_count,
+                         total_questions=len(questions),
+                         correct_answers=correct_answers,
+                         total_points_awarded=total_points_awarded,
+                         total_points_possible=total_points_possible,
+                         course_code=course_code,
+                         teacher_mode=True)
+
+@teacher_quiz_bp.route('/teacher/course/<course_code>/quiz/<int:quiz_id>/user/<int:user_id>/submission/<int:submission_id>/grade/<int:question_id>', methods=['POST'])
+@teacher_required
+def teacher_grade_saq_question(course_code, quiz_id, user_id, submission_id, question_id):
+    """Teacher grade short answer question"""
+    teacher_id = session.get('user_id')
+    
+    # Verify teacher access to course
+    course, error = check_teacher_course_access(course_code, teacher_id)
+    if error:
+        return jsonify({'error': error}), 404 if error == "Course not found" else 403
+    
+    # Verify quiz belongs to course
+    quiz = Quiz.query.filter_by(id=quiz_id, course_code=course_code).first()
+    if not quiz:
+        return jsonify({'error': 'Quiz not found'}), 404
+    
+    # Verify submission exists and belongs to user
+    submission = Submission.query.filter_by(id=submission_id, quiz_id=quiz_id, user_id=user_id).first()
+    if not submission:
+        return jsonify({'error': 'Submission not found'}), 404
+    
+    # Verify question exists and belongs to quiz
+    question = Question.query.filter_by(id=question_id, quiz_id=quiz_id).first()
+    if not question:
+        return jsonify({'error': 'Question not found'}), 404
+    
+    # Verify question is SAQ type
+    if question.type != 'saq':
+        return jsonify({'error': 'Question is not a short answer question'}), 400
+    
+    # Get the question response
+    response = QuestionResponse.query.filter_by(submission_id=submission_id, question_id=question_id).first()
+    if not response:
+        return jsonify({'error': 'Question response not found'}), 404
+    
+    # Get grading data from request
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    points = data.get('points')
+    is_correct = data.get('is_correct')
+    
+    if points is None or is_correct is None:
+        return jsonify({'error': 'Missing required fields: points and is_correct'}), 400
+    
+    # Validate points
+    try:
+        points = float(points)
+        if points < 0 or points > question.points:
+            return jsonify({'error': f'Points must be between 0 and {question.points}'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Points must be a valid number'}), 400
+    
+    # Update the question response
+    response.points = points
+    response.is_correct = is_correct
+    
+    try:
+        db.session.commit()
+        
+        # Recalculate submission grade
+        all_responses = QuestionResponse.query.filter_by(submission_id=submission_id).all()
+        total_points = sum(r.points for r in all_responses if r.points is not None)
+        
+        # Update submission grade
+        submission.grade = total_points
+        db.session.commit()
+        
+        # Calculate updated statistics
+        all_responses = QuestionResponse.query.filter_by(submission_id=submission_id).all()
+        total_points_possible = 0
+        correct_answers = 0
+        
+        # Get all questions for this quiz to calculate totals
+        quiz_questions = Question.query.filter_by(quiz_id=quiz_id).all()
+        for question in quiz_questions:
+            total_points_possible += question.points
+            # Check if this question is correct
+            response = next((r for r in all_responses if r.question_id == question.id), None)
+            if response and response.is_correct:
+                correct_answers += 1
+        
+        return jsonify({
+            'success': True,
+            'message': 'Grade saved successfully',
+            'points_awarded': points,
+            'total_points': total_points,
+            'submission_stats': {
+                'total_points_awarded': total_points,
+                'total_points_possible': total_points_possible,
+                'correct_answers': correct_answers,
+                'final_score': round((total_points / total_points_possible * 100), 1) if total_points_possible > 0 else 0
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to save grade: {str(e)}'}), 500

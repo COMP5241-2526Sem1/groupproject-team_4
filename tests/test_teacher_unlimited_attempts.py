@@ -41,7 +41,7 @@ def test_teacher_unlimited_attempts():
     
     # Step 2: Get teacher home to see available courses
     print("\n2. Getting teacher home page...")
-    home_response = session.get(f"{base_url}/teacher_home")
+    home_response = session.get(f"{base_url}/teacher")
     
     if home_response.status_code != 200:
         print(f"❌ Teacher home access failed: {home_response.status_code}")

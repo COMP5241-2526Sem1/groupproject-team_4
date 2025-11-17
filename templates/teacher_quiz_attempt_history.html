@@ -1,0 +1,135 @@
+{% extends 'quiz_base.html' %}
+
+{% block title %}Quiz Attempt History - {{ quiz.name }}{% endblock %}
+
+{% block main_content %}
+    <div class="quiz-container">
+        <div class="teacher-mode-banner" style="background: linear-gradient(45deg, #ffeb3b, #ffc107); color: #333; padding: 10px 20px; border-radius: 5px; margin-bottom: 20px; text-align: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            👨‍🏫 TEACHER VIEW - Quiz Attempt History
+        </div>
+        
+        {% if quiz %}
+            <div class="quiz-header">
+                <h1>{{ quiz.name }} - Attempt History</h1>
+                <p><strong>Course:</strong> {{ course.name }} ({{ course_code }})</p>
+                {% if quiz.description %}
+                    <p><strong>Description:</strong> {{ quiz.description }}</p>
+                {% endif %}
+            </div>
+            
+            {% if attempts %}
+                <div class="attempt-history-container" style="margin: 20px 0;">
+                    <h3 style="color: #495057; margin-bottom: 15px;">📋 All Student Attempts</h3>
+                    <div style="max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8f9fa; position: sticky; top: 0;">
+                                <tr>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Student</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Role</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Attempt #</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Score</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Status</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Submitted At</th>
+                                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attempt in attempts %}
+                                <tr style="border-bottom: 1px solid #dee2e6;">
+                                    <td style="padding: 10px;">
+                                        <strong>{{ attempt.student_name }}</strong><br>
+                                        <small style="color: #6c757d;">ID: {{ attempt.user_id }}</small>
+                                    </td>
+                                    <td style="padding: 10px;">
+                                        <span style="padding: 3px 8px; border-radius: 12px; font-size: 12px; background: {% if attempt.student_role == 'teacher' %}#ffeb3b{% else %}#e3f2fd{% endif %}; color: {% if attempt.student_role == 'teacher' %}#f57f17{% else %}#1976d2{% endif %};">
+                                            {{ attempt.student_role.title() }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 10px;">#{{ attempt.attempt_count }}</td>
+                                    <td style="padding: 10px;">
+                                        {% if attempt.score is not none %}
+                                            <strong style="color: {% if attempt.score >= 80 %}#28a745{% elif attempt.score >= 60 %}#ffc107{% else %}#dc3545{% endif %};">
+                                                {{ attempt.score }}%
+                                            </strong>
+                                        {% else %}
+                                            <em style="color: #6c757d;">In Progress</em>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 10px;">
+                                        {% if attempt.is_completed %}
+                                            <span style="color: #28a745;">✓ Completed</span>
+                                        {% else %}
+                                            <span style="color: #ffc107;">⏳ In Progress</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 10px; font-size: 12px; color: #6c757d;">
+                                        {% if attempt.submitted_at %}
+                                            {{ attempt.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            <em>Not submitted</em>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 10px;">
+                                        {% if attempt.submission_id %}
+                                            <a href="/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}/user/{{ attempt.user_id }}/submission/{{ attempt.submission_id }}" 
+                                               style="background: #17a2b8; color: white; padding: 5px 10px; border-radius: 3px; text-decoration: none; font-size: 12px;">
+                                                View Details
+                                            </a>
+                                        {% else %}
+                                            <span style="color: #6c757d; font-size: 12px;">No submission</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="summary-stats" style="background: #e8f5e8; border: 1px solid #28a745; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                    <h4 style="color: #155724; margin-bottom: 15px;">📊 Summary Statistics</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <strong>Total Students</strong><br>
+                            <span style="font-size: 18px; color: #155724;">{{ stats.total_students }}</span>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <strong>Total Attempts</strong><br>
+                            <span style="font-size: 18px; color: #155724;">{{ stats.total_attempts }}</span>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <strong>Completed</strong><br>
+                            <span style="font-size: 18px; color: #155724;">{{ stats.completed_attempts }}</span>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: 5px; text-align: center;">
+                            <strong>Average Score</strong><br>
+                            <span style="font-size: 18px; color: #155724;">{{ "%.1f"|format(stats.average_score) }}%</span>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0; text-align: center;">
+                    <p style="color: #856404; margin: 0;">No attempts have been made for this quiz yet.</p>
+                </div>
+            {% endif %}
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz/{{ quiz.id }}'" style="background: #6c757d;">
+                    ← Back to Quiz Info
+                </button>
+                
+                <button onclick="window.location.href='/course/{{ course_code }}/quiz'" style="background: #6c757d;">
+                    📋 Return to Quiz List
+                </button>
+                
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}'" style="background: #17a2b8;">
+                    🏠 Return to Course
+                </button>
+            </div>
+        {% else %}
+            <div class="alert alert-danger" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 16px; text-align: center;">
+                <strong>⚠️ Error:</strong> Quiz not found or unavailable.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

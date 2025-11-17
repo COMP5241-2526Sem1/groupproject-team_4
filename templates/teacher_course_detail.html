@@ -120,9 +120,9 @@
     </div>
     
     <div class="action-buttons">
-        <a href="/teacher_course/{{ course.code }}/enrolled_list" class="action-btn">Enrolled Students</a>
-        <a href="/teacher_course/{{ course.code }}/not_enrolled_list" class="action-btn secondary">Add Students</a>
-        <a href="/teacher_course/{{ course.code }}/import_students" class="action-btn success">Import Students (CSV)</a>
+        <a href="/teacher/course/{{ course.code }}/enrolled_list" class="action-btn">Enrolled Students</a>
+                <a href="/teacher/course/{{ course.code }}/not_enrolled_list" class="action-btn secondary">Add Students</a>
+                <a href="/teacher/course/{{ course.code }}/import_students" class="action-btn success">Import Students (CSV)</a>
         <a href="{{ url_for('quiz.teacher_quiz_list', course_code=course.code) }}" class="action-btn">Manage Quizzes</a>
         <a href="{{ url_for('poll.teacher_poll_list', course_code=course.code) }}" class="action-btn secondary">Manage Polls</a>
         <a href="/teacher_course_list" class="action-btn">Back to Course List</a>

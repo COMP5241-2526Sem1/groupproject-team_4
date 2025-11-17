@@ -181,9 +181,9 @@
 
 <div class="action-buttons">
     <div class="nav-buttons">
-        <a href="/teacher_course/{{ course.code }}" class="nav-btn">Back to Course Details</a>
-        <a href="/teacher_course/{{ course.code }}/enrolled_list" class="nav-btn">Enrolled Students</a>
-        <a href="/teacher_course/{{ course.code }}/import_students" class="nav-btn">Import Students</a>
+        <a href="/teacher/course/{{ course.code }}" class="nav-btn">Back to Course Details</a>
+        <a href="/teacher/course/{{ course.code }}/enrolled_list" class="nav-btn">Enrolled Students</a>
+        <a href="/teacher/course/{{ course.code }}/import_students" class="nav-btn">Import Students</a>
     </div>
 </div>
 
@@ -323,7 +323,7 @@
             // Create a form to submit the selected students
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `{{ url_for('teacher_course.bulk_add_students', course_code=course.code) }}`;
+            form.action = `/teacher/course/{{ course.code }}/bulk_add`;
             
             // Add CSRF token if available
             const csrfToken = document.querySelector('input[name="csrf_token"]');

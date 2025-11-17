@@ -34,7 +34,7 @@ def test_foreign_key_fix_verification():
     # Check if login was successful by looking for redirect or success message
     if response.status_code == 200 and 'success' in response.text.lower():
         print("✅ Login successful (via JSON response)")
-    elif 'teacher_home' in response.url or 'student_home' in response.url:
+    elif 'teacher' in response.url or 'student_home' in response.url:
         print("✅ Login successful (via redirect)")
     elif 'login' in response.url and response.status_code == 200:
         print("❌ Login failed - still on login page")

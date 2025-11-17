@@ -94,7 +94,11 @@
                     🎯 Start Quiz (Teacher Mode)
                 </button>
                 
-                <button onclick="window.location.href='/course/{{ course_code }}/quiz'" style="background: #6c757d;">
+                <button onclick="window.location.href='{{ url_for('teacher_quiz.teacher_quiz_attempt_history', course_code=course_code, quiz_id=quiz.id) }}'" style="background: #17a2b8;">
+                    📜 Attempt History
+                </button>
+                
+                <button onclick="window.location.href='/teacher/course/{{ course_code }}/quiz'" style="background: #6c757d;">
                     📋 Return to Quiz List
                 </button>
                 

@@ -10,7 +10,7 @@
             <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
         </div>
         <nav>
-            <a href="/teacher_home" class="active">Dashboard</a>
+            <a href="/teacher" class="active">Dashboard</a>
             <div class="dropdown">
                 <a href="/teacher_course_list">My Courses</a>
                 <div class="dropdown-content" id="course-dropdown">
@@ -20,7 +20,7 @@
             <a href="/activity">Activity</a>
             <a href="/grades">Grades</a>
             <a href="/assist">Assist</a>
-            <a href="/teacher_course/create">Create Course</a>
+            <a href="/teacher/course/create">Create Course</a>
             <a href="/profile">Profile</a>
             <a href="/logout">Sign Out</a>
         </nav>
@@ -57,7 +57,7 @@
                             <td>{{ course.capacity }}</td>
                             <td>{{ course.day_of_week }} {{ course.start_time }} - {{ course.end_time }}</td>
                             <td>
-                                <a href="/teacher_course/{{ course.code }}" class="btn-view">View Details</a>
+                                <a href="/teacher/course/{{ course.code }}" class="btn-view">View Details</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -106,7 +106,7 @@
 <script>
     // Navigation handled by URL routing
     document.getElementById('create-course-btn').addEventListener('click', function() {
-        window.location.href = '/teacher_course/create';
+        window.location.href = '/teacher/course/create';
     });
     
     // Dynamically generate course dropdown menu
@@ -118,7 +118,7 @@
                 dropdown.innerHTML = '';
                 courses.forEach(course => {
                     const link = document.createElement('a');
-                    link.href = `/teacher_course/${course.code}`;
+                    link.href = `/teacher/course/${course.code}`;
                     link.textContent = course.name;
                     dropdown.appendChild(link);
                 });

@@ -11,9 +11,9 @@
             <div style="font-size:14px;margin-top:4px;">{{ course.name }}</div>
         </div>
         <nav>
-            <a href="/teacher_home">Teacher Dashboard</a>
+            <a href="/teacher">Teacher Dashboard</a>
             <div class="dropdown">
-                <a href="/teacher_course_list" class="{% if request.path.startswith('/teacher_course') %}active{% endif %}">My Courses</a>
+                <a href="/teacher_course_list" class="{% if request.path.startswith('/teacher/course') %}active{% endif %}">My Courses</a>
                 <div class="dropdown-content" id="course-dropdown">
                     <!-- Dynamically generate course options -->
                 </div>
@@ -53,14 +53,14 @@
                 if (data.my_courses) {
                     data.my_courses.forEach(course => {
                         const link = document.createElement('a');
-                        link.href = `/teacher_course/${course.code}`;
+                        link.href = `/teacher/course/${course.code}`;
                         link.textContent = course.name;
                         dropdown.appendChild(link);
                     });
                 } else if (data.length > 0) {
                     data.forEach(course => {
                         const link = document.createElement('a');
-                        link.href = `/teacher_course/${course.code}`;
+                        link.href = `/teacher/course/${course.code}`;
                         link.textContent = course.name;
                         dropdown.appendChild(link);
                     });

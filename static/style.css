@@ -360,8 +360,9 @@ a:hover {
     width: auto;
 }
 
+/* Hover effect removed as requested */
 .quiz-container button:hover {
-    background: #a62c43;
+    /* No hover effect - maintain same background color */
 }
 
 /* Quiz/Poll List Styles */
@@ -382,14 +383,14 @@ a:hover {
     overflow: hidden;
 }
 
+/* Hover effect removed as requested */
 .quiz-container:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    background-color: #ff6363;
+    /* No hover effect - maintain same appearance */
 }
 
+/* Hover effect removed as requested */
 .quiz-container:hover .quiz-link {
-    color: #8a1c32;
+    /* No hover effect - maintain same color */
 }
 
 /* Success Message Styles */
@@ -609,9 +610,9 @@ a:hover {
     text-align: left;
 }
 
+/* Hover effect removed as requested */
 .choice label:hover {
-    background-color: #f0f0f0;
-    border-color: #bbb;
+    /* No hover effect - maintain same appearance */
 }
 
 .choice input[type="radio"] {
@@ -661,8 +662,9 @@ a:hover {
     width: auto;
 }
 
+/* Hover effect removed as requested */
 .submit-btn:hover {
-    background-color: #a62c43;
+    /* No hover effect - maintain same background color */
 }
 
 /* Error Message */
@@ -682,8 +684,9 @@ a:hover {
     transition: transform 0.2s ease;
 }
 
+/* Hover effect removed as requested */
 .quiz-container-link:hover {
-    transform: translateY(-2px);
+    /* No hover effect - maintain same transform */
 }
 
 .quiz-container-link .quiz-container {
@@ -691,7 +694,7 @@ a:hover {
 }
 
 .quiz-container-link:hover .quiz-container {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    /* No hover effect - maintain same box-shadow */
 }
 
 .quiz-container {
