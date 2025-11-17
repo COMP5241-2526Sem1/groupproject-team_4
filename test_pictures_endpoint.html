@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Pictures Endpoint</title>
+</head>
+<body>
+    <h1>Testing Pictures Endpoint</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test the pictures endpoint
+        fetch('/course/PHYS101/mini_games/9/pictures?last_update=0')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                console.log('Pictures data:', data);
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = '<pre>Error: ' + error + '</pre>';
+                console.error('Error:', error);
+            });
+    </script>
+</body>
+</html>

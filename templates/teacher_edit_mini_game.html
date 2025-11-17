@@ -8,7 +8,7 @@
         <h1>Edit Mini Game</h1>
     </div>
 
-    <form method="POST" action="{{ url_for('mini_game.teacher_edit_mini_game', course_code=course.code, mini_game_id=mini_game.id) }}">
+    <form method="POST" action="/teacher/course/{{ course.code }}/mini_games/{{ mini_game.id }}/edit">
         <div class="form-group">
             <label for="name">Mini Game Name *</label>
             <input type="text" id="name" name="name" class="form-control" value="{{ mini_game.name }}" required maxlength="255">
@@ -57,7 +57,7 @@
 
         <div style="margin-top: 30px;">
             <button type="submit" class="btn-primary">Update Mini Game</button>
-            <a href="{{ url_for('mini_game.teacher_mini_games_list', course_code=course.code) }}" class="btn-secondary" style="margin-left: 10px;">Cancel</a>
+            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/mini_games';" class="btn-secondary" style="margin-left: 10px;">Cancel</a>
         </div>
     </form>
 </div>

@@ -1,6 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'course_base.html' %}
 
-{% block title %}Mini Games - {{ course.code }}{% endblock %}
+{% block title %}Mini Games - {{ course.name if course else 'Student Home' }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -9,254 +9,361 @@
         padding: 30px;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-top: 20px;
+        margin-bottom: 30px;
     }
 
     .page-header {
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 30px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #f0f0f0;
     }
 
     .page-header h1 {
-        color: #333;
+        color: #8a1c32;
         margin: 0;
-        font-size: 28px;
     }
 
     .back-btn {
-        background-color: #6c757d;
+        background: #8a1c32;
         color: white;
         padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
         text-decoration: none;
-        font-size: 16px;
-        transition: background-color 0.3s ease;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: background 0.2s;
     }
 
     .back-btn:hover {
-        background-color: #545b62;
-        color: white;
-        text-decoration: none;
+        background: #6e1728;
+    }
+
+    .course-info {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .course-info h2 {
+        color: #8a1c32;
+        margin: 0 0 10px 0;
+    }
+
+    .course-info p {
+        color: #666;
+        margin: 0;
     }
 
     .mini-games-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
     }
 
     .mini-game-card {
-        background: #f8f9fa;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 20px;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        position: relative;
+        overflow: hidden;
     }
 
     .mini-game-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: #8a1c32;
     }
 
     .mini-game-card.unavailable {
-        opacity: 0.6;
-        background: #f5f5f5;
+        opacity: 0.7;
+        background: #f8f9fa;
+    }
+
+    .mini-game-card.unavailable:hover {
+        transform: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #e9ecef;
     }
 
     .mini-game-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 10px;
+        font-size: 1.4em;
+        font-weight: bold;
+        color: #8a1c32;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
     }
 
     .mini-game-description {
         color: #666;
-        font-size: 14px;
-        margin-bottom: 15px;
-        line-height: 1.4;
+        margin-bottom: 20px;
+        line-height: 1.5;
+        min-height: 60px;
     }
 
     .mini-game-info {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 15px;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
     }
 
     .info-item {
         display: flex;
         justify-content: space-between;
-        font-size: 14px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .info-item:last-child {
+        margin-bottom: 0;
     }
 
     .info-label {
-        color: #666;
-        font-weight: 500;
+        font-weight: bold;
+        color: #495057;
     }
 
     .info-value {
-        color: #333;
-        font-weight: 600;
+        color: #6c757d;
+        font-weight: 500;
     }
 
     .mini-game-points {
         color: #8a1c32;
-        font-weight: 700;
-        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .status-available {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-upcoming {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-ended {
+        background: #f8d7da;
+        color: #721c24;
     }
 
     .attempt-info {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding: 10px;
-        background: white;
-        border-radius: 5px;
-        border: 1px solid #e0e0e0;
+        padding: 15px;
+        background: #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-weight: bold;
     }
 
     .attempt-count {
-        font-size: 14px;
-        color: #666;
+        color: #495057;
     }
 
     .attempt-limit {
-        font-size: 14px;
-        color: #8a1c32;
-        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .play-btn, .view-details-btn {
+        width: 100%;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 10px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
     }
 
     .play-btn {
-        width: 100%;
-        background-color: #27ae60;
+        background: #27ae60;
         color: white;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
     }
 
     .play-btn:hover {
-        background-color: #219a52;
+        background: #219a52;
+        transform: translateY(-2px);
     }
 
     .play-btn:disabled {
-        background-color: #bdc3c7;
+        background: #6c757d;
         cursor: not-allowed;
+        transform: none;
     }
 
     .view-details-btn {
-        width: 100%;
-        background-color: #8a1c32;
+        background: #8a1c32;
         color: white;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
+        padding: 8px 16px;
         text-decoration: none;
-        display: block;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        transition: background 0.2s, transform 0.2s;
+        border: none;
+        cursor: pointer;
+        display: inline-block;
         text-align: center;
-        transition: background-color 0.3s ease;
+        max-width: 120px;
+        margin-top: 10px;
     }
 
     .view-details-btn:hover {
-        background-color: #6a1527;
-        color: white;
+        background: #6e1728;
+        transform: translateY(-2px);
     }
 
     .no-mini-games {
         text-align: center;
         padding: 60px 40px;
-        color: #666;
+        color: #7f8c8d;
         font-size: 18px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        margin: 30px 0;
     }
 
     .no-mini-games p {
-        margin-bottom: 10px;
+        margin: 10px 0;
     }
 
-    .course-info {
-        background: #f8f9fa;
+    .mini-games-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .mini-games-table th {
+        background: #8a1c32;
+        color: white;
         padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        border-left: 4px solid #8a1c32;
+        text-align: left;
+        font-weight: bold;
     }
 
-    .course-info h2 {
-        margin: 0 0 5px 0;
-        color: #333;
+    .mini-games-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .mini-games-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .mini-game-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .action-btn {
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        transition: background 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .view-btn {
+        background: #8a1c32;
+        color: white;
+    }
+
+    .view-btn:hover {
+        background: #6e1728;
+    }
+
+    .play-btn {
+        background: #27ae60;
+        color: white;
+    }
+
+    .play-btn:hover {
+        background: #219a52;
+    }
+
+    .no-mini-games {
+        text-align: center;
+        padding: 40px;
+        color: #7f8c8d;
         font-size: 18px;
     }
 
-    .course-info p {
-        margin: 0;
+    .datetime-info {
+        font-size: 0.9em;
         color: #666;
-        font-size: 14px;
     }
 
-    .status-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
+    .attempt-info {
+        font-weight: bold;
     }
 
-    .status-available {
-        background-color: #d4edda;
-        color: #155724;
+    .attempt-info.full {
+        color: #dc3545;
     }
 
-    .status-upcoming {
-        background-color: #fff3cd;
-        color: #856404;
+    .attempt-info.available {
+        color: #28a745;
     }
 
-    .status-ended {
-        background-color: #f8d7da;
-        color: #721c24;
+    .grade-info {
+        font-weight: bold;
+    }
+
+    .grade-score {
+        color: #8a1c32;
+    }
+
+    .grade-percentage {
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .no-grade {
+        color: #999;
+        font-style: italic;
     }
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="container">
-    <aside class="sidebar">
-        <div class="logo">
-            <img src="/static/polyu_logo.png" alt="PolyU Logo">
-            <div style="font-size:18px;font-weight:bold;margin-top:8px;">LEARN@POLYU</div>
-        </div>
-        <nav>
-            <a href="/institution">Institution Page</a>
-            <div class="dropdown">
-                <a href="/course/my" class="active">My Course</a>
-                <div class="dropdown-content" id="course-dropdown">
-                    <!-- Dynamically generate course options -->
-                </div>
-            </div>
-            <a href="/grades">Grades</a>
-            <a href="https://genai.polyu.edu.hk/" target="_blank">Assist</a>
-            <a href="/course_registration">Course Registration</a>
-            <a href="/profile">Profile</a>
-            <a href="/logout">Sign Out</a>
-        </nav>
-    </aside>
-    <main class="main-content">
+{% block sidebar_links %}
+<a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2];">Course Home</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/announcement';">Announcement</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/content';">Content</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/quiz';">Quiz</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/poll';">Poll</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/word_cloud';">Word Cloud</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/mini_games';" style="background-color: #8a1c32; color: white;">Mini Games</a>
+    <a href="javascript:void(0);" onclick="window.location.href=window.location.pathname.split('/')[0] + '/' + window.location.pathname.split('/')[1] + '/' + window.location.pathname.split('/')[2] + '/grades';">Grades</a>
+    <a href="/logout">Sign Out</a>
+{% endblock %}
+
+{% block main_content %}
         <div class="mini-games-container">
             <div class="page-header">
                 <h1>Mini Games - {{ course.code }}</h1>
@@ -313,15 +420,17 @@
                                 </div>
                             </div>
 
-                            {% if mini_game.can_attempt %}
-                                <form method="POST" action="{{ url_for('mini_game.student_start_mini_game', course_code=course.code, mini_game_id=mini_game.id) }}">
-                                    <button type="submit" class="play-btn">Play Now</button>
-                                </form>
-                            {% else %}
-                                <button class="play-btn" disabled>Max Attempts Reached</button>
-                            {% endif %}
+                            <div class="mini-game-actions">
+                                {% if mini_game.can_attempt %}
+                                    <form method="POST" action="{{ url_for('mini_game.student_start_mini_game', course_code=course.code, mini_game_id=mini_game.id) }}" style="display: inline-block;">
+                                        <button type="submit" class="play-btn">Play Now</button>
+                                    </form>
+                                {% else %}
+                                    <button class="play-btn" disabled>Max Attempts Reached</button>
+                                {% endif %}
 
-                            <a href="{{ url_for('mini_game.student_mini_game_detail', course_code=course.code, mini_game_id=mini_game.id) }}" class="view-details-btn">View Details</a>
+                                <a href="{{ url_for('mini_game.student_mini_game_detail', course_code=course.code, mini_game_id=mini_game.id) }}" class="view-details-btn">View Details</a>
+                            </div>
                         </div>
                     {% endfor %}
                 </div>
@@ -332,7 +441,7 @@
                 </div>
             {% endif %}
         </div>
-    </main>
+    </div>
 </div>
 
 <script>

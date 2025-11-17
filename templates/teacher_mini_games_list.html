@@ -211,7 +211,7 @@
 <div class="mini-games-management-container">
     <div class="page-header">
         <h1>Mini Games Management</h1>
-        <a href="{{ url_for('mini_game.teacher_create_mini_game', course_code=course.code) }}" class="create-btn">
+        <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/mini_games/create';" class="create-btn">
             Create Mini Game
         </a>
     </div>
@@ -270,13 +270,13 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <a href="{{ url_for('mini_game.teacher_edit_mini_game', course_code=course.code, mini_game_id=mini_game.id) }}" class="action-btn edit-btn">
+                            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/mini_games/' + {{ mini_game.id }} + '/edit';" class="action-btn edit-btn">
                                 Edit
                             </a>
-                            <a href="{{ url_for('mini_game.teacher_mini_game_detail', course_code=course.code, mini_game_id=mini_game.id) }}" class="action-btn view-btn">
+                            <a href="javascript:void(0);" onclick="window.location.href='/teacher/course/' + window.location.pathname.split('/')[3] + '/mini_games/' + {{ mini_game.id }};" class="action-btn view-btn">
                                 View
                             </a>
-                            <form method="POST" action="{{ url_for('mini_game.teacher_delete_mini_game', course_code=course.code, mini_game_id=mini_game.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this mini game?');">
+                            <form method="POST" action="/teacher/course/{{ course.code }}/mini_games/{{ mini_game.id }}/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this mini game?');">
                                 <button type="submit" class="action-btn delete-btn">Delete</button>
                             </form>
                         </div>
