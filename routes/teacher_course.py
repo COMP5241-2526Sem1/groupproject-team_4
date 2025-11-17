@@ -4,6 +4,7 @@ from database import db
 from models.user import User
 from models.course import Course
 from models.course_enrollment import CourseEnrollment
+from models.minigame import Minigame
 import csv
 import io
 import random
@@ -97,6 +98,67 @@ def teacher_course_detail(course_code):
     enrolled_count = CourseEnrollment.query.filter_by(course_code=course_code).count()
     
     return render_template('teacher_course_home.html', course=course, enrolled_count=enrolled_count)
+
+# Teacher course dashboard page
+@teacher_course_bp.route('/teacher/course/<course_code>/dashboard')
+@login_required
+@teacher_required
+def teacher_course_dashboard(course_code):
+    # Get course information
+    course = Course.query.get_or_404(course_code)
+    
+    # Check if the user is the teacher of this course
+    if course.teacher_id != session['user_id']:
+        flash('You are not the teacher of this course, cannot access this page.')
+        return redirect(url_for('teacher_course.teacher_course_list'))
+    
+    # Get enrolled students with their participation data
+    from models.course_enrollment import CourseEnrollment
+    from sqlalchemy import func
+    
+    # Get student participation data
+    enrolled_students = db.session.query(
+        User,
+        func.count(CourseEnrollment.id).label('activities_completed')
+    ).join(
+        CourseEnrollment, User.id == CourseEnrollment.student_id
+    ).filter(
+        CourseEnrollment.course_code == course_code
+    ).group_by(User.id).all()
+    
+    # Calculate total activities for this course
+    from models.quiz import Quiz
+    from models.poll import Poll
+    from models.word_cloud import WordCloud
+    
+    total_quizzes = Quiz.query.filter_by(course_code=course_code).count()
+    total_polls = Poll.query.filter_by(course_code=course_code).count()
+    total_word_clouds = WordCloud.query.filter_by(course_code=course_code).count()
+    total_mini_games = Minigame.query.filter_by(course_code=course_code).count()
+    
+    total_activities = total_quizzes + total_polls + total_word_clouds + total_mini_games
+    
+    # Create student ranking data
+    student_rankings = []
+    for student, activities_completed in enrolled_students:
+        participation_rate = (activities_completed / total_activities * 100) if total_activities > 0 else 0
+        student_rankings.append({
+            'student': student,
+            'activities_completed': activities_completed,
+            'participation_rate': participation_rate
+        })
+    
+    # Sort by participation rate (descending)
+    student_rankings.sort(key=lambda x: x['participation_rate'], reverse=True)
+    
+    # Get enrolled count
+    enrolled_count = CourseEnrollment.query.filter_by(course_code=course_code).count()
+    
+    return render_template('teacher_course_dashboard.html', 
+                         course=course, 
+                         student_rankings=student_rankings,
+                         total_activities=total_activities,
+                         enrolled_count=enrolled_count)
 
 # Create new course page
 @teacher_course_bp.route('/teacher/course/create', methods=['GET', 'POST'])

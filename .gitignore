@@ -15,3 +15,23 @@ venv/
 *.log
 *.sqlite
 sample_data.sql
+
+# Ignore test files
+test_*.py
+*_test.py
+*_tests.py
+tests/
+testing/
+
+# Ignore test output and reports
+*.html
+*.xml
+*.coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ignore debug files
+debug_*.py
+find_*.py
+check_*.py
