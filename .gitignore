@@ -4,23 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual Environment
 venv/
 env/
 ENV/
@@ -29,6 +12,11 @@ ENV/
 # Environment variables
 .env
 .env.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # IDE
 .vscode/
@@ -44,10 +32,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Vercel
-.vercel
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
