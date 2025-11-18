@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Design Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .test-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .test-section h2 {
+            color: #8a1c32;
+            margin-bottom: 20px;
+        }
+        
+        .viewport-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        
+        .responsive-demo {
+            display: grid;
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .responsive-demo {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .responsive-demo {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Responsive Design Test Page</h1>
+        
+        <div class="viewport-info">
+            <strong>Current Viewport:</strong>
+            <div id="viewport-size"></div>
+            <div id="breakpoint-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Quiz Components Test</h2>
+            <div class="responsive-demo">
+                <div class="quiz-container">
+                    <h3>Quiz Container</h3>
+                    <p>This should adapt to different screen sizes</p>
+                </div>
+                
+                <div class="question-container">
+                    <div class="question-text">Sample Question Text</div>
+                    <div class="question-options">
+                        <div class="question-option">Option A</div>
+                        <div class="question-option">Option B</div>
+                    </div>
+                </div>
+                
+                <div class="quiz-navigation">
+                    <button class="quiz-button">Previous</button>
+                    <button class="quiz-button">Next</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Teacher View Components</h2>
+            <div class="responsive-demo">
+                <div class="teacher-mode-banner">
+                    Teacher Mode Active
+                </div>
+                
+                <div class="teacher-submission-info">
+                    <h4>Submission Info</h4>
+                    <div class="submission-details-grid">
+                        <div>Student: John Doe</div>
+                        <div>Score: 85%</div>
+                    </div>
+                </div>
+                
+                <div class="question-review">
+                    <div class="question-header">
+                        <h4>Question 1 Review</h4>
+                        <div class="question-meta">
+                            <span class="question-type">Multiple Choice</span>
+                            <span class="status-correct">Correct</span>
+                        </div>
+                    </div>
+                    <div class="student-answer-box">
+                        <div class="student-answer-text">Student's answer text goes here</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Status and Feedback Classes</h2>
+            <div class="responsive-demo">
+                <span class="grade-success">Success Message</span>
+                <span class="grade-error">Error Message</span>
+                <span class="status-correct">Correct Status</span>
+                <span class="status-incorrect">Incorrect Status</span>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Quiz List Items</h2>
+            <div class="quiz-list">
+                <div class="quiz-item">
+                    <div class="quiz-item-content">
+                        <h3>Quiz Title</h3>
+                        <p>Quiz description goes here</p>
+                    </div>
+                    <div class="quiz-item-action">
+                        <button class="btn">Start Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function updateViewportInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const viewportSize = document.getElementById('viewport-size');
+            const breakpointInfo = document.getElementById('breakpoint-info');
+            
+            viewportSize.textContent = `Width: ${width}px, Height: ${height}px`;
+            
+            let breakpoint = 'Desktop';
+            if (width <= 480) {
+                breakpoint = 'Mobile (≤480px)';
+            } else if (width <= 768) {
+                breakpoint = 'Tablet (481-768px)';
+            }
+            
+            breakpointInfo.textContent = `Breakpoint: ${breakpoint}`;
+        }
+        
+        window.addEventListener('resize', updateViewportInfo);
+        window.addEventListener('load', updateViewportInfo);
+        updateViewportInfo();
+    </script>
+</body>
+</html>

@@ -109,6 +109,10 @@ from routes.ai_routes import ai_bp
 # AI routes
 app.register_blueprint(ai_bp)
 
+# Register test routes blueprint
+from routes.test_routes import test_bp
+app.register_blueprint(test_bp)
+
 # Routes: Login and registration pages
 @app.route('/login')
 def login_page():

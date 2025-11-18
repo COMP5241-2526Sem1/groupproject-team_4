@@ -6,11 +6,11 @@
         <div class="logo" onclick="window.location.href='/student_home'">
             <img src="/static/polyu_logo.png" alt="PolyU Logo">
             {% if course %}
-                <div style="font-size:18px;font-weight:bold;margin-top:8px;">{{ course.code }}</div>
-                <div style="font-size:14px;margin-top:4px;">{{ course.name }}</div>
+                <div class="course-code">{{ course.code }}</div>
+                <div class="course-name">{{ course.name }}</div>
             {% else %}
-                <div style="font-size:18px;font-weight:bold;margin-top:8px;">Quiz System</div>
-                <div style="font-size:14px;margin-top:4px;">Error: Course not found</div>
+                <div class="system-name">Quiz System</div>
+                <div class="error-message">Error: Course not found</div>
             {% endif %}
         </div>
 
