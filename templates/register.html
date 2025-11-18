@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <img src="/static/polyulogo.png" alt="PolyU Logo" class="logo" style="width:260px;">
+        <h2>Register</h2>
+        <div class="role-menu" id="roleMenu">
+            <div class="role-item selected" data-role="student">Student</div>
+            <div class="role-item" data-role="teacher">Teacher</div>
+            <div class="role-item" data-role="admin">Admin</div>
+        </div>
+        <form id="registerForm">
+            <input type="hidden" id="role" name="role" value="student">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Register</button>
+        </form>
+        <p id="registerMsg"></p>
+        <a href="/login">Already have an account? Sign In</a>
+    </div>
+    <script>
+    // 角色菜单交互
+    document.querySelectorAll('.role-item').forEach(item => {
+        item.onclick = function() {
+            document.querySelectorAll('.role-item').forEach(i => i.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('role').value = this.getAttribute('data-role');
+        };
+    });
+    document.getElementById('registerForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const data = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            role: document.getElementById('role').value,
+            email: document.getElementById('email').value
+        };
+        const res = await fetch('/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        document.getElementById('registerMsg').textContent = result.msg;
+        if (res.ok) {
+            window.location.href = '/login';
+        }
+    };
+    </script>
+</body>
+</html>

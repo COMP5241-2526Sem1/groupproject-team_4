@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <img src="/static/polyulogo.png" alt="PolyU Logo" class="logo" style="width:260px;">
+        <h2>Sign In</h2>
+        <div class="role-menu" id="roleMenu">
+            <div class="role-item selected" data-role="student">Student</div>
+            <div class="role-item" data-role="teacher">Teacher</div>
+            <div class="role-item" data-role="admin">Admin</div>
+        </div>
+        <form id="loginForm">
+            <input type="hidden" id="role" name="role" value="student">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Sign In</button>
+        </form>
+        <p id="loginMsg"></p>
+        <a href="/register">No account? Register</a>
+    </div>
+    <script>
+    // 角色菜单交互
+    document.querySelectorAll('.role-item').forEach(item => {
+        item.onclick = function() {
+            document.querySelectorAll('.role-item').forEach(i => i.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('role').value = this.getAttribute('data-role');
+        };
+    });
+    document.getElementById('loginForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const data = {
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            role: document.getElementById('role').value
+        };
+        const res = await fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        document.getElementById('loginMsg').textContent = result.msg;
+        if (res.ok) {
+            // 登录成功后跳转到不同角色首页
+            if (result.role === 'student') {
+                window.location.href = '/student_home';
+            } else if (result.role === 'teacher') {
+                window.location.href = '/teacher_home';
+            } else if (result.role === 'admin') {
+                window.location.href = '/admin_home';
+            }
+        }
+    };
+    </script>
+</body>
+</html>
