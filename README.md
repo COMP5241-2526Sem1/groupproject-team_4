@@ -1,1 +1,1 @@
-.\venv\Scripts\Activate.ps1; python app.py
+Vercel Deployment: https://groupproject-team-4.vercel.app/
