@@ -34,3 +34,4 @@ htmlcov/
 debug_*.py
 find_*.py
 check_*.py
+.vercel

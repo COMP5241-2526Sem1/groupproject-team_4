@@ -1,7 +1,6 @@
-psycopg2==2.8.6
 flask
-flask_sqlalchemy
+flask-sqlalchemy
 werkzeug
 sqlalchemy
-pymysql
-dotenv
+python-dotenv
+gunicorn

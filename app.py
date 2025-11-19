@@ -3,12 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from sqlalchemy import text
 from database import db
-
+import os
 
 app = Flask(__name__)
 
 # Set secret_key for Flask app to avoid session errors
-app.secret_key = 'your_secret_key_123456789'
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_123456789')
 
 # Initialize database object
 app.config.from_object(Config)
