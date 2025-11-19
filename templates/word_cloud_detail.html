@@ -2,139 +2,6 @@
 
 {% block title %}{{ word_cloud.name }} - Word Cloud{% endblock %}
 
-{% block styles %}
-<style>
-    .word-cloud-container {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .word-cloud-display {
-        width: 100%;
-        min-height: 300px;
-        border: 2px dashed #ddd;
-        border-radius: 8px;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        margin: 20px 0;
-        background: #f9f9f9;
-        transition: all 0.3s ease;
-    }
-    .word-cloud-word {
-        display: inline-block;
-        margin: 5px;
-        padding: 5px 10px;
-        border-radius: 4px;
-        background: #007bff;
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    .word-cloud-word:hover {
-        background: #0056b3;
-        transform: scale(1.1);
-    }
-    .word-input-area {
-        margin-top: 20px;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-    .word-input-area textarea {
-        width: 100%;
-        min-height: 100px;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        resize: vertical;
-    }
-    .btn-submit {
-        background: #28a745;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-top: 10px;
-    }
-    .btn-submit:hover {
-        background: #218838;
-    }
-    .btn-submit:disabled {
-        background: #6c757d;
-        cursor: not-allowed;
-    }
-    .stats {
-        margin: 10px 0;
-        padding: 15px;
-        background: #e9ecef;
-        border-radius: 4px;
-    }
-    .alert {
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 4px;
-    }
-    .alert-warning {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        color: #856404;
-    }
-    .alert-info {
-        background: #d1ecf1;
-        border: 1px solid #bee5eb;
-        color: #0c5460;
-    }
-    
-    /* Enhanced animations for word cloud */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.8) translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
-    }
-    
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0px);
-        }
-        50% {
-            transform: translateY(-5px);
-        }
-    }
-    
-    .word-cloud-display span {
-        animation: fadeIn 0.6s ease-out forwards;
-        position: relative;
-    }
-    
-    .word-cloud-display span:hover {
-        animation: float 2s ease-in-out infinite;
-        z-index: 10;
-    }
-    
-    /* Clickable word indicator */
-    .word-cloud-display span {
-        cursor: pointer !important;
-        user-select: none;
-    }
-    
-    .word-cloud-display span:active {
-        transform: scale(0.95) !important;
-        transition: transform 0.1s ease !important;
-    }
-</style>
-{% endblock %}
-
 {% block main_content %}
 <div class="word-cloud-container">
     <h1>{{ word_cloud.name }}</h1>
@@ -146,7 +13,7 @@
     </div>
     
     <div id="word-cloud-display" class="word-cloud-display">
-        <p style="color: #666;">Loading word cloud...</p>
+        <p class="word-cloud-loading">Loading word cloud...</p>
     </div>
 </div>
 
@@ -217,7 +84,7 @@ function loadWordCloudData() {
             
             if (data.error) {
                 console.error('Error loading word cloud:', data.error);
-                document.getElementById('word-cloud-display').innerHTML = '<p style="color: red;">Error loading word cloud data: ' + data.error + '</p>';
+                document.getElementById('word-cloud-display').innerHTML = '<p class="word-cloud-error">Error loading word cloud data: ' + data.error + '</p>';
                 return;
             }
             
@@ -239,7 +106,7 @@ function loadWordCloudData() {
         })
         .catch(error => {
             console.error('Error loading word cloud:', error);
-            document.getElementById('word-cloud-display').innerHTML = '<p style="color: red;">Error loading word cloud data</p>';
+            document.getElementById('word-cloud-display').innerHTML = '<p class="word-cloud-error">Error loading word cloud data</p>';
         });
 }
 
@@ -248,7 +115,7 @@ function renderWordCloud(words) {
     const container = document.getElementById('word-cloud-display');
     
     if (!words || words.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 60px 20px; color: #6c757d; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif;"><div style="font-size: 64px; margin-bottom: 16px; opacity: 0.3;">☁</div><div style="font-size: 18px; font-weight: 500; margin-bottom: 8px; color: #495057;">No words yet</div><div style="font-size: 14px; color: #868e96;">Be the first to contribute to this word cloud</div></div>';
+        container.innerHTML = '<div class="word-cloud-empty"><div class="empty-icon">☁</div><div class="empty-title">No words yet</div><div class="empty-subtitle">Be the first to contribute to this word cloud</div></div>';
         return;
     }
     
@@ -357,34 +224,21 @@ function renderWordCloud(words) {
         const weight = word.frequency > 20 ? '800' : word.frequency > 15 ? '700' : word.frequency > 8 ? '600' : word.frequency > 3 ? '500' : '400';
         
         // Dynamic word cloud with positioning
-        html += `<span style="
+        html += `<span class="word-cloud-word-dynamic" style="
             font-size: ${fontSize}px;
             color: ${color};
             font-weight: ${weight};
-            position: absolute;
             left: ${position.x}px;
             top: ${position.y}px;
             transform: translate(-50%, -50%) rotate(${rotation}deg);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-            line-height: 1;
-            letter-spacing: -0.01em;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
             z-index: ${word.frequency};
-            white-space: nowrap;
         " onclick="addWordToInput('${word.text}')" onmouseover="this.style.transform='translate(-50%, -50%) scale(1.1) rotate(0deg)'; this.style.zIndex='100'; this.style.textShadow='0 2px 4px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translate(-50%, -50%) scale(1) rotate(${rotation}deg)'; this.style.zIndex='${word.frequency}'; this.style.textShadow='0 1px 2px rgba(0,0,0,0.1)';" title="${word.text} (${word.frequency} occurrences)">${word.text}</span>`;
     });
     
     container.innerHTML = html;
-    container.style.position = 'relative';
+    container.className = 'word-cloud-container-dynamic';
     container.style.width = containerWidth + 'px';
     container.style.height = containerHeight + 'px';
-    container.style.margin = '0 auto';
-    container.style.background = '#f8f9fa';
-    container.style.borderRadius = '12px';
-    container.style.overflow = 'hidden';
-    container.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
 }
 
 // Update attempts display (placeholder - no attempts tracking needed)
@@ -404,9 +258,9 @@ function addWordToInput(word) {
     wordInput.focus();
     
     // Add a brief visual feedback
-    wordInput.style.backgroundColor = '#e8f5e8';
+    wordInput.classList.add('word-input-highlight');
     setTimeout(() => {
-        wordInput.style.backgroundColor = '';
+        wordInput.classList.remove('word-input-highlight');
     }, 300);
 }
 
@@ -437,19 +291,7 @@ function showNotice(message, type = 'success') {
     const notice = document.getElementById('submission-notice');
     notice.textContent = message;
     notice.style.display = 'block';
-    
-    // Set appropriate styling based on type
-    if (type === 'success') {
-        notice.className = 'alert alert-success';
-        notice.style.background = '#d4edda';
-        notice.style.border = '1px solid #c3e6cb';
-        notice.style.color = '#155724';
-    } else if (type === 'error') {
-        notice.className = 'alert alert-danger';
-        notice.style.background = '#f8d7da';
-        notice.style.border = '1px solid #f5c6cb';
-        notice.style.color = '#721c24';
-    }
+    notice.className = 'alert alert-' + (type === 'success' ? 'success' : 'danger');
     
     // Auto-hide after 5 seconds
     setTimeout(() => {
